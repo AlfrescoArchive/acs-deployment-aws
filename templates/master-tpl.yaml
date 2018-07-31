@@ -111,7 +111,6 @@ Resources:
         Tags:
           - Key: Name
             Value: !Sub "${AWS::StackName}-k8s" 
-        #must use param here
         TemplateURL: !Sub "https://s3.amazonaws.com/quickstart-reference/aws/vpc/latest/templates/aws-vpc.template"
         Parameters:
           AvailabilityZones: !Join [",", !Ref AvailabilityZones]
@@ -175,3 +174,70 @@ Resources:
         ManagedPolicyArns:
           - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
           - arn:aws:iam::aws:policy/AmazonEKSServicePolicy
+
+    WorkersSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      DependsOn:
+        - VPCStack
+      Properties: 
+        GroupName: !Sub "${AWS::StackName}-k8s-workersSg"
+        GroupDescription: "Security Group for EKS worker Nodes"
+        Tags:
+          - Key: Name
+            Value: !Sub "${AWS::StackName}-k8s-workersSg" 
+        VpcId: !GetAtt VPCStack.Outputs.VPCID
+
+    EFSStack:
+      Type: AWS::CloudFormation::Stack
+      DependsOn:
+        - WorkersSecurityGroup
+      Properties:
+        Tags:
+          - Key: Name
+            Value: !Sub "${AWS::StackName}-k8s-efs" 
+        TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/efs.yaml"
+        Parameters:
+          PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
+          PrivateSubnet2: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
+          SecurityGroup: !GetAtt WorkersSecurityGroup.GroupId
+
+Outputs:
+  EKSServiceRole:
+    Value: !GetAtt EKSServiceRole.Arn
+  NodeInstanceRole:
+    Value: !GetAtt NodeInstanceRole.Arn
+  WorkersSecurityGroup:
+    Value: !GetAtt WorkersSecurityGroup.GroupId
+
+  RemoteAccessCIDR: 
+    Value: !Ref RemoteAccessCIDR
+  VPCID: 
+    Value: !GetAtt VPCStack.Outputs.VPCID
+
+  BastionSubStackName:
+    Value: !GetAtt BastionStack.Outputs.SubStackName
+  BastionSecurityGroup:
+    Value: !GetAtt BastionStack.Outputs.BastionSecurityGroup
+  BastionLaunchConfiguration:
+    Value: !GetAtt BastionStack.Outputs.BastionLaunchConfiguration
+  BastionAutoScalingGroup:
+    Value: !GetAtt BastionStack.Outputs.BastionAutoScalingGroup
+  BastionEIP:
+    Value: !GetAtt BastionStack.Outputs.BastionEIP
+  ControlPlaneSecurityGroup:
+    Value: !GetAtt BastionStack.Outputs.ControlPlaneSecurityGroup
+  BastionMainLogGroup:
+    Value: !GetAtt BastionStack.Outputs.BastionMainLogGroup
+  BastionInstanceProfile:
+    Value: !GetAtt BastionStack.Outputs.BastionInstanceProfile
+  BastionInstanceRole:
+    Value: !GetAtt BastionStack.Outputs.BastionInstanceRole
+  BastionMainLogGroup:
+    Value: !GetAtt BastionStack.Outputs.BastionMainLogGroup
+
+  EFSSubstackName:
+    Value: !GetAtt EFSStack.Outputs.SubstackName
+  EFSName:
+    Value: !GetAtt EFSStack.Outputs.EFSName
+  EFSMountTargets:
+    Value: !GetAtt EFSStack.Outputs.MountTargets
