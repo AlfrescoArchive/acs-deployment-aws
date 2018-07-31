@@ -350,3 +350,24 @@ Resources:
           ToPort: '-1'
           CidrIp: !Ref RemoteAccessCIDR
 
+Outputs:
+  SubStackName:
+    Value: !Sub "${AWS::StackName}"
+  BastionSecurityGroup:
+    Value: !GetAtt BastionSecurityGroup.GroupId
+  BastionLaunchConfiguration:
+    Value: !Ref BastionLaunchConfiguration
+  BastionAutoScalingGroup:
+    Value: !Ref BastionAutoScalingGroup
+  BastionEIP:
+    Value: !Ref BastionEIP
+  ControlPlaneSecurityGroup:
+    Value: !GetAtt ControlPlaneSecurityGroup.GroupId
+  BastionMainLogGroup:
+    Value: !GetAtt BastionMainLogGroup.Arn
+  BastionInstanceProfile:
+    Value: !GetAtt BastionInstanceProfile.Arn
+  BastionInstanceRole:
+    Value: !GetAtt BastionInstanceRole.Arn
+  BastionMainLogGroup:
+    Value: !GetAtt BastionMainLogGroup.Arn

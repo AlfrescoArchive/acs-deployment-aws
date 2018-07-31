@@ -1,0 +1,61 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "EFS stack that deploys EFS and sets mountpoints in existent subnets."
+
+Parameters:
+    SecurityGroup:
+      Description: "ID for the VPC, This will be used to get the default security group"
+      Type: "AWS::EC2::SecurityGroup::Id"
+    PrivateSubnet1:
+      Description: "ID of Private Subnet 1"
+      Type: "AWS::EC2::Subnet::Id"   
+    PrivateSubnet2:
+      Description: "ID of Private Subnet 2"
+      Type: "AWS::EC2::Subnet::Id"
+
+Resources:
+  Filesystem:
+    Type: AWS::EFS::FileSystem
+    Properties: 
+      Encrypted: true
+      FileSystemTags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-k8s-efs" 
+      PerformanceMode: "generalPurpose"
+
+  MountTarget1:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref Filesystem
+      SecurityGroups:
+        - !Ref SecurityGroup
+      SubnetId: !Ref PrivateSubnet1
+
+  MountTarget2:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref Filesystem
+      SecurityGroups:
+        - !Ref SecurityGroup
+      SubnetId: !Ref PrivateSubnet2
+
+  NFSIngressRule:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: 
+      Description: "NFS used for Persistent volume claims in k8s"
+      GroupId: !Ref SecurityGroup
+      IpProtocol: tcp
+      FromPort: '2049'
+      ToPort: '2049'
+      SourceSecurityGroupId: !Ref SecurityGroup
+
+Outputs:
+  SubstackName:
+    Value: !Sub "${AWS::StackName}" 
+  EFSName:
+    Value: !Ref Filesystem
+  MountTargets:
+    Value: !Join
+      - ","
+      - - !Ref MountTarget1
+        - !Ref MountTarget2
