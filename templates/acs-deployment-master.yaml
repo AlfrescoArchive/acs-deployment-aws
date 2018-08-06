@@ -1,0 +1,320 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Master template to deploy ACS to AWS using kubernetes."
+Metadata:
+    AWS::CloudFormation::Interface:
+      ParameterGroups:
+        - Label:
+            default: VPC Stack Configuration
+          Parameters:
+            - AvailabilityZones
+            - KeyPairName
+            - PrivateSubnet1CIDR
+            - PrivateSubnet2CIDR
+            - PublicSubnet1CIDR
+            - PublicSubnet2CIDR
+            - VPCCIDR
+            - NumberOfAZs
+        - Label:
+            default: Bastion and EKS Cluster Stack Configuration
+          Parameters:
+            - RemoteAccessCIDR
+            - BastionInstanceType
+            - MaxNumberOfBastionNodes
+            - MinNumberOfBastionNodes
+            - DesiredNumberOfBastionNodes
+            - NodeInstanceType
+            - MaxNumberOfNodes
+            - MinNumberOfNodes
+            - DesiredNumberOfNodes
+            - EksExternalUserArn
+
+      ParameterLabels:
+        AvailabilityZones:
+          default: The AZ's to deploy to
+        NumberOfAZs:
+          default: The number of AZ's to deploy into
+        PrivateSubnet1CIDR:
+          default: The CIDR block for the first private subnet
+        PrivateSubnet2CIDR:
+          default: The CIDR block for the second private subnet
+        PublicSubnet1CIDR:
+          default: The CIDR block for the first public subnet
+        PublicSubnet2CIDR:
+          default: The CIDR block for the second public subnet
+        VPCCIDR:
+          default: The CIDR block for the VPC to create
+        KeyPairName:
+          default: The key pair name to use to access the instances
+        RemoteAccessCIDR:
+          default: The CIDR block to allow remote access
+        BastionInstanceType:
+          default: The instance type to deploy Bastion to
+        MaxNumberOfBastionNodes:
+          default: The maximum number of nodes to scale up to for Bastion
+        MinNumberOfBastionNodes:
+          default: The minimum number of nodes to scale down to for Bastion
+        DesiredNumberOfBastionNodes:
+          default: The desired number of nodes to keep running for Bastion
+        NodeInstanceType:
+          default: The instance type to deploy EKS Worker Node to
+        MaxNumberOfNodes:
+          default: The maximum number of nodes to scale up to for EKS Worker Node
+        MinNumberOfNodes:
+          default: The minimum number of nodes to scale down to for EKS Worker Node
+        DesiredNumberOfNodes:
+          default: The desired number of nodes to keep running for EKS Worker Node
+        TemplateBucketName:
+          default: The name of the S3 bucket that holds the templates
+        TemplateBucketKeyPrefix:
+          default: The Key prefix for the templates in the S3 template bucket
+        EksExternalUserArn:
+          default: The AWS IAM user arn who will be authorised to connect the cluster externally
+
+Parameters:
+    AvailabilityZones:
+      Description: "List of Availability Zones to use for the subnets in the VPC."
+      Type: "List<AWS::EC2::AvailabilityZone::Name>"
+    NumberOfAZs:
+      Default: "2"
+      Type: String
+      AllowedValues:
+        - "1"
+        - "2"
+      Description: "The number of AZ's to use in this deployment"
+    PrivateSubnet1CIDR:
+      AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
+      ConstraintDescription: "CIDR block parameter must be in the form x.x.x.x/16-28"
+      Default: "10.0.0.0/19"
+      Description: "CIDR block for private subnet 1 located in Availability Zone 1"
+      Type: "String"
+    PrivateSubnet2CIDR:
+      AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
+      ConstraintDescription: "CIDR block parameter must be in the form x.x.x.x/16-28"
+      Default: "10.0.32.0/19"
+      Description: "CIDR block for private subnet 1 located in Availability Zone 2"
+      Type: "String"
+    PublicSubnet1CIDR:
+      AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
+      ConstraintDescription: "CIDR block parameter must be in the form x.x.x.x/16-28"
+      Default: "10.0.128.0/20"
+      Description: "CIDR block for the public (DMZ) subnet 1 located in Availability Zone 1"
+      Type: "String"
+    PublicSubnet2CIDR:
+      AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
+      ConstraintDescription: "CIDR block parameter must be in the form x.x.x.x/16-28"
+      Default: "10.0.144.0/20"
+      Description: "CIDR block for the public (DMZ) subnet 2 located in Availability Zone 2"
+      Type: "String"
+    VPCCIDR:
+      AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
+      ConstraintDescription: "CIDR block parameter must be in the form x.x.x.x/16-28"
+      Default: "10.0.0.0/16"
+      Description: "CIDR block for the VPC"
+      Type: "String"
+    KeyPairName:
+      Description: "The name of an existing public/private key pair, which allows you to securely connect to your instance after it launches"
+      Type: "AWS::EC2::KeyPair::KeyName"
+    RemoteAccessCIDR:
+      AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$"
+      ConstraintDescription: "CIDR block parameter must be in the form x.x.x.x/x"
+      Description: "The CIDR IP range that is permitted to access the AWS resources. It is recommended that you set this value to a trusted IP range."
+      Type: "String"
+    BastionInstanceType:
+      Type: "String"
+      Default: "t2.micro"
+      Description: "The type of EC2 instance to be launched for Bastion Host"
+      AllowedValues:
+        # Add more instance types if needed
+        - t2.micro
+        - t2.medium
+        - t2.large
+      ConstraintDescription: "Must contain a valid instance type"
+    DesiredNumberOfBastionNodes:
+      Type: "String"
+      MinLength: 1
+      Description: "The desired number of Bastion instance to run"
+      Default: 1
+    MaxNumberOfBastionNodes:
+      Type: "String"
+      MinLength: 1
+      Description: "The maximum number of Bastion instances to run"
+      Default: 1
+    MinNumberOfBastionNodes:
+      Type: "String"
+      MinLength: 1
+      Description: "The minimum number of Bastion instances to run"
+      Default: 1
+    NodeInstanceType:
+      Type: "String"
+      Default: "m5.xlarge"
+      Description: "The type of EC2 instance to be launched for EKS Worker Node"
+      AllowedValues:
+        # Add more instance types if needed
+        - t2.xlarge
+        - t2.2xlarge
+        - m3.xlarge
+        - m3.2xlarge
+        - m4.xlarge
+        - m4.2xlarge
+        - m5.xlarge
+        - m5.2xlarge
+      ConstraintDescription: "Must contain a valid instance type"
+    DesiredNumberOfNodes:
+      Type: "String"
+      MinLength: 1
+      Description: "The desired number of EKS Worker Nodes to run"
+      Default: 1
+    MaxNumberOfNodes:
+      Type: "String"
+      MinLength: 1
+      Description: "The maximum number of EKS Worker Nodes to run"
+      Default: 1
+    MinNumberOfNodes:
+      Type: "String"
+      MinLength: 1
+      Description: "The minimum number of EKS Worker Nodes to run"
+      Default: 1
+    QSS3BucketName:
+      AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
+      ConstraintDescription: "Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+      Default: "quickstart-reference"
+      Description: "S3 bucket name for the Quick Start assets. This string can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+      Type: "String"
+    QSS3KeyPrefix:
+      AllowedPattern: "^[0-9a-zA-Z-/]*$"
+      ConstraintDescription: "Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
+      Default: "aws/vpc/latest"
+      Description: "S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
+      Type: "String"
+    TemplateBucketName:
+      AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
+      ConstraintDescription: "Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+      Description: "S3 bucket name that contains the CFN templates (VPC, Bastion etc). This string can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+      Type: "String"
+    TemplateBucketKeyPrefix:
+      AllowedPattern: "^[0-9a-zA-Z-/]*$"
+      ConstraintDescription: "Template bucket key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
+      Type: "String"
+    EksExternalUserArn:
+      Type: String
+      Description: The AWS IAM user arn who will be authorised to connect the cluster externally
+
+Resources:
+    VPCStack:
+      Type: AWS::CloudFormation::Stack
+      Properties:
+        Tags:
+          - Key: Name
+            Value: !Sub "${AWS::StackName}" 
+          - Key: Component
+            Value: ACS-VPC
+        TemplateURL: !Sub "https://s3.amazonaws.com/${QSS3BucketName}/${QSS3KeyPrefix}/templates/aws-vpc.template"
+        Parameters:
+          AvailabilityZones: !Join [",", !Ref AvailabilityZones]
+          KeyPairName: !Ref KeyPairName
+          PrivateSubnet1ACIDR: !Ref PrivateSubnet1CIDR
+          PrivateSubnet2ACIDR: !Ref PrivateSubnet2CIDR
+          PublicSubnet1CIDR: !Ref PublicSubnet1CIDR
+          PublicSubnet2CIDR: !Ref PublicSubnet2CIDR
+          CreatePrivateSubnets: true
+          VPCCIDR: !Ref VPCCIDR
+
+    BastionAndEksClusterStack:
+      Type: AWS::CloudFormation::Stack
+      DependsOn:
+        - VPCStack
+      Properties:
+        Tags:
+          - Key: Name
+            Value: !Sub "${AWS::StackName}" 
+          - Key: Component
+            Value: ACS-Bastion 
+        TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/bastion-and-eks-cluster.yaml"
+        Parameters:
+          # Bastion stack params
+          KeyPairName: !Ref KeyPairName
+          PublicSubnet1ID: !GetAtt VPCStack.Outputs.PublicSubnet1ID
+          PublicSubnet2ID: !GetAtt VPCStack.Outputs.PublicSubnet2ID
+          PrivateSubnet1ID: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
+          PrivateSubnet2ID: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
+          RemoteAccessCIDR: !Ref RemoteAccessCIDR
+          VPCID: !GetAtt VPCStack.Outputs.VPCID
+          BastionInstanceType: !Ref BastionInstanceType
+          MaxNumberOfBastionNodes: !Ref MaxNumberOfBastionNodes
+          MinNumberOfBastionNodes: !Ref MinNumberOfBastionNodes
+          DesiredNumberOfBastionNodes: !Ref DesiredNumberOfBastionNodes
+          # EKS Worker Node stack params
+          NodeInstanceType: !Ref NodeInstanceType
+          MaxNumberOfNodes: !Ref MaxNumberOfNodes
+          MinNumberOfNodes: !Ref MinNumberOfNodes
+          DesiredNumberOfNodes: !Ref DesiredNumberOfNodes
+          TemplateBucketName: !Ref TemplateBucketName
+          TemplateBucketKeyPrefix: !Ref TemplateBucketKeyPrefix
+          EksExternalUserArn: !Ref EksExternalUserArn
+
+    EFSStack:
+      Type: AWS::CloudFormation::Stack
+      DependsOn:
+        - BastionAndEksClusterStack
+      Properties:
+        Tags:
+          - Key: Name
+            Value: !Sub "${AWS::StackName}" 
+          - Key: Component
+            Value: ACS-EFS 
+        TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/efs.yaml"
+        Parameters:
+          PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
+          PrivateSubnet2: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
+          SecurityGroup: !GetAtt BastionAndEksClusterStack.Outputs.NodeSecurityGroupId
+
+Outputs:
+
+  # VPC stack
+  VPCID: 
+    Value: !GetAtt VPCStack.Outputs.VPCID
+  RemoteAccessCIDR: 
+    Value: !Ref RemoteAccessCIDR
+
+  # Bastion stack
+  BastionSubstackName:
+    Value: !GetAtt BastionAndEksClusterStack.Outputs.SubstackName
+  BastionSecurityGroup:
+    Value: !GetAtt BastionAndEksClusterStack.Outputs.BastionSecurityGroup
+  BastionLaunchConfiguration:
+    Value: !GetAtt BastionAndEksClusterStack.Outputs.BastionLaunchConfiguration
+  BastionAutoScalingGroup:
+    Value: !GetAtt BastionAndEksClusterStack.Outputs.BastionAutoScalingGroup
+  BastionEIP:
+    Value: !GetAtt BastionAndEksClusterStack.Outputs.BastionEIP
+  EC2LogGroup:
+    Value: !GetAtt BastionAndEksClusterStack.Outputs.EC2LogGroup
+  BastionInstanceProfile:
+    Value: !GetAtt BastionAndEksClusterStack.Outputs.BastionInstanceProfile
+  BastionInstanceRole:
+    Value: !GetAtt BastionAndEksClusterStack.Outputs.BastionInstanceRole
+
+  # EKS Cluster
+  ControlPlaneSecurityGroup:
+    Value: !GetAtt BastionAndEksClusterStack.Outputs.ControlPlaneSecurityGroup
+  EksClusterName:
+    Value: !GetAtt BastionAndEksClusterStack.Outputs.EksClusterName
+  EksEndpoint:
+    Value: !GetAtt BastionAndEksClusterStack.Outputs.EksEndpoint
+  EksCertAuthority:
+    Value: !GetAtt BastionAndEksClusterStack.Outputs.EksCertAuthority
+  EksServiceRoleArn:
+    Value: !GetAtt BastionAndEksClusterStack.Outputs.EksServiceRoleArn
+  NodeInstanceRoleArn:
+    Value: !GetAtt BastionAndEksClusterStack.Outputs.NodeInstanceRoleArn
+  NodeSecurityGroupId:
+    Value: !GetAtt BastionAndEksClusterStack.Outputs.NodeSecurityGroupId
+
+  # EFS Stack
+  EFSSubstackName:
+    Value: !GetAtt EFSStack.Outputs.SubstackName
+  EFSName:
+    Value: !GetAtt EFSStack.Outputs.EFSName
+  EFSMountTargets:
+    Value: !GetAtt EFSStack.Outputs.MountTargets

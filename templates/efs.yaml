@@ -2,6 +2,24 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: "EFS stack that deploys EFS and sets mountpoints in existent subnets."
 
+Metadata:
+    AWS::CloudFormation::Interface:
+      ParameterGroups:
+        - Label:
+            default: EFS Stack Configuration
+          Parameters:
+            - SecurityGroup
+            - PrivateSubnet1
+            - PrivateSubnet2
+
+      ParameterLabels:
+        SecurityGroup:
+          default: The Security Group ID to use for EFS
+        PrivateSubnet1:
+          default: The ID of Private Subnet 1
+        PrivateSubnet2:
+          default: The ID of Private Subnet 2
+
 Parameters:
     SecurityGroup:
       Description: "ID for the VPC, This will be used to get the default security group"
