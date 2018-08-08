@@ -100,24 +100,6 @@ Resources:
         - !Ref PrivateSubnet1
         - !Ref PrivateSubnet2
 
-#  BastionSecurityGroup:
-#    Type: AWS::EC2::SecurityGroup
-#    Properties:
-#      Tags:
-#        - Key: Name
-#          Value: !Sub "${AWS::StackName}-k8s-bastion"
-#      GroupDescription: Enables SSH Access to Bastion Hosts
-#      VpcId: !Ref VPCID
-#      SecurityGroupIngress:
-#        - IpProtocol: tcp
-#          FromPort: '22'
-#          ToPort: '22'
-#          CidrIp: 0.0.0.0/0
-#        - IpProtocol: icmp
-#          FromPort: '-1'
-#          ToPort: '-1'
-#          CidrIp: 0.0.0.0/0
-
   RDSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -198,8 +180,4 @@ Outputs:
   SubstackName:
     Value: !Sub "${AWS::StackName}"
   Endpoint:
-    Condition: isAmazonAuroraRegion
-    Value: !GetAtt RDSDBCluster.Endpoint.Address
-  Endpoint:
-    Condition: isNotAmazonAuroraRegion
-    Value: !GetAtt RDSDBInstance.Endpoint.Address
+    Value: !If [isAmazonAuroraRegion, !GetAtt RDSDBCluster.Endpoint.Address, !GetAtt RDSDBInstance.Endpoint.Address]
