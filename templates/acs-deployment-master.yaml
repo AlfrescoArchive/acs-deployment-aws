@@ -28,6 +28,14 @@ Metadata:
             - MinNumberOfNodes
             - DesiredNumberOfNodes
             - EksExternalUserArn
+        - Label:
+            default: Alfresco Storage Configuration
+          Parameters:
+            - RDSInstanceType
+            - RDSAllocatedStorage
+            - RDSDBName
+            - RDSUsername
+            - RDSPassword
 
       ParameterLabels:
         AvailabilityZones:
@@ -48,6 +56,16 @@ Metadata:
           default: The key pair name to use to access the instances
         RemoteAccessCIDR:
           default: The CIDR block to allow remote access
+        RDSDBName:
+          default: RDS DB Name
+        RDSInstanceType:
+          default: RDS Instance Type
+        RDSAllocatedStorage:
+          default: RDS Allocated Storage
+        RDSPassword:
+          default: RDS Password
+        RDSUsername:
+          default: RDS User Name
         BastionInstanceType:
           default: The instance type to deploy Bastion to
         MaxNumberOfBastionNodes:
@@ -72,207 +90,314 @@ Metadata:
           default: The AWS IAM user arn who will be authorised to connect the cluster externally
 
 Parameters:
-    AvailabilityZones:
-      Description: "List of Availability Zones to use for the subnets in the VPC."
-      Type: "List<AWS::EC2::AvailabilityZone::Name>"
-    NumberOfAZs:
-      Default: "2"
-      Type: String
-      AllowedValues:
-        - "1"
-        - "2"
-      Description: "The number of AZ's to use in this deployment"
-    PrivateSubnet1CIDR:
-      AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
-      ConstraintDescription: "CIDR block parameter must be in the form x.x.x.x/16-28"
-      Default: "10.0.0.0/19"
-      Description: "CIDR block for private subnet 1 located in Availability Zone 1"
-      Type: "String"
-    PrivateSubnet2CIDR:
-      AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
-      ConstraintDescription: "CIDR block parameter must be in the form x.x.x.x/16-28"
-      Default: "10.0.32.0/19"
-      Description: "CIDR block for private subnet 1 located in Availability Zone 2"
-      Type: "String"
-    PublicSubnet1CIDR:
-      AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
-      ConstraintDescription: "CIDR block parameter must be in the form x.x.x.x/16-28"
-      Default: "10.0.128.0/20"
-      Description: "CIDR block for the public (DMZ) subnet 1 located in Availability Zone 1"
-      Type: "String"
-    PublicSubnet2CIDR:
-      AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
-      ConstraintDescription: "CIDR block parameter must be in the form x.x.x.x/16-28"
-      Default: "10.0.144.0/20"
-      Description: "CIDR block for the public (DMZ) subnet 2 located in Availability Zone 2"
-      Type: "String"
-    VPCCIDR:
-      AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
-      ConstraintDescription: "CIDR block parameter must be in the form x.x.x.x/16-28"
-      Default: "10.0.0.0/16"
-      Description: "CIDR block for the VPC"
-      Type: "String"
-    KeyPairName:
-      Description: "The name of an existing public/private key pair, which allows you to securely connect to your instance after it launches"
-      Type: "AWS::EC2::KeyPair::KeyName"
-    RemoteAccessCIDR:
-      AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$"
-      ConstraintDescription: "CIDR block parameter must be in the form x.x.x.x/x"
-      Description: "The CIDR IP range that is permitted to access the AWS resources. It is recommended that you set this value to a trusted IP range."
-      Type: "String"
-    BastionInstanceType:
-      Type: "String"
-      Default: "t2.micro"
-      Description: "The type of EC2 instance to be launched for Bastion Host"
-      AllowedValues:
-        # Add more instance types if needed
-        - t2.micro
-        - t2.medium
-        - t2.large
-      ConstraintDescription: "Must contain a valid instance type"
-    DesiredNumberOfBastionNodes:
-      Type: "String"
-      MinLength: 1
-      Description: "The desired number of Bastion instance to run"
-      Default: 1
-    MaxNumberOfBastionNodes:
-      Type: "String"
-      MinLength: 1
-      Description: "The maximum number of Bastion instances to run"
-      Default: 1
-    MinNumberOfBastionNodes:
-      Type: "String"
-      MinLength: 1
-      Description: "The minimum number of Bastion instances to run"
-      Default: 1
-    NodeInstanceType:
-      Type: "String"
-      Default: "m5.xlarge"
-      Description: "The type of EC2 instance to be launched for EKS Worker Node"
-      AllowedValues:
-        # Add more instance types if needed
-        - t2.xlarge
-        - t2.2xlarge
-        - m3.xlarge
-        - m3.2xlarge
-        - m4.xlarge
-        - m4.2xlarge
-        - m5.xlarge
-        - m5.2xlarge
-      ConstraintDescription: "Must contain a valid instance type"
-    DesiredNumberOfNodes:
-      Type: "String"
-      MinLength: 1
-      Description: "The desired number of EKS Worker Nodes to run"
-      Default: 1
-    MaxNumberOfNodes:
-      Type: "String"
-      MinLength: 1
-      Description: "The maximum number of EKS Worker Nodes to run"
-      Default: 1
-    MinNumberOfNodes:
-      Type: "String"
-      MinLength: 1
-      Description: "The minimum number of EKS Worker Nodes to run"
-      Default: 1
-    QSS3BucketName:
-      AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
-      ConstraintDescription: "Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
-      Default: "quickstart-reference"
-      Description: "S3 bucket name for the Quick Start assets. This string can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
-      Type: "String"
-    QSS3KeyPrefix:
-      AllowedPattern: "^[0-9a-zA-Z-/]*$"
-      ConstraintDescription: "Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
-      Default: "aws/vpc/latest"
-      Description: "S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
-      Type: "String"
-    TemplateBucketName:
-      AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
-      ConstraintDescription: "Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
-      Description: "S3 bucket name that contains the CFN templates (VPC, Bastion etc). This string can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
-      Type: "String"
-    TemplateBucketKeyPrefix:
-      AllowedPattern: "^[0-9a-zA-Z-/]*$"
-      ConstraintDescription: "Template bucket key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
-      Type: "String"
-    EksExternalUserArn:
-      Type: String
-      Description: The AWS IAM user arn who will be authorised to connect the cluster externally
+  AvailabilityZones:
+    Description: "List of Availability Zones to use for the subnets in the VPC."
+    Type: "List<AWS::EC2::AvailabilityZone::Name>"
+  NumberOfAZs:
+    Default: "2"
+    Type: String
+    AllowedValues:
+      - "1"
+      - "2"
+    Description: "The number of AZ's to use in this deployment"
+  PrivateSubnet1CIDR:
+    AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
+    ConstraintDescription: "CIDR block parameter must be in the form x.x.x.x/16-28"
+    Default: "10.0.0.0/19"
+    Description: "CIDR block for private subnet 1 located in Availability Zone 1"
+    Type: "String"
+  PrivateSubnet2CIDR:
+    AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
+    ConstraintDescription: "CIDR block parameter must be in the form x.x.x.x/16-28"
+    Default: "10.0.32.0/19"
+    Description: "CIDR block for private subnet 1 located in Availability Zone 2"
+    Type: "String"
+  PublicSubnet1CIDR:
+    AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
+    ConstraintDescription: "CIDR block parameter must be in the form x.x.x.x/16-28"
+    Default: "10.0.128.0/20"
+    Description: "CIDR block for the public (DMZ) subnet 1 located in Availability Zone 1"
+    Type: "String"
+  PublicSubnet2CIDR:
+    AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
+    ConstraintDescription: "CIDR block parameter must be in the form x.x.x.x/16-28"
+    Default: "10.0.144.0/20"
+    Description: "CIDR block for the public (DMZ) subnet 2 located in Availability Zone 2"
+    Type: "String"
+  VPCCIDR:
+    AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
+    ConstraintDescription: "CIDR block parameter must be in the form x.x.x.x/16-28"
+    Default: "10.0.0.0/16"
+    Description: "CIDR block for the VPC"
+    Type: "String"
+  KeyPairName:
+    Description: "The name of an existing public/private key pair, which allows you to securely connect to your instance after it launches"
+    Type: "AWS::EC2::KeyPair::KeyName"
+  RemoteAccessCIDR:
+    AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$"
+    ConstraintDescription: "CIDR block parameter must be in the form x.x.x.x/x"
+    Description: "The CIDR IP range that is permitted to access the AWS resources. It is recommended that you set this value to a trusted IP range."
+    Type: "String"
+  RDSDBName:
+    Default: alfresco
+    Description: DB name for the Amazon RDS Aurora database (MySQL if non-Amazon Aurora region).
+    Type: String
+  RDSInstanceType:
+    AllowedValues:
+      - "db.r3.large"
+      - "db.r3.xlarge"
+      - "db.r3.2xlarge"
+      - "db.r3.4xlarge"
+      - "db.r3.8xlarge"
+      - "db.r4.large"
+      - "db.r4.2xlarge"
+      - "db.r4.8xlarge"
+      - "db.r4.xlarge"
+      - "db.r4.16xlarge"
+    ConstraintDescription: Must contain valid RDS instance type
+    Default: db.r4.xlarge
+    Description: EC2 instance type for the Amazon RDS instances
+    Type: String
+  RDSPassword:
+    Description: Password for the Amazon RDS database
+    NoEcho: True
+    Type: String
+  RDSUsername:
+    Default: alfresco
+    Description: User name for the Amazon RDS database
+    Type: String
+  RDSAllocatedStorage:
+    Default: 5
+    Description: Size in GiB for the Amazon RDS MySQL database allocated storage (only non-Amazon Aurora region)
+    Type: String
+  RDSInstanceType:
+    AllowedValues:
+      - "db.r3.large"
+      - "db.r3.xlarge"
+      - "db.r3.2xlarge"
+      - "db.r3.4xlarge"
+      - "db.r3.8xlarge"
+      - "db.r4.large"
+      - "db.r4.2xlarge"
+      - "db.r4.8xlarge"
+      - "db.r4.xlarge"
+      - "db.r4.16xlarge"
+    ConstraintDescription: Must contain valid RDS instance type
+    Default: db.r4.xlarge
+    Description: EC2 instance type for the Amazon RDS instances
+    Type: String
+  RDSPassword:
+    Description: Password for the Amazon RDS database
+    NoEcho: True
+    Type: String
+  RDSUsername:
+    Default: alfresco
+    Description: User name for the Amazon RDS database
+    Type: String
+  RDSAllocatedStorage:
+    Default: 5
+    Description: Size in GiB for the Amazon RDS MySQL database allocated storage (only non-Amazon Aurora region)
+    Type: String
+  BastionInstanceType:
+    Type: "String"
+    Default: "t2.micro"
+    Description: "The type of EC2 instance to be launched for Bastion Host"
+    AllowedValues:
+      # Add more instance types if needed
+      - t2.micro
+      - t2.medium
+      - t2.large
+    ConstraintDescription: "Must contain a valid instance type"
+  DesiredNumberOfBastionNodes:
+    Type: "String"
+    MinLength: 1
+    Description: "The desired number of Bastion instance to run"
+    Default: 1
+  MaxNumberOfBastionNodes:
+    Type: "String"
+    MinLength: 1
+    Description: "The maximum number of Bastion instances to run"
+    Default: 1
+  MinNumberOfBastionNodes:
+    Type: "String"
+    MinLength: 1
+    Description: "The minimum number of Bastion instances to run"
+    Default: 1
+  NodeInstanceType:
+    Type: "String"
+    Default: "m5.xlarge"
+    Description: "The type of EC2 instance to be launched for EKS Worker Node"
+    AllowedValues:
+      # Add more instance types if needed
+      - t2.xlarge
+      - t2.2xlarge
+      - m3.xlarge
+      - m3.2xlarge
+      - m4.xlarge
+      - m4.2xlarge
+      - m5.xlarge
+      - m5.2xlarge
+    ConstraintDescription: "Must contain a valid instance type"
+  DesiredNumberOfNodes:
+    Type: "String"
+    MinLength: 1
+    Description: "The desired number of EKS Worker Nodes to run"
+    Default: 1
+  MaxNumberOfNodes:
+    Type: "String"
+    MinLength: 1
+    Description: "The maximum number of EKS Worker Nodes to run"
+    Default: 1
+  MinNumberOfNodes:
+    Type: "String"
+    MinLength: 1
+    Description: "The minimum number of EKS Worker Nodes to run"
+    Default: 1
+  QSS3BucketName:
+    AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
+    ConstraintDescription: "Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+    Default: "quickstart-reference"
+    Description: "S3 bucket name for the Quick Start assets. This string can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+    Type: "String"
+  QSS3KeyPrefix:
+    AllowedPattern: "^[0-9a-zA-Z-/]*$"
+    ConstraintDescription: "Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
+    Default: "aws/vpc/latest"
+    Description: "S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
+    Type: "String"
+  RDSPassword:
+    Description: Password for the Amazon RDS database
+    NoEcho: True
+    Type: String
+    MinLength: 8
+    ConstraintDescription: Minimum 8 characters
+  TemplateBucketName:
+    AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
+    ConstraintDescription: "Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+    Description: "S3 bucket name that contains the CFN templates (VPC, Bastion etc). This string can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+    Type: "String"
+  TemplateBucketKeyPrefix:
+    AllowedPattern: "^[0-9a-zA-Z-/]*$"
+    ConstraintDescription: "Template bucket key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
+    Type: "String"
+  EksExternalUserArn:
+    Type: String
+    Description: The AWS IAM user arn who will be authorised to connect the cluster externally
 
 Resources:
-    VPCStack:
-      Type: AWS::CloudFormation::Stack
-      Properties:
-        Tags:
-          - Key: Name
-            Value: !Sub "${AWS::StackName}" 
-          - Key: Component
-            Value: ACS-VPC
-        TemplateURL: !Sub "https://s3.amazonaws.com/${QSS3BucketName}/${QSS3KeyPrefix}/templates/aws-vpc.template"
-        Parameters:
-          AvailabilityZones: !Join [",", !Ref AvailabilityZones]
-          KeyPairName: !Ref KeyPairName
-          PrivateSubnet1ACIDR: !Ref PrivateSubnet1CIDR
-          PrivateSubnet2ACIDR: !Ref PrivateSubnet2CIDR
-          PublicSubnet1CIDR: !Ref PublicSubnet1CIDR
-          PublicSubnet2CIDR: !Ref PublicSubnet2CIDR
-          CreatePrivateSubnets: true
-          VPCCIDR: !Ref VPCCIDR
+  VPCStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}"
+        - Key: Component
+          Value: ACS-VPC
+      TemplateURL: !Sub "https://s3.amazonaws.com/${QSS3BucketName}/${QSS3KeyPrefix}/templates/aws-vpc.template"
+      Parameters:
+        AvailabilityZones: !Join [",", !Ref AvailabilityZones]
+        KeyPairName: !Ref KeyPairName
+        PrivateSubnet1ACIDR: !Ref PrivateSubnet1CIDR
+        PrivateSubnet2ACIDR: !Ref PrivateSubnet2CIDR
+        PublicSubnet1CIDR: !Ref PublicSubnet1CIDR
+        PublicSubnet2CIDR: !Ref PublicSubnet2CIDR
+        CreatePrivateSubnets: true
+        VPCCIDR: !Ref VPCCIDR
 
-    BastionAndEksClusterStack:
-      Type: AWS::CloudFormation::Stack
-      DependsOn:
-        - VPCStack
-      Properties:
-        Tags:
-          - Key: Name
-            Value: !Sub "${AWS::StackName}" 
-          - Key: Component
-            Value: ACS-Bastion 
-        TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/bastion-and-eks-cluster.yaml"
-        Parameters:
-          # Bastion stack params
-          KeyPairName: !Ref KeyPairName
-          PublicSubnet1ID: !GetAtt VPCStack.Outputs.PublicSubnet1ID
-          PublicSubnet2ID: !GetAtt VPCStack.Outputs.PublicSubnet2ID
-          PrivateSubnet1ID: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
-          PrivateSubnet2ID: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
-          RemoteAccessCIDR: !Ref RemoteAccessCIDR
-          VPCID: !GetAtt VPCStack.Outputs.VPCID
-          BastionInstanceType: !Ref BastionInstanceType
-          MaxNumberOfBastionNodes: !Ref MaxNumberOfBastionNodes
-          MinNumberOfBastionNodes: !Ref MinNumberOfBastionNodes
-          DesiredNumberOfBastionNodes: !Ref DesiredNumberOfBastionNodes
-          # EKS Worker Node stack params
-          NodeInstanceType: !Ref NodeInstanceType
-          MaxNumberOfNodes: !Ref MaxNumberOfNodes
-          MinNumberOfNodes: !Ref MinNumberOfNodes
-          DesiredNumberOfNodes: !Ref DesiredNumberOfNodes
-          TemplateBucketName: !Ref TemplateBucketName
-          TemplateBucketKeyPrefix: !Ref TemplateBucketKeyPrefix
-          EksExternalUserArn: !Ref EksExternalUserArn
+  BastionSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-k8s-bastion"
+      GroupDescription: Enables SSH Access to Bastion Hosts
+      VpcId: !GetAtt VPCStack.Outputs.VPCID
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: !Ref RemoteAccessCIDR
+        - IpProtocol: icmp
+          FromPort: '-1'
+          ToPort: '-1'
+          CidrIp: !Ref RemoteAccessCIDR
 
-    EFSStack:
-      Type: AWS::CloudFormation::Stack
-      DependsOn:
-        - BastionAndEksClusterStack
-      Properties:
-        Tags:
-          - Key: Name
-            Value: !Sub "${AWS::StackName}" 
-          - Key: Component
-            Value: ACS-EFS 
-        TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/efs.yaml"
-        Parameters:
-          PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
-          PrivateSubnet2: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
-          SecurityGroup: !GetAtt BastionAndEksClusterStack.Outputs.NodeSecurityGroupId
+  BastionAndEksClusterStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+      - VPCStack
+      - RDSStack
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}"
+        - Key: Component
+          Value: ACS-Bastion
+      TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/bastion-and-eks-cluster.yaml"
+      Parameters:
+        # Bastion stack params
+        KeyPairName: !Ref KeyPairName
+        PublicSubnet1ID: !GetAtt VPCStack.Outputs.PublicSubnet1ID
+        PublicSubnet2ID: !GetAtt VPCStack.Outputs.PublicSubnet2ID
+        PrivateSubnet1ID: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
+        PrivateSubnet2ID: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
+        RemoteAccessCIDR: !Ref RemoteAccessCIDR
+        VPCID: !GetAtt VPCStack.Outputs.VPCID
+        BastionSecurityGroup: !Ref BastionSecurityGroup
+        BastionInstanceType: !Ref BastionInstanceType
+        MaxNumberOfBastionNodes: !Ref MaxNumberOfBastionNodes
+        MinNumberOfBastionNodes: !Ref MinNumberOfBastionNodes
+        DesiredNumberOfBastionNodes: !Ref DesiredNumberOfBastionNodes
+        # EKS Worker Node stack params
+        NodeInstanceType: !Ref NodeInstanceType
+        MaxNumberOfNodes: !Ref MaxNumberOfNodes
+        MinNumberOfNodes: !Ref MinNumberOfNodes
+        DesiredNumberOfNodes: !Ref DesiredNumberOfNodes
+        TemplateBucketName: !Ref TemplateBucketName
+        TemplateBucketKeyPrefix: !Ref TemplateBucketKeyPrefix
+        EksExternalUserArn: !Ref EksExternalUserArn
+        RDSUsername: !Ref RDSUsername
+        RDSPassword: !Ref RDSPassword
+        RDSEndpoint: !GetAtt RDSStack.Outputs.Endpoint
+
+  EFSStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+      - BastionAndEksClusterStack
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}"
+        - Key: Component
+          Value: ACS-EFS
+      TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/efs.yaml"
+      Parameters:
+        PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
+        PrivateSubnet2: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
+        SecurityGroup: !GetAtt BastionAndEksClusterStack.Outputs.NodeSecurityGroupId
+
+  RDSStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+      - VPCStack
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}"
+        - Key: Component
+          Value: ACS-RDS
+      TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/rds.yaml"
+      Parameters:
+        PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
+        PrivateSubnet2: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
+        BastionSecurityGroup: !Ref BastionSecurityGroup
+        VPCID: !GetAtt VPCStack.Outputs.VPCID
+        RDSPassword: !Ref RDSPassword
 
 Outputs:
 
   # VPC stack
-  VPCID: 
+  VPCID:
     Value: !GetAtt VPCStack.Outputs.VPCID
   RemoteAccessCIDR: 
     Value: !Ref RemoteAccessCIDR
@@ -281,7 +406,7 @@ Outputs:
   BastionSubstackName:
     Value: !GetAtt BastionAndEksClusterStack.Outputs.SubstackName
   BastionSecurityGroup:
-    Value: !GetAtt BastionAndEksClusterStack.Outputs.BastionSecurityGroup
+    Value: !Ref BastionSecurityGroup
   BastionLaunchConfiguration:
     Value: !GetAtt BastionAndEksClusterStack.Outputs.BastionLaunchConfiguration
   BastionAutoScalingGroup:
@@ -318,3 +443,9 @@ Outputs:
     Value: !GetAtt EFSStack.Outputs.EFSName
   EFSMountTargets:
     Value: !GetAtt EFSStack.Outputs.MountTargets
+
+  # RDS Stack
+  RDSSubstackName:
+    Value: !GetAtt RDSStack.Outputs.SubstackName
+  RDSEndPoint:
+    Value: !GetAtt RDSStack.Outputs.Endpoint

@@ -43,26 +43,21 @@ Metadata:
 
 Parameters:
   BastionSecurityGroup:
-    Description: "ID for the VPC, This will be used to get the bastion security group"
-    Type: "AWS::EC2::SecurityGroup::Id"
-
+    Description: ID for the VPC, This will be used to get the bastion security group
+    Type: AWS::EC2::SecurityGroup::Id
   PrivateSubnet1:
-        Description: "ID of Private Subnet 1"
-        Type: "AWS::EC2::Subnet::Id"
-
+    Description: ID of Private Subnet 1
+    Type: AWS::EC2::Subnet::Id
   PrivateSubnet2:
-    Description: "ID of Private Subnet 2"
-    Type: "AWS::EC2::Subnet::Id"
-
+    Description: ID of Private Subnet 2
+    Type: AWS::EC2::Subnet::Id
   VPCID:
-    Description: "ID for the VPC"
-    Type: "AWS::EC2::VPC::Id"
-
+    Description: ID for the VPC
+    Type: AWS::EC2::VPC::Id
   RDSDBName:
     Default: alfresco
     Description: DB name for the Amazon RDS Aurora database (MySQL if non-Amazon Aurora region).
     Type: String
-
   RDSInstanceType:
     AllowedValues:
       - "db.r3.large"
@@ -79,21 +74,22 @@ Parameters:
     Default: db.r4.xlarge
     Description: EC2 instance type for the Amazon RDS instances
     Type: String
-
   RDSPassword:
     Description: Password for the Amazon RDS database
     NoEcho: True
     Type: String
-
   RDSUsername:
     Default: alfresco
     Description: User name for the Amazon RDS database
     Type: String
-
   RDSAllocatedStorage:
     Default: 5
     Description: Size in GiB for the Amazon RDS MySQL database allocated storage (only non-Amazon Aurora region)
     Type: String
+
+Conditions:
+  isAmazonAuroraRegion: !Not [Condition: isNotAmazonAuroraRegion]
+  isNotAmazonAuroraRegion: !Equals [!Ref "AWS::Region", "sa-east-1"]
 
 Resources:
   RDSDBSubnetGroup:
@@ -104,79 +100,106 @@ Resources:
         - !Ref PrivateSubnet1
         - !Ref PrivateSubnet2
 
+#  BastionSecurityGroup:
+#    Type: AWS::EC2::SecurityGroup
+#    Properties:
+#      Tags:
+#        - Key: Name
+#          Value: !Sub "${AWS::StackName}-k8s-bastion"
+#      GroupDescription: Enables SSH Access to Bastion Hosts
+#      VpcId: !Ref VPCID
+#      SecurityGroupIngress:
+#        - IpProtocol: tcp
+#          FromPort: '22'
+#          ToPort: '22'
+#          CidrIp: 0.0.0.0/0
+#        - IpProtocol: icmp
+#          FromPort: '-1'
+#          ToPort: '-1'
+#          CidrIp: 0.0.0.0/0
+
   RDSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security group for RDS DB Instance.
-      VpcId:
-        - !Ref VPCID
+      VpcId: !Ref VPCID
       SecurityGroupIngress:
         IpProtocol: tcp
         FromPort: 3306
         ToPort: 3306
-        SourceSecurityGroupId:
-          - !Ref BastionSecurityGroup
+        SourceSecurityGroupId: !Ref BastionSecurityGroup
+
+  RDSDBInstance:
+    Type: AWS::RDS::DBInstance
+    Condition: isNotAmazonAuroraRegion
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-instance"
+      MultiAZ: true
+      DBSubnetGroupName: !Ref RDSDBSubnetGroup
+      Engine: MySQL
+      MasterUsername: !Ref RDSUsername
+      MasterUserPassword: !Ref RDSPassword
+      DBName: !Ref RDSDBName
+      AllocatedStorage: !Ref RDSAllocatedStorage
+      PubliclyAccessible: false
+      DBInstanceClass: !Ref RDSInstanceType
+      VPCSecurityGroups:
+        - !Ref RDSSecurityGroup
+      DBSubnetGroupName: !Ref RDSDBSubnetGroup
+    DeletionPolicy: Snapshot
 
   RDSDBCluster:
     Type: AWS::RDS::DBCluster
-    #Condition: isAmazonAuroraRegion
+    Condition: isAmazonAuroraRegion
     DeletionPolicy: Snapshot
     Properties:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}"
-      MasterUsername:
-        - !Ref RDSUsername
-      MasterUserPassword:
-        - !Ref RDSPassword
+      MasterUsername: !Ref RDSUsername
+      MasterUserPassword: !Ref RDSPassword
       Engine: aurora
-      DatabaseName:
-        - !Ref RDSDBName
+      DatabaseName: !Ref RDSDBName
       VpcSecurityGroupIds:
         - !Ref RDSSecurityGroup
-      DBSubnetGroupName:
-        - !Ref RDSDBSubnetGroup
+      DBSubnetGroupName: !Ref RDSDBSubnetGroup
 
   RDSDBInstance1:
     Type: AWS::RDS::DBInstance
-#    Condition: isAmazonAuroraRegion
+    Condition: isAmazonAuroraRegion
     Properties:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-instance-1"
-      DBSubnetGroupName:
-        - !Ref RDSDBSubnetGroup
+      DBSubnetGroupName: !Ref RDSDBSubnetGroup
       Engine: aurora
-      AllocatedStorage:
-        - !Ref RDSAllocatedStorage
-      DBClusterIdentifier:
-        - !Ref RDSDBCluster
+      DBClusterIdentifier: !Ref RDSDBCluster
       PubliclyAccessible: false
-      DBInstanceClass:
-        - !Ref RDSInstanceType
+      DBInstanceClass: !Ref RDSInstanceType
     DeletionPolicy: Delete
 
   RDSDBInstance2:
     Type: AWS::RDS::DBInstance
-#    Condition: isAmazonAuroraRegion
+    Condition: isAmazonAuroraRegion
     Properties:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-instance-2"
-      DBSubnetGroupName:
-        - !Ref RDSDBSubnetGroup
+      DBSubnetGroupName: !Ref RDSDBSubnetGroup
       Engine: aurora
-      AllocatedStorage:
-        - !Ref RDSAllocatedStorage
-      DBClusterIdentifier:
-        - !Ref RDSDBCluster
+      DBClusterIdentifier: !Ref RDSDBCluster
       PubliclyAccessible: false
-      DBInstanceClass:
-        - !Ref RDSInstanceType
+      DBInstanceClass: !Ref RDSInstanceType
     DeletionPolicy: Delete
 
 Outputs:
   SubstackName:
     Value: !Sub "${AWS::StackName}"
-  ClusterName:
-    Value: !Ref RDSDBCluster
+  Endpoint:
+    Condition: isAmazonAuroraRegion
+    Value: !GetAtt RDSDBCluster.Endpoint.Address
+  Endpoint:
+    Condition: isNotAmazonAuroraRegion
+    Value: !GetAtt RDSDBInstance.Endpoint.Address
