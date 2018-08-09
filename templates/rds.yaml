@@ -108,7 +108,6 @@ Resources:
 
   RDSSecurityGroupFromNodes:
     Type: AWS::EC2::SecurityGroupIngress
-#    DependsOn: NodeSecurityGroup
     Properties:
       Description: Allow worker nodes to connect to RDS
       GroupId: !Ref RDSSecurityGroup

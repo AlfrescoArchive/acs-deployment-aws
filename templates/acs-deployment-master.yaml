@@ -366,7 +366,7 @@ Resources:
       Parameters:
         PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
         PrivateSubnet2: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
-        SecurityGroup: !GetAtt BastionAndEksClusterStack.Outputs.NodeSecurityGroupId
+        SecurityGroup: !Ref NodeSecurityGroup
 
   RDSStack:
     Type: AWS::CloudFormation::Stack
