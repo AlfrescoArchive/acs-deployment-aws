@@ -65,3 +65,4 @@ else
 
   # Show stack
   aws cloudformation describe-stacks --stack-name $STACK_NAME
+fi
