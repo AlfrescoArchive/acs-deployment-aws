@@ -971,7 +971,7 @@ Resources:
               runCommand: 
                 - "export HOME=/root"
                 - "export KUBECONFIG=/home/ec2-user/.kube/config"
-                - !Sub "helm install {{ chartName }} --set postgresql.enabled=false --database.external=true -database.user=${RDSUsername} --database.password=${RDSPassword} --database.url=jdbc:mysql://${RDSEndpoint}:3306?useUnicode=yes&characterEncoding=UTF-8 --database.driver=org.gjt.mm.mysql.Driver"
+                - "helm install {{ chartName }}"
               timeoutSeconds: 30
       DocumentType: Command
 

@@ -318,7 +318,6 @@ Resources:
       Type: AWS::CloudFormation::Stack
       DependsOn:
         - VPCStack
-        - RDSStack
       Properties:
         Tags:
           - Key: Name
