@@ -113,8 +113,8 @@ Resources:
       GroupId: !Ref RDSSecurityGroup
       SourceSecurityGroupId: !Ref NodeSecurityGroup
       IpProtocol: tcp
-      FromPort: 5432
-      ToPort: 5432
+      FromPort: 3306
+      ToPort: 3306
 
   RDSDBInstance:
     Type: AWS::RDS::DBInstance
@@ -125,7 +125,7 @@ Resources:
           Value: !Sub "${AWS::StackName}-instance"
       MultiAZ: true
       DBSubnetGroupName: !Ref RDSDBSubnetGroup
-      Engine: postgres
+      Engine: MySQL
       MasterUsername: !Ref RDSUsername
       MasterUserPassword: !Ref RDSPassword
       DBName: !Ref RDSDBName
@@ -147,7 +147,7 @@ Resources:
           Value: !Sub "${AWS::StackName}"
       MasterUsername: !Ref RDSUsername
       MasterUserPassword: !Ref RDSPassword
-      Engine: aurora-postgresql
+      Engine: aurora
       DatabaseName: !Ref RDSDBName
       VpcSecurityGroupIds:
         - !Ref RDSSecurityGroup
