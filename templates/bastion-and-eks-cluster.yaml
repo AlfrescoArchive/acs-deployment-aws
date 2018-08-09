@@ -3,193 +3,193 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: "Bastion Stack that is used to provision an EKS Cluster with Worker Nodes in an Auto-Scaling Group."
 
 Metadata:
-  AWS::CloudFormation::Interface:
-    ParameterGroups:
-      - Label:
-          default: Bastion Stack Configuration
-        Parameters:
-          - AvailabilityZones
-          - NumberOfAZs
-          - VPCID
-          - VPCCIDR
-          - PrivateSubnet1ID
-          - PrivateSubnet2ID
-          - PublicSubnet1ID
-          - PublicSubnet2ID
-          - KeyPairName
-          - NodeSecurityGroup
-          - RemoteAccessCIDR
-          - BastionInstanceType
-          - MaxNumberOfBastionNodes
-          - MinNumberOfBastionNodes
-          - DesiredNumberOfBastionNodes
-          - RDSEndpoint
-          - RDSUsername
-          - RDSPassword
-      - Label:
-          default: EKS Worker Nodes Stack Configuration
-        Parameters:
-          - NodeInstanceType
-          - MaxNumberOfNodes
-          - MinNumberOfNodes
-          - DesiredNumberOfNodes
-          - EksExternalUserArn
+    AWS::CloudFormation::Interface:
+      ParameterGroups:
+        - Label:
+            default: Bastion Stack Configuration
+          Parameters:
+            - AvailabilityZones
+            - NumberOfAZs
+            - VPCID
+            - VPCCIDR
+            - PrivateSubnet1ID
+            - PrivateSubnet2ID
+            - PublicSubnet1ID
+            - PublicSubnet2ID
+            - KeyPairName
+            - NodeSecurityGroup
+            - RemoteAccessCIDR
+            - BastionInstanceType
+            - MaxNumberOfBastionNodes
+            - MinNumberOfBastionNodes
+            - DesiredNumberOfBastionNodes
+            - RDSEndpoint
+            - RDSUsername
+            - RDSPassword
+        - Label:
+            default: EKS Worker Nodes Stack Configuration
+          Parameters:
+            - NodeInstanceType
+            - MaxNumberOfNodes
+            - MinNumberOfNodes
+            - DesiredNumberOfNodes
+            - EksExternalUserArn
 
-    ParameterLabels:
-      AvailabilityZones:
-        default: The AZ's to deploy to
-      NumberOfAZs:
-        default: The number of AZ's to deploy into
-      VPCID:
-        default: The ID of the VPC to deploy the Bastion and EKS Cluster into
-      VPCCIDR:
-        default: The CIDR block for the VPC to create
-      PrivateSubnet1ID:
-        default: The ID of the first private subnet to deploy EKS Workers into
-      PrivateSubnet2ID:
-        default: The ID of the second private subnet to deploy EKS Workers into
-      PublicSubnet1ID:
-        default: The ID of the first public subet to deploy APS into
-      PublicSubnet2ID:
-        default: The ID of the second public subnet to deploy APS into
-      KeyPairName:
-        default: The key pair name to use to access the instances
-      RemoteAccessCIDR:
-        default: The CIDR block to allow remote access
-      BastionInstanceType:
-        default: The instance type to deploy Bastion to
-      MaxNumberOfBastionNodes:
-        default: The maximum number of nodes to scale up to for Bastion
-      MinNumberOfBastionNodes:
-        default: The minimum number of nodes to scale down to for Bastion
-      DesiredNumberOfBastionNodes:
-        default: The desired number of nodes to keep running for Bastion
-      NodeInstanceType:
-        default: The instance type to deploy EKS Worker Node to
-      MaxNumberOfNodes:
-        default: The maximum number of nodes to scale up to for EKS Worker Node
-      MinNumberOfNodes:
-        default: The minimum number of nodes to scale down to for EKS Worker Node
-      DesiredNumberOfNodes:
-        default: The desired number of nodes to keep running for EKS Worker Node
-      TemplateBucketName:
-        default: The name of the S3 bucket that holds the templates
-      TemplateBucketKeyPrefix:
-        default: The Key prefix for the templates in the S3 template bucket
-      EksExternalUserArn:
-        default: The AWS IAM user arn who will be authorised to connect the cluster externally
-      RDSEndpoint:
-        default: The connection to the RDS
-      RDSPassword:
-        default: RDS Password
-      RDSUsername:
-        default: RDS User Name
+      ParameterLabels:
+        AvailabilityZones:
+          default: The AZ's to deploy to
+        NumberOfAZs:
+          default: The number of AZ's to deploy into
+        VPCID:
+          default: The ID of the VPC to deploy the Bastion and EKS Cluster into
+        VPCCIDR:
+          default: The CIDR block for the VPC to create
+        PrivateSubnet1ID:
+          default: The ID of the first private subnet to deploy EKS Workers into
+        PrivateSubnet2ID:
+          default: The ID of the second private subnet to deploy EKS Workers into
+        PublicSubnet1ID:
+          default: The ID of the first public subet to deploy APS into
+        PublicSubnet2ID:
+          default: The ID of the second public subnet to deploy APS into
+        KeyPairName:
+          default: The key pair name to use to access the instances
+        RemoteAccessCIDR:
+          default: The CIDR block to allow remote access
+        BastionInstanceType:
+          default: The instance type to deploy Bastion to
+        MaxNumberOfBastionNodes:
+          default: The maximum number of nodes to scale up to for Bastion
+        MinNumberOfBastionNodes:
+          default: The minimum number of nodes to scale down to for Bastion
+        DesiredNumberOfBastionNodes:
+          default: The desired number of nodes to keep running for Bastion
+        NodeInstanceType:
+          default: The instance type to deploy EKS Worker Node to
+        MaxNumberOfNodes:
+          default: The maximum number of nodes to scale up to for EKS Worker Node
+        MinNumberOfNodes:
+          default: The minimum number of nodes to scale down to for EKS Worker Node
+        DesiredNumberOfNodes:
+          default: The desired number of nodes to keep running for EKS Worker Node
+        TemplateBucketName:
+          default: The name of the S3 bucket that holds the templates
+        TemplateBucketKeyPrefix:
+          default: The Key prefix for the templates in the S3 template bucket
+        EksExternalUserArn:
+          default: The AWS IAM user arn who will be authorised to connect the cluster externally
+        RDSEndpoint:
+          default: The connection to the RDS
+        RDSPassword:
+          default: RDS Password
+        RDSUsername:
+          default: RDS User Name
           
 Parameters:
-  NodeSecurityGroup:
-    Description: "ID for the VPC, This will be used to get the node security group"
-    Type: "AWS::EC2::SecurityGroup::Id"
-  VPCID:
-    Description: "ID for the VPC"
-    Type: "AWS::EC2::VPC::Id"
-  PublicSubnet1ID:
-    Description: "ID of Public Subnet 1"
-    Type: "AWS::EC2::Subnet::Id"
-  PublicSubnet2ID:
-    Description: "ID of Public Subnet 2"
-    Type: "AWS::EC2::Subnet::Id"
-  PrivateSubnet1ID:
-    Description: "ID of Private Subnet 1"
-    Type: "AWS::EC2::Subnet::Id"
-  PrivateSubnet2ID:
-    Description: "ID of Private Subnet 2"
-    Type: "AWS::EC2::Subnet::Id"
-  KeyPairName:
-    Description: "The name of an existing public/private key pair, which allows you to securely connect to your instance after it launches"
-    Type: "AWS::EC2::KeyPair::KeyName"
-  RemoteAccessCIDR:
-    AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$"
-    ConstraintDescription: "CIDR block parameter must be in the form x.x.x.x/x"
-    Description: "The CIDR IP range that is permitted to access the AWS resources. It is recommended that you set this value to a trusted IP range."
-    Type: "String"
-  BastionInstanceType:
-    Type: "String"
-    Default: "t2.micro"
-    Description: "The type of EC2 instance to be launched for Bastion Host"
-    AllowedValues:
-      # Add more instance types if needed
-      - t2.micro
-      - t2.medium
-      - t2.large
-    ConstraintDescription: "Must contain a valid instance type"
-  DesiredNumberOfBastionNodes:
-    Type: "String"
-    MinLength: 1
-    Description: "The desired number of Bastion instance to run"
-    Default: 1
-  MaxNumberOfBastionNodes:
-    Type: "String"
-    MinLength: 1
-    Description: "The maximum number of Bastion instances to run"
-    Default: 1
-  MinNumberOfBastionNodes:
-    Type: "String"
-    MinLength: 1
-    Description: "The minimum number of Bastion instances to run"
-    Default: 1
-  NodeInstanceType:
-    Type: "String"
-    Default: "m5.xlarge"
-    Description: "The type of EC2 instance to be launched for EKS Worker Node"
-    AllowedValues:
-      # Add more instance types if needed
-      - t2.xlarge
-      - t2.2xlarge
-      - m3.xlarge
-      - m3.2xlarge
-      - m4.xlarge
-      - m4.2xlarge
-      - m5.xlarge
-      - m5.2xlarge
-    ConstraintDescription: "Must contain a valid instance type"
-  DesiredNumberOfNodes:
-    Type: "String"
-    MinLength: 1
-    Description: "The desired number of EKS Worker Nodes to run"
-    Default: 1
-  MaxNumberOfNodes:
-    Type: "String"
-    MinLength: 1
-    Description: "The maximum number of EKS Worker Nodes to run"
-    Default: 1
-  MinNumberOfNodes:
-    Type: "String"
-    MinLength: 1
-    Description: "The minimum number of EKS Worker Nodes to run"
-    Default: 1
-  TemplateBucketName:
-    AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
-    ConstraintDescription: "Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
-    Description: "S3 bucket name that contains the CFN templates (VPC, Bastion etc). This string can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
-    Type: "String"
-  TemplateBucketKeyPrefix:
-    AllowedPattern: "^[0-9a-zA-Z-/]*$"
-    ConstraintDescription: "Template bucket key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
-    Type: "String"
-  EksExternalUserArn:
-    Type: String
-    Description: The AWS IAM user arn who will be authorised to connect the cluster externally
-  RDSEndpoint:
-    Type: String
-    Description: The connection to the RDS
-  RDSPassword:
-    Description: Password for the Amazon RDS database
-    NoEcho: True
-    Type: String
-  RDSUsername:
-    Default: alfresco
-    Description: User name for the Amazon RDS database
-    Type: String
+    NodeSecurityGroup:
+      Description: "ID for the VPC, This will be used to get the node security group"
+      Type: "AWS::EC2::SecurityGroup::Id"
+    VPCID:
+      Description: "ID for the VPC"
+      Type: "AWS::EC2::VPC::Id"
+    PublicSubnet1ID:
+      Description: "ID of Public Subnet 1"
+      Type: "AWS::EC2::Subnet::Id"
+    PublicSubnet2ID:
+      Description: "ID of Public Subnet 2"
+      Type: "AWS::EC2::Subnet::Id"
+    PrivateSubnet1ID:
+      Description: "ID of Private Subnet 1"
+      Type: "AWS::EC2::Subnet::Id"
+    PrivateSubnet2ID:
+      Description: "ID of Private Subnet 2"
+      Type: "AWS::EC2::Subnet::Id"
+    KeyPairName:
+      Description: "The name of an existing public/private key pair, which allows you to securely connect to your instance after it launches"
+      Type: "AWS::EC2::KeyPair::KeyName"
+    RemoteAccessCIDR:
+      AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$"
+      ConstraintDescription: "CIDR block parameter must be in the form x.x.x.x/x"
+      Description: "The CIDR IP range that is permitted to access the AWS resources. It is recommended that you set this value to a trusted IP range."
+      Type: "String"
+    BastionInstanceType:
+      Type: "String"
+      Default: "t2.micro"
+      Description: "The type of EC2 instance to be launched for Bastion Host"
+      AllowedValues:
+        # Add more instance types if needed
+        - t2.micro
+        - t2.medium
+        - t2.large
+      ConstraintDescription: "Must contain a valid instance type"
+    DesiredNumberOfBastionNodes:
+      Type: "String"
+      MinLength: 1
+      Description: "The desired number of Bastion instance to run"
+      Default: 1
+    MaxNumberOfBastionNodes:
+      Type: "String"
+      MinLength: 1
+      Description: "The maximum number of Bastion instances to run"
+      Default: 1
+    MinNumberOfBastionNodes:
+      Type: "String"
+      MinLength: 1
+      Description: "The minimum number of Bastion instances to run"
+      Default: 1
+    NodeInstanceType:
+      Type: "String"
+      Default: "m5.xlarge"
+      Description: "The type of EC2 instance to be launched for EKS Worker Node"
+      AllowedValues:
+        # Add more instance types if needed
+        - t2.xlarge
+        - t2.2xlarge
+        - m3.xlarge
+        - m3.2xlarge
+        - m4.xlarge
+        - m4.2xlarge
+        - m5.xlarge
+        - m5.2xlarge
+      ConstraintDescription: "Must contain a valid instance type"
+    DesiredNumberOfNodes:
+      Type: "String"
+      MinLength: 1
+      Description: "The desired number of EKS Worker Nodes to run"
+      Default: 1
+    MaxNumberOfNodes:
+      Type: "String"
+      MinLength: 1
+      Description: "The maximum number of EKS Worker Nodes to run"
+      Default: 1
+    MinNumberOfNodes:
+      Type: "String"
+      MinLength: 1
+      Description: "The minimum number of EKS Worker Nodes to run"
+      Default: 1
+    TemplateBucketName:
+      AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
+      ConstraintDescription: "Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+      Description: "S3 bucket name that contains the CFN templates (VPC, Bastion etc). This string can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+      Type: "String"
+    TemplateBucketKeyPrefix:
+      AllowedPattern: "^[0-9a-zA-Z-/]*$"
+      ConstraintDescription: "Template bucket key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
+      Type: "String"
+    EksExternalUserArn:
+      Type: String
+      Description: The AWS IAM user arn who will be authorised to connect the cluster externally
+    RDSEndpoint:
+      Type: String
+      Description: The connection to the RDS
+    RDSPassword:
+      Description: Password for the Amazon RDS database
+      NoEcho: True
+      Type: String
+    RDSUsername:
+      Default: alfresco
+      Description: User name for the Amazon RDS database
+      Type: String
 
 Mappings:
   BastionAmiRegionMap:
@@ -710,7 +710,6 @@ Resources:
 
   NodeSecurityGroupIngress:
     Type: AWS::EC2::SecurityGroupIngress
-#    DependsOn: NodeSecurityGroup
     Properties:
       Description: Allow node to communicate with each other
       GroupId: !Ref NodeSecurityGroup
@@ -721,7 +720,6 @@ Resources:
 
   NodeSecurityGroupFromBastion:
     Type: AWS::EC2::SecurityGroupIngress
-#    DependsOn: NodeSecurityGroup
     Properties:
       Description: Allow bastion to SSH to worker nodes
       GroupId: !Ref NodeSecurityGroup
@@ -732,7 +730,6 @@ Resources:
 
   NodeSecurityGroupFromControlPlaneIngress:
     Type: AWS::EC2::SecurityGroupIngress
-#    DependsOn: NodeSecurityGroup
     Properties:
       Description: Allow worker Kubelets and pods to receive communication from the cluster control plane
       GroupId: !Ref NodeSecurityGroup
@@ -743,7 +740,6 @@ Resources:
 
   ControlPlaneEgressToNodeSecurityGroup:
     Type: AWS::EC2::SecurityGroupEgress
-#    DependsOn: NodeSecurityGroup
     Properties:
       Description: Allow the cluster control plane to communicate with worker Kubelet and pods
       GroupId: !Ref ControlPlaneSecurityGroup
@@ -754,7 +750,6 @@ Resources:
 
   ClusterControlPlaneSecurityGroupIngress:
     Type: AWS::EC2::SecurityGroupIngress
-#    DependsOn: NodeSecurityGroup
     Properties:
       Description: Allow pods to communicate with the cluster API Server
       GroupId: !Ref ControlPlaneSecurityGroup
@@ -1092,6 +1087,3 @@ Outputs:
   NodeInstanceRoleArn:
     Description: The node instance role ARN
     Value: !GetAtt NodeInstanceRole.Arn
-#  NodeSecurityGroupId:
-#    Description: The node security group id
-#    Value: !Ref NodeSecurityGroup
