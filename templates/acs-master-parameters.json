@@ -1,26 +1,26 @@
 [
   {
     "ParameterKey": "AvailabilityZones",
-    "ParameterValue": "@@AvailabilityZonesValue@@"
+    "ParameterValue": "us-east-1a,us-east-1b"
   },
   {
     "ParameterKey": "RemoteAccessCIDR",
-    "ParameterValue": "@@RemoteAccessCIDRValue@@"
+    "ParameterValue": "0.0.0.0/0"
   },
   {
     "ParameterKey": "EksExternalUserArn",
-    "ParameterValue": "@@EksExternalUserArn@@"
+    "ParameterValue": "arn:aws:iam::586394462691:user/mmuller"
   },
   {
     "ParameterKey": "KeyPairName",
-    "ParameterValue": "@@KeyPairNameValue@@"
+    "ParameterValue": "mmuller"
   },
   {
     "ParameterKey": "TemplateBucketName",
-    "ParameterValue": "@@TemplateBucketNameValue@@"
+    "ParameterValue": "mm-us-east-1"
   },
   {
     "ParameterKey": "TemplateBucketKeyPrefix",
-    "ParameterValue": "@@TemplateBucketKeyPrefixValue@@"
+    "ParameterValue": "acs"
   }
 ]
