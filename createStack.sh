@@ -55,7 +55,7 @@ else
   separator
   aws cloudformation create-stack \
       --stack-name $STACK_NAME \
-      --template-body $TEMPLATE_BODY \
+      --template-body file://$TEMPLATE_BODY \
       --parameters file://$PARAMETERS_FILE \
       --region $6 \
       --capabilities $CAPABILITIES
