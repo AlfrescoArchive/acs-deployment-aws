@@ -49,7 +49,7 @@ else
   # Validate the template
   separator
   logInfo "Validate the Cloudformation template"
-  aws cloudformation validate-template --template-body $TEMPLATE_BODY --region $6
+  aws cloudformation validate-template --template-body file://$TEMPLATE_BODY --region $6
 
   # Create the stack
   separator
