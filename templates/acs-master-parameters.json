@@ -22,5 +22,9 @@
   {
     "ParameterKey": "TemplateBucketKeyPrefix",
     "ParameterValue": "@@TemplateBucketKeyPrefixValue@@"
+  },
+  {
+    "ParameterKey": "RDSPassword",
+    "ParameterValue": "@@RDSPasswordValue@@"
   }
 ]

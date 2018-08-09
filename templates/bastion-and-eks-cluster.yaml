@@ -17,7 +17,7 @@ Metadata:
           - PublicSubnet1ID
           - PublicSubnet2ID
           - KeyPairName
-          - BastionSecurityGroup
+          - NodeSecurityGroup
           - RemoteAccessCIDR
           - BastionInstanceType
           - MaxNumberOfBastionNodes
@@ -86,8 +86,8 @@ Metadata:
         default: RDS User Name
           
 Parameters:
-  BastionSecurityGroup:
-    Description: "ID for the VPC, This will be used to get the bastion security group"
+  NodeSecurityGroup:
+    Description: "ID for the VPC, This will be used to get the node security group"
     Type: "AWS::EC2::SecurityGroup::Id"
   VPCID:
     Description: "ID for the VPC"
@@ -668,23 +668,23 @@ Resources:
             ]
           ]
 
-#  BastionSecurityGroup:
-#    Type: AWS::EC2::SecurityGroup
-#    Properties:
-#      Tags:
-#        - Key: Name
-#          Value: !Sub "${AWS::StackName}-k8s-bastion"
-#      GroupDescription: Enables SSH Access to Bastion Hosts
-#      VpcId: !Ref VPCID
-#      SecurityGroupIngress:
-#        - IpProtocol: tcp
-#          FromPort: '22'
-#          ToPort: '22'
-#          CidrIp: !Ref RemoteAccessCIDR
-#        - IpProtocol: icmp
-#          FromPort: '-1'
-#          ToPort: '-1'
-#          CidrIp: !Ref RemoteAccessCIDR
+  BastionSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-k8s-bastion"
+      GroupDescription: Enables SSH Access to Bastion Hosts
+      VpcId: !Ref VPCID
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: !Ref RemoteAccessCIDR
+        - IpProtocol: icmp
+          FromPort: '-1'
+          ToPort: '-1'
+          CidrIp: !Ref RemoteAccessCIDR
 
   # Cluster resources
   ControlPlaneSecurityGroup:
@@ -699,18 +699,18 @@ Resources:
       VpcId: !Ref VPCID
 
   # Worker nodes resources
-  NodeSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Security group for all nodes in the cluster
-      VpcId: !Ref VPCID
-      Tags:
-      - Key: !Sub "kubernetes.io/cluster/${AWS::StackName}-cluster"
-        Value: 'owned'
+#  NodeSecurityGroup:
+#    Type: AWS::EC2::SecurityGroup
+#    Properties:
+#      GroupDescription: Security group for all nodes in the cluster
+#      VpcId: !Ref VPCID
+#      Tags:
+#      - Key: !Sub "kubernetes.io/cluster/${AWS::StackName}-cluster"
+#        Value: 'owned'
 
   NodeSecurityGroupIngress:
     Type: AWS::EC2::SecurityGroupIngress
-    DependsOn: NodeSecurityGroup
+#    DependsOn: NodeSecurityGroup
     Properties:
       Description: Allow node to communicate with each other
       GroupId: !Ref NodeSecurityGroup
@@ -721,7 +721,7 @@ Resources:
 
   NodeSecurityGroupFromBastion:
     Type: AWS::EC2::SecurityGroupIngress
-    DependsOn: NodeSecurityGroup
+#    DependsOn: NodeSecurityGroup
     Properties:
       Description: Allow bastion to SSH to worker nodes
       GroupId: !Ref NodeSecurityGroup
@@ -732,7 +732,7 @@ Resources:
 
   NodeSecurityGroupFromControlPlaneIngress:
     Type: AWS::EC2::SecurityGroupIngress
-    DependsOn: NodeSecurityGroup
+#    DependsOn: NodeSecurityGroup
     Properties:
       Description: Allow worker Kubelets and pods to receive communication from the cluster control plane
       GroupId: !Ref NodeSecurityGroup
@@ -743,7 +743,7 @@ Resources:
 
   ControlPlaneEgressToNodeSecurityGroup:
     Type: AWS::EC2::SecurityGroupEgress
-    DependsOn: NodeSecurityGroup
+#    DependsOn: NodeSecurityGroup
     Properties:
       Description: Allow the cluster control plane to communicate with worker Kubelet and pods
       GroupId: !Ref ControlPlaneSecurityGroup
@@ -754,7 +754,7 @@ Resources:
 
   ClusterControlPlaneSecurityGroupIngress:
     Type: AWS::EC2::SecurityGroupIngress
-    DependsOn: NodeSecurityGroup
+#    DependsOn: NodeSecurityGroup
     Properties:
       Description: Allow pods to communicate with the cluster API Server
       GroupId: !Ref ControlPlaneSecurityGroup
@@ -1054,9 +1054,9 @@ Outputs:
   SubstackName:
     Description: The bastion stack name
     Value: !Sub "${AWS::StackName}" 
-#  BastionSecurityGroup:
-#    Description: The bastion security group id
-#    Value: !Ref BastionSecurityGroup
+  BastionSecurityGroup:
+    Description: The bastion security group id
+    Value: !Ref BastionSecurityGroup
   BastionLaunchConfiguration:
     Description: The bastion host launch config
     Value: !Ref BastionLaunchConfiguration
@@ -1092,6 +1092,6 @@ Outputs:
   NodeInstanceRoleArn:
     Description: The node instance role ARN
     Value: !GetAtt NodeInstanceRole.Arn
-  NodeSecurityGroupId:
-    Description: The node security group id
-    Value: !Ref NodeSecurityGroup
+#  NodeSecurityGroupId:
+#    Description: The node security group id
+#    Value: !Ref NodeSecurityGroup

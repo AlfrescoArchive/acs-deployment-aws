@@ -9,7 +9,7 @@ Metadata:
           default: RDS Stack Configuration
         Parameters:
           - VPCID
-          - BastionSecurityGroup
+          - NodeSecurityGroup
           - PrivateSubnet1
           - PrivateSubnet2
       - Label:
@@ -22,8 +22,8 @@ Metadata:
           - RDSPassword
 
     ParameterLabels:
-      BastionSecurityGroup:
-        default: The Bastion Security Group ID to use for RDS
+      NodeSecurityGroup:
+        default: The Node Security Group ID to use for RDS
       PrivateSubnet1:
         default: The ID of Private Subnet 1
       PrivateSubnet2:
@@ -42,8 +42,8 @@ Metadata:
         default: VPC ID
 
 Parameters:
-  BastionSecurityGroup:
-    Description: ID for the VPC, This will be used to get the bastion security group
+  NodeSecurityGroup:
+    Description: ID for the VPC, This will be used to get the node security group
     Type: AWS::EC2::SecurityGroup::Id
   PrivateSubnet1:
     Description: ID of Private Subnet 1
@@ -105,11 +105,17 @@ Resources:
     Properties:
       GroupDescription: Security group for RDS DB Instance.
       VpcId: !Ref VPCID
-      SecurityGroupIngress:
-        IpProtocol: tcp
-        FromPort: 3306
-        ToPort: 3306
-        SourceSecurityGroupId: !Ref BastionSecurityGroup
+
+  RDSSecurityGroupFromNodes:
+    Type: AWS::EC2::SecurityGroupIngress
+#    DependsOn: NodeSecurityGroup
+    Properties:
+      Description: Allow worker nodes to connect to RDS
+      GroupId: !Ref RDSSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 3306
+      ToPort: 3306
 
   RDSDBInstance:
     Type: AWS::RDS::DBInstance

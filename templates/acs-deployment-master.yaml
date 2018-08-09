@@ -304,23 +304,15 @@ Resources:
         CreatePrivateSubnets: true
         VPCCIDR: !Ref VPCCIDR
 
-  BastionSecurityGroup:
+  # Worker nodes resources
+  NodeSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-k8s-bastion"
-      GroupDescription: Enables SSH Access to Bastion Hosts
+      GroupDescription: Security group for all nodes in the cluster
       VpcId: !GetAtt VPCStack.Outputs.VPCID
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: '22'
-          ToPort: '22'
-          CidrIp: !Ref RemoteAccessCIDR
-        - IpProtocol: icmp
-          FromPort: '-1'
-          ToPort: '-1'
-          CidrIp: !Ref RemoteAccessCIDR
+      Tags:
+      - Key: !Sub "kubernetes.io/cluster/${AWS::StackName}-cluster"
+        Value: 'owned'
 
   BastionAndEksClusterStack:
     Type: AWS::CloudFormation::Stack
@@ -343,7 +335,7 @@ Resources:
         PrivateSubnet2ID: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
         RemoteAccessCIDR: !Ref RemoteAccessCIDR
         VPCID: !GetAtt VPCStack.Outputs.VPCID
-        BastionSecurityGroup: !Ref BastionSecurityGroup
+        NodeSecurityGroup: !Ref NodeSecurityGroup
         BastionInstanceType: !Ref BastionInstanceType
         MaxNumberOfBastionNodes: !Ref MaxNumberOfBastionNodes
         MinNumberOfBastionNodes: !Ref MinNumberOfBastionNodes
@@ -390,7 +382,7 @@ Resources:
       Parameters:
         PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
         PrivateSubnet2: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
-        BastionSecurityGroup: !Ref BastionSecurityGroup
+        NodeSecurityGroup: !Ref NodeSecurityGroup
         VPCID: !GetAtt VPCStack.Outputs.VPCID
         RDSPassword: !Ref RDSPassword
 
@@ -406,7 +398,7 @@ Outputs:
   BastionSubstackName:
     Value: !GetAtt BastionAndEksClusterStack.Outputs.SubstackName
   BastionSecurityGroup:
-    Value: !Ref BastionSecurityGroup
+    Value: !GetAtt BastionAndEksClusterStack.Outputs.BastionSecurityGroup
   BastionLaunchConfiguration:
     Value: !GetAtt BastionAndEksClusterStack.Outputs.BastionLaunchConfiguration
   BastionAutoScalingGroup:
@@ -434,7 +426,7 @@ Outputs:
   NodeInstanceRoleArn:
     Value: !GetAtt BastionAndEksClusterStack.Outputs.NodeInstanceRoleArn
   NodeSecurityGroupId:
-    Value: !GetAtt BastionAndEksClusterStack.Outputs.NodeSecurityGroupId
+    Value: !Ref NodeSecurityGroup
 
   # EFS Stack
   EFSSubstackName:
