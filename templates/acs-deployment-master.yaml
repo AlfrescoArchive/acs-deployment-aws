@@ -89,7 +89,7 @@ Metadata:
         EksExternalUserArn:
           default: The AWS IAM user arn who will be authorised to connect the cluster externally
 
-  Parameters:
+Parameters:
     AvailabilityZones:
       Description: "List of Availability Zones to use for the subnets in the VPC."
       Type: "List<AWS::EC2::AvailabilityZone::Name>"
@@ -389,7 +389,7 @@ Resources:
 Outputs:
 
   # VPC stack
-  VPCID:
+  VPCID: 
     Value: !GetAtt VPCStack.Outputs.VPCID
   RemoteAccessCIDR: 
     Value: !Ref RemoteAccessCIDR
