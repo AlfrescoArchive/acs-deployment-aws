@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Util
+separator() {
+    echo "============================"
+}
+
 logInfo() {
     echo "info::: $1"
 }
