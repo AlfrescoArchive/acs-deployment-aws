@@ -1,0 +1,188 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "RDS stack that deploys RDS with Aurora as engine"
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: RDS Stack Configuration
+        Parameters:
+          - VPCID
+          - NodeSecurityGroup
+          - PrivateSubnet1
+          - PrivateSubnet2
+      - Label:
+          default: Alfresco Storage Configuration
+        Parameters:
+          - RDSInstanceType
+          - RDSAllocatedStorage
+          - RDSDBName
+          - RDSUsername
+          - RDSPassword
+
+    ParameterLabels:
+      NodeSecurityGroup:
+        default: The Node Security Group ID to use for RDS
+      PrivateSubnet1:
+        default: The ID of Private Subnet 1
+      PrivateSubnet2:
+        default: The ID of Private Subnet 2
+      RDSDBName:
+        default: RDS DB Name
+      RDSInstanceType:
+        default: RDS Instance Type
+      RDSAllocatedStorage:
+        default: RDS Allocated Storage
+      RDSPassword:
+        default: RDS Password
+      RDSUsername:
+        default: RDS User Name
+      VPCID:
+        default: VPC ID
+
+Parameters:
+  NodeSecurityGroup:
+    Description: ID for the VPC, This will be used to get the node security group
+    Type: AWS::EC2::SecurityGroup::Id
+  PrivateSubnet1:
+    Description: ID of Private Subnet 1
+    Type: AWS::EC2::Subnet::Id
+  PrivateSubnet2:
+    Description: ID of Private Subnet 2
+    Type: AWS::EC2::Subnet::Id
+  VPCID:
+    Description: ID for the VPC
+    Type: AWS::EC2::VPC::Id
+  RDSDBName:
+    Default: alfresco
+    Description: DB name for the Amazon RDS Aurora database (MySQL if non-Amazon Aurora region).
+    Type: String
+  RDSInstanceType:
+    AllowedValues:
+      - "db.r3.large"
+      - "db.r3.xlarge"
+      - "db.r3.2xlarge"
+      - "db.r3.4xlarge"
+      - "db.r3.8xlarge"
+      - "db.r4.large"
+      - "db.r4.2xlarge"
+      - "db.r4.8xlarge"
+      - "db.r4.xlarge"
+      - "db.r4.16xlarge"
+    ConstraintDescription: Must contain valid RDS instance type
+    Default: db.r4.xlarge
+    Description: EC2 instance type for the Amazon RDS instances
+    Type: String
+  RDSPassword:
+    Description: Password for the Amazon RDS database
+    NoEcho: True
+    Type: String
+  RDSUsername:
+    Default: alfresco
+    Description: User name for the Amazon RDS database
+    Type: String
+  RDSAllocatedStorage:
+    Default: 5
+    Description: Size in GiB for the Amazon RDS MySQL database allocated storage (only non-Amazon Aurora region)
+    Type: String
+
+Conditions:
+  isAmazonAuroraRegion: !Not [Condition: isNotAmazonAuroraRegion]
+  isNotAmazonAuroraRegion: !Equals [!Ref "AWS::Region", "sa-east-1"]
+
+Resources:
+  RDSDBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnets available for the RDS DB Instance
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for RDS DB Instance.
+      VpcId: !Ref VPCID
+
+  RDSSecurityGroupFromNodes:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow worker nodes to connect to RDS
+      GroupId: !Ref RDSSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 3306
+      ToPort: 3306
+
+  RDSDBInstance:
+    Type: AWS::RDS::DBInstance
+    Condition: isNotAmazonAuroraRegion
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-instance"
+      MultiAZ: true
+      DBSubnetGroupName: !Ref RDSDBSubnetGroup
+      Engine: MySQL
+      MasterUsername: !Ref RDSUsername
+      MasterUserPassword: !Ref RDSPassword
+      DBName: !Ref RDSDBName
+      AllocatedStorage: !Ref RDSAllocatedStorage
+      PubliclyAccessible: false
+      DBInstanceClass: !Ref RDSInstanceType
+      VPCSecurityGroups:
+        - !Ref RDSSecurityGroup
+      DBSubnetGroupName: !Ref RDSDBSubnetGroup
+    DeletionPolicy: Snapshot
+
+  RDSDBCluster:
+    Type: AWS::RDS::DBCluster
+    Condition: isAmazonAuroraRegion
+    DeletionPolicy: Snapshot
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}"
+      MasterUsername: !Ref RDSUsername
+      MasterUserPassword: !Ref RDSPassword
+      Engine: aurora
+      DatabaseName: !Ref RDSDBName
+      VpcSecurityGroupIds:
+        - !Ref RDSSecurityGroup
+      DBSubnetGroupName: !Ref RDSDBSubnetGroup
+
+  RDSDBInstance1:
+    Type: AWS::RDS::DBInstance
+    Condition: isAmazonAuroraRegion
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-instance-1"
+      DBSubnetGroupName: !Ref RDSDBSubnetGroup
+      Engine: aurora
+      DBClusterIdentifier: !Ref RDSDBCluster
+      PubliclyAccessible: false
+      DBInstanceClass: !Ref RDSInstanceType
+    DeletionPolicy: Delete
+
+  RDSDBInstance2:
+    Type: AWS::RDS::DBInstance
+    Condition: isAmazonAuroraRegion
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-instance-2"
+      DBSubnetGroupName: !Ref RDSDBSubnetGroup
+      Engine: aurora
+      DBClusterIdentifier: !Ref RDSDBCluster
+      PubliclyAccessible: false
+      DBInstanceClass: !Ref RDSInstanceType
+    DeletionPolicy: Delete
+
+Outputs:
+  SubstackName:
+    Value: !Sub "${AWS::StackName}"
+  Endpoint:
+    Value: !If [isAmazonAuroraRegion, !GetAtt RDSDBCluster.Endpoint.Address, !GetAtt RDSDBInstance.Endpoint.Address]

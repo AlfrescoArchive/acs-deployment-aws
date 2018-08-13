@@ -28,6 +28,14 @@ Metadata:
             - MinNumberOfNodes
             - DesiredNumberOfNodes
             - EksExternalUserArn
+        - Label:
+            default: Alfresco Storage Configuration
+          Parameters:
+            - RDSInstanceType
+            - RDSAllocatedStorage
+            - RDSDBName
+            - RDSUsername
+            - RDSPassword
 
       ParameterLabels:
         AvailabilityZones:
@@ -48,6 +56,16 @@ Metadata:
           default: The key pair name to use to access the instances
         RemoteAccessCIDR:
           default: The CIDR block to allow remote access
+        RDSDBName:
+          default: RDS DB Name
+        RDSInstanceType:
+          default: RDS Instance Type
+        RDSAllocatedStorage:
+          default: RDS Allocated Storage
+        RDSPassword:
+          default: RDS Password
+        RDSUsername:
+          default: RDS User Name
         BastionInstanceType:
           default: The instance type to deploy Bastion to
         MaxNumberOfBastionNodes:
@@ -120,6 +138,66 @@ Parameters:
       ConstraintDescription: "CIDR block parameter must be in the form x.x.x.x/x"
       Description: "The CIDR IP range that is permitted to access the AWS resources. It is recommended that you set this value to a trusted IP range."
       Type: "String"
+    RDSDBName:
+      Default: alfresco
+      Description: DB name for the Amazon RDS Aurora database (MySQL if non-Amazon Aurora region).
+      Type: String
+    RDSInstanceType:
+      AllowedValues:
+        - "db.r3.large"
+        - "db.r3.xlarge"
+        - "db.r3.2xlarge"
+        - "db.r3.4xlarge"
+        - "db.r3.8xlarge"
+        - "db.r4.large"
+        - "db.r4.2xlarge"
+        - "db.r4.8xlarge"
+        - "db.r4.xlarge"
+        - "db.r4.16xlarge"
+      ConstraintDescription: Must contain valid RDS instance type
+      Default: db.r4.xlarge
+      Description: EC2 instance type for the Amazon RDS instances
+      Type: String
+    RDSPassword:
+      Description: Password for the Amazon RDS database
+      NoEcho: True
+      Type: String
+    RDSUsername:
+      Default: alfresco
+      Description: User name for the Amazon RDS database
+      Type: String
+    RDSAllocatedStorage:
+      Default: 5
+      Description: Size in GiB for the Amazon RDS MySQL database allocated storage (only non-Amazon Aurora region)
+      Type: String
+    RDSInstanceType:
+      AllowedValues:
+        - "db.r3.large"
+        - "db.r3.xlarge"
+        - "db.r3.2xlarge"
+        - "db.r3.4xlarge"
+        - "db.r3.8xlarge"
+        - "db.r4.large"
+        - "db.r4.2xlarge"
+        - "db.r4.8xlarge"
+        - "db.r4.xlarge"
+        - "db.r4.16xlarge"
+      ConstraintDescription: Must contain valid RDS instance type
+      Default: db.r4.xlarge
+      Description: EC2 instance type for the Amazon RDS instances
+      Type: String
+    RDSPassword:
+      Description: Password for the Amazon RDS database
+      NoEcho: True
+      Type: String
+    RDSUsername:
+      Default: alfresco
+      Description: User name for the Amazon RDS database
+      Type: String
+    RDSAllocatedStorage:
+      Default: 5
+      Description: Size in GiB for the Amazon RDS MySQL database allocated storage (only non-Amazon Aurora region)
+      Type: String
     BastionInstanceType:
       Type: "String"
       Default: "t2.micro"
@@ -187,6 +265,12 @@ Parameters:
       Default: "aws/vpc/latest"
       Description: "S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
       Type: "String"
+    RDSPassword:
+      Description: Password for the Amazon RDS database
+      NoEcho: True
+      Type: String
+      MinLength: 8
+      ConstraintDescription: Minimum 8 characters
     TemplateBucketName:
       AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
       ConstraintDescription: "Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
@@ -206,7 +290,7 @@ Resources:
       Properties:
         Tags:
           - Key: Name
-            Value: !Sub "${AWS::StackName}" 
+            Value: !Sub "${AWS::StackName}"
           - Key: Component
             Value: ACS-VPC
         TemplateURL: !Sub "https://s3.amazonaws.com/${QSS3BucketName}/${QSS3KeyPrefix}/templates/aws-vpc.template"
@@ -220,6 +304,16 @@ Resources:
           CreatePrivateSubnets: true
           VPCCIDR: !Ref VPCCIDR
 
+    # Worker nodes resources
+    NodeSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: Security group for all nodes in the cluster
+        VpcId: !GetAtt VPCStack.Outputs.VPCID
+        Tags:
+        - Key: !Sub "kubernetes.io/cluster/${AWS::StackName}-cluster"
+          Value: 'owned'
+
     BastionAndEksClusterStack:
       Type: AWS::CloudFormation::Stack
       DependsOn:
@@ -227,9 +321,9 @@ Resources:
       Properties:
         Tags:
           - Key: Name
-            Value: !Sub "${AWS::StackName}" 
+            Value: !Sub "${AWS::StackName}"
           - Key: Component
-            Value: ACS-Bastion 
+            Value: ACS-Bastion
         TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/bastion-and-eks-cluster.yaml"
         Parameters:
           # Bastion stack params
@@ -240,6 +334,7 @@ Resources:
           PrivateSubnet2ID: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
           RemoteAccessCIDR: !Ref RemoteAccessCIDR
           VPCID: !GetAtt VPCStack.Outputs.VPCID
+          NodeSecurityGroup: !Ref NodeSecurityGroup
           BastionInstanceType: !Ref BastionInstanceType
           MaxNumberOfBastionNodes: !Ref MaxNumberOfBastionNodes
           MinNumberOfBastionNodes: !Ref MinNumberOfBastionNodes
@@ -252,6 +347,9 @@ Resources:
           TemplateBucketName: !Ref TemplateBucketName
           TemplateBucketKeyPrefix: !Ref TemplateBucketKeyPrefix
           EksExternalUserArn: !Ref EksExternalUserArn
+          RDSUsername: !Ref RDSUsername
+          RDSPassword: !Ref RDSPassword
+          RDSEndpoint: !GetAtt RDSStack.Outputs.Endpoint
 
     EFSStack:
       Type: AWS::CloudFormation::Stack
@@ -260,14 +358,32 @@ Resources:
       Properties:
         Tags:
           - Key: Name
-            Value: !Sub "${AWS::StackName}" 
+            Value: !Sub "${AWS::StackName}"
           - Key: Component
-            Value: ACS-EFS 
+            Value: ACS-EFS
         TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/efs.yaml"
         Parameters:
           PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
           PrivateSubnet2: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
-          SecurityGroup: !GetAtt BastionAndEksClusterStack.Outputs.NodeSecurityGroupId
+          SecurityGroup: !Ref NodeSecurityGroup
+
+    RDSStack:
+      Type: AWS::CloudFormation::Stack
+      DependsOn:
+        - VPCStack
+      Properties:
+        Tags:
+          - Key: Name
+            Value: !Sub "${AWS::StackName}"
+          - Key: Component
+            Value: ACS-RDS
+        TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/rds.yaml"
+        Parameters:
+          PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
+          PrivateSubnet2: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
+          NodeSecurityGroup: !Ref NodeSecurityGroup
+          VPCID: !GetAtt VPCStack.Outputs.VPCID
+          RDSPassword: !Ref RDSPassword
 
 Outputs:
 
@@ -309,7 +425,7 @@ Outputs:
   NodeInstanceRoleArn:
     Value: !GetAtt BastionAndEksClusterStack.Outputs.NodeInstanceRoleArn
   NodeSecurityGroupId:
-    Value: !GetAtt BastionAndEksClusterStack.Outputs.NodeSecurityGroupId
+    Value: !Ref NodeSecurityGroup
 
   # EFS Stack
   EFSSubstackName:
@@ -318,3 +434,9 @@ Outputs:
     Value: !GetAtt EFSStack.Outputs.EFSName
   EFSMountTargets:
     Value: !GetAtt EFSStack.Outputs.MountTargets
+
+  # RDS Stack
+  RDSSubstackName:
+    Value: !GetAtt RDSStack.Outputs.SubstackName
+  RDSEndPoint:
+    Value: !GetAtt RDSStack.Outputs.Endpoint

@@ -17,11 +17,15 @@ Metadata:
             - PublicSubnet1ID
             - PublicSubnet2ID
             - KeyPairName
+            - NodeSecurityGroup
             - RemoteAccessCIDR
             - BastionInstanceType
             - MaxNumberOfBastionNodes
             - MinNumberOfBastionNodes
             - DesiredNumberOfBastionNodes
+            - RDSEndpoint
+            - RDSUsername
+            - RDSPassword
         - Label:
             default: EKS Worker Nodes Stack Configuration
           Parameters:
@@ -74,20 +78,29 @@ Metadata:
           default: The Key prefix for the templates in the S3 template bucket
         EksExternalUserArn:
           default: The AWS IAM user arn who will be authorised to connect the cluster externally
+        RDSEndpoint:
+          default: The connection to the RDS
+        RDSPassword:
+          default: RDS Password
+        RDSUsername:
+          default: RDS User Name
           
 Parameters:
+    NodeSecurityGroup:
+      Description: "ID for the VPC, This will be used to get the node security group"
+      Type: "AWS::EC2::SecurityGroup::Id"
     VPCID:
       Description: "ID for the VPC"
       Type: "AWS::EC2::VPC::Id"
     PublicSubnet1ID:
       Description: "ID of Public Subnet 1"
-      Type: "AWS::EC2::Subnet::Id"    
+      Type: "AWS::EC2::Subnet::Id"
     PublicSubnet2ID:
       Description: "ID of Public Subnet 2"
-      Type: "AWS::EC2::Subnet::Id"   
+      Type: "AWS::EC2::Subnet::Id"
     PrivateSubnet1ID:
       Description: "ID of Private Subnet 1"
-      Type: "AWS::EC2::Subnet::Id"   
+      Type: "AWS::EC2::Subnet::Id"
     PrivateSubnet2ID:
       Description: "ID of Private Subnet 2"
       Type: "AWS::EC2::Subnet::Id"
@@ -166,6 +179,17 @@ Parameters:
     EksExternalUserArn:
       Type: String
       Description: The AWS IAM user arn who will be authorised to connect the cluster externally
+    RDSEndpoint:
+      Type: String
+      Description: The connection to the RDS
+    RDSPassword:
+      Description: Password for the Amazon RDS database
+      NoEcho: True
+      Type: String
+    RDSUsername:
+      Default: alfresco
+      Description: User name for the Amazon RDS database
+      Type: String
 
 Mappings:
   BastionAmiRegionMap:
@@ -649,7 +673,7 @@ Resources:
     Properties:
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-k8s-bastion" 
+          Value: !Sub "${AWS::StackName}-k8s-bastion"
       GroupDescription: Enables SSH Access to Bastion Hosts
       VpcId: !Ref VPCID
       SecurityGroupIngress:
@@ -675,18 +699,17 @@ Resources:
       VpcId: !Ref VPCID
 
   # Worker nodes resources
-  NodeSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Security group for all nodes in the cluster
-      VpcId: !Ref VPCID
-      Tags:
-      - Key: !Sub "kubernetes.io/cluster/${AWS::StackName}-cluster"
-        Value: 'owned'
+#  NodeSecurityGroup:
+#    Type: AWS::EC2::SecurityGroup
+#    Properties:
+#      GroupDescription: Security group for all nodes in the cluster
+#      VpcId: !Ref VPCID
+#      Tags:
+#      - Key: !Sub "kubernetes.io/cluster/${AWS::StackName}-cluster"
+#        Value: 'owned'
 
   NodeSecurityGroupIngress:
     Type: AWS::EC2::SecurityGroupIngress
-    DependsOn: NodeSecurityGroup
     Properties:
       Description: Allow node to communicate with each other
       GroupId: !Ref NodeSecurityGroup
@@ -697,7 +720,6 @@ Resources:
 
   NodeSecurityGroupFromBastion:
     Type: AWS::EC2::SecurityGroupIngress
-    DependsOn: NodeSecurityGroup
     Properties:
       Description: Allow bastion to SSH to worker nodes
       GroupId: !Ref NodeSecurityGroup
@@ -708,7 +730,6 @@ Resources:
 
   NodeSecurityGroupFromControlPlaneIngress:
     Type: AWS::EC2::SecurityGroupIngress
-    DependsOn: NodeSecurityGroup
     Properties:
       Description: Allow worker Kubelets and pods to receive communication from the cluster control plane
       GroupId: !Ref NodeSecurityGroup
@@ -719,7 +740,6 @@ Resources:
 
   ControlPlaneEgressToNodeSecurityGroup:
     Type: AWS::EC2::SecurityGroupEgress
-    DependsOn: NodeSecurityGroup
     Properties:
       Description: Allow the cluster control plane to communicate with worker Kubelet and pods
       GroupId: !Ref ControlPlaneSecurityGroup
@@ -730,7 +750,6 @@ Resources:
 
   ClusterControlPlaneSecurityGroupIngress:
     Type: AWS::EC2::SecurityGroupIngress
-    DependsOn: NodeSecurityGroup
     Properties:
       Description: Allow pods to communicate with the cluster API Server
       GroupId: !Ref ControlPlaneSecurityGroup
@@ -1068,6 +1087,3 @@ Outputs:
   NodeInstanceRoleArn:
     Description: The node instance role ARN
     Value: !GetAtt NodeInstanceRole.Arn
-  NodeSecurityGroupId:
-    Description: The node security group id
-    Value: !Ref NodeSecurityGroup
