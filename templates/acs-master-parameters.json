@@ -24,6 +24,22 @@
     "ParameterValue": "@@TemplateBucketKeyPrefixValue@@"
   },
   {
+    "ParameterKey": "UseCrossRegionReplication",
+    "ParameterValue": "@@UseCrossRegionReplication@@"
+  },
+  {
+    "ParameterKey": "ReplicationBucketRegion",
+    "ParameterValue": "@@ReplicationBucketRegion@@"
+  },
+  {
+    "ParameterKey": "ReplicationBucket",
+    "ParameterValue": "@@ReplicationBucket@@"
+  },
+  {
+    "ParameterKey": "ReplicationBucketKMSEncryptionKey",
+    "ParameterValue": "@@ReplicationBucketKMSEncryptionKey@@"
+  },
+  {
     "ParameterKey": "RDSPassword",
     "ParameterValue": "@@RDSPasswordValue@@"
   }

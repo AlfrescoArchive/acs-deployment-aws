@@ -29,6 +29,13 @@ Metadata:
             - DesiredNumberOfNodes
             - EksExternalUserArn
         - Label:
+            default: S3 Bucket Stack for storing ACS content store
+          Parameters:
+            - UseCrossRegionReplication
+            - ReplicationBucketRegion
+            - ReplicationBucket
+            - ReplicationBucketKMSEncryptionKey
+        - Label:
             default: Alfresco Storage Configuration
           Parameters:
             - RDSInstanceType
@@ -88,6 +95,14 @@ Metadata:
           default: The Key prefix for the templates in the S3 template bucket
         EksExternalUserArn:
           default: The AWS IAM user arn who will be authorised to connect the cluster externally
+        UseCrossRegionReplication:
+          default: Enable Cross Region Replication for This Bucket
+        ReplicationBucketRegion:
+          default: Destination Bucket region
+        ReplicationBucket:
+          default: Destination Replication Bucket
+        ReplicationBucketKMSEncryptionKey:
+          default: Destination Bucket KMS Encryption Key
 
 Parameters:
     AvailabilityZones:
@@ -283,6 +298,25 @@ Parameters:
     EksExternalUserArn:
       Type: String
       Description: The AWS IAM user arn who will be authorised to connect the cluster externally
+    UseCrossRegionReplication:
+      Description: "Set to true if you want to add an S3 Bucket for replication"
+      Type: String
+      Default: false
+      AllowedValues: 
+        - "true"
+        - "false"
+    ReplicationBucketRegion:
+      Description: "The Region of the Replication bucket"
+      Type: String
+      Default: "eu-west-1"
+    ReplicationBucket:
+      Description: "Name of the destionation S3 Bucket you want to replicate data into. "
+      Type: String
+      Default: "devacss3crr-acscontentstorebucket-1r1g0vcv7em8c"
+    ReplicationBucketKMSEncryptionKey:
+      Description: "The KMS encryption key for the destination bucket"
+      Type: "String"
+      Default: "arn:aws:kms:eu-west-1:586394462691:key/2bcfed06-7c73-47aa-93d4-af45e47683b8"
 
 Resources:
     VPCStack:
@@ -304,7 +338,52 @@ Resources:
           CreatePrivateSubnets: true
           VPCCIDR: !Ref VPCCIDR
 
-    # Worker nodes resources
+    EC2LogGroup:
+      Type: AWS::Logs::LogGroup
+    
+    NodeInstanceRole:
+      Type: AWS::IAM::Role
+      Properties:
+        Policies:
+          - PolicyName: aws-quick-start-s3-policy
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Action:
+                    - s3:GetObject
+                  Resource: arn:aws:s3:::aws-quickstart/quickstart-linux-bastion/*
+                  Effect: Allow
+          - PolicyName: cloudwatch-logs-policy
+            PolicyDocument:
+              Version: 2012-10-17
+              Statement:
+                - Action:
+                    - logs:CreateLogStream
+                    - logs:GetLogEvents
+                    - logs:PutLogEvents
+                    - logs:DescribeLogGroups
+                    - logs:DescribeLogStreams
+                    - logs:PutRetentionPolicy
+                    - logs:PutMetricFilter
+                    - logs:CreateLogGroup
+                  Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${EC2LogGroup}:*"
+                  Effect: Allow
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - ec2.amazonaws.com
+            Action:
+            - sts:AssumeRole
+        Path: /
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+          - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+          - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+          - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
+          
     NodeSecurityGroup:
       Type: AWS::EC2::SecurityGroup
       Properties:
@@ -318,6 +397,7 @@ Resources:
       Type: AWS::CloudFormation::Stack
       DependsOn:
         - VPCStack
+        - NodeInstanceRole
       Properties:
         Tags:
           - Key: Name
@@ -334,12 +414,15 @@ Resources:
           PrivateSubnet2ID: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
           RemoteAccessCIDR: !Ref RemoteAccessCIDR
           VPCID: !GetAtt VPCStack.Outputs.VPCID
-          NodeSecurityGroup: !Ref NodeSecurityGroup
           BastionInstanceType: !Ref BastionInstanceType
           MaxNumberOfBastionNodes: !Ref MaxNumberOfBastionNodes
           MinNumberOfBastionNodes: !Ref MinNumberOfBastionNodes
           DesiredNumberOfBastionNodes: !Ref DesiredNumberOfBastionNodes
           # EKS Worker Node stack params
+          EC2LogGroup: !Ref EC2LogGroup
+          NodeSecurityGroup: !Ref NodeSecurityGroup
+          NodeInstanceRole: !Ref NodeInstanceRole
+          NodeInstanceRoleArn: !GetAtt NodeInstanceRole.Arn
           NodeInstanceType: !Ref NodeInstanceType
           MaxNumberOfNodes: !Ref MaxNumberOfNodes
           MinNumberOfNodes: !Ref MinNumberOfNodes
@@ -347,14 +430,16 @@ Resources:
           TemplateBucketName: !Ref TemplateBucketName
           TemplateBucketKeyPrefix: !Ref TemplateBucketKeyPrefix
           EksExternalUserArn: !Ref EksExternalUserArn
-          RDSUsername: !Ref RDSUsername
-          RDSPassword: !Ref RDSPassword
-          RDSEndpoint: !GetAtt RDSStack.Outputs.Endpoint
+          # Removed indirect dependency to RDS Stack Untill the helm stack gets created
+          # RDSUsername: !Ref RDSUsername
+          # RDSPassword: !Ref RDSPassword
+          # RDSEndpoint: !GetAtt RDSStack.Outputs.Endpoint
 
     EFSStack:
       Type: AWS::CloudFormation::Stack
       DependsOn:
-        - BastionAndEksClusterStack
+        - VPCStack
+        - NodeSecurityGroup
       Properties:
         Tags:
           - Key: Name
@@ -385,6 +470,26 @@ Resources:
           VPCID: !GetAtt VPCStack.Outputs.VPCID
           RDSPassword: !Ref RDSPassword
 
+    S3Stack:
+      Type: AWS::CloudFormation::Stack
+      DependsOn:
+        - NodeInstanceRole
+      Properties:
+        Tags:
+          - Key: Name
+            Value: !Sub "${AWS::StackName}" 
+          - Key: Component
+            Value: ACS-S3
+        TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/s3-bucket.yaml"
+        Parameters:
+          TemplateBucketName: !Ref TemplateBucketName
+          TemplateBucketKeyPrefix: !Ref TemplateBucketKeyPrefix
+          UseCrossRegionReplication: !Ref UseCrossRegionReplication
+          ReplicationBucketRegion: !Ref ReplicationBucketRegion
+          ReplicationBucket: !Ref ReplicationBucket
+          ReplicationBucketKMSEncryptionKey: !Ref ReplicationBucketKMSEncryptionKey
+          NodeInstanceRole: !Ref NodeInstanceRole
+
 Outputs:
 
   # VPC stack
@@ -404,12 +509,12 @@ Outputs:
     Value: !GetAtt BastionAndEksClusterStack.Outputs.BastionAutoScalingGroup
   BastionEIP:
     Value: !GetAtt BastionAndEksClusterStack.Outputs.BastionEIP
-  EC2LogGroup:
-    Value: !GetAtt BastionAndEksClusterStack.Outputs.EC2LogGroup
   BastionInstanceProfile:
     Value: !GetAtt BastionAndEksClusterStack.Outputs.BastionInstanceProfile
   BastionInstanceRole:
     Value: !GetAtt BastionAndEksClusterStack.Outputs.BastionInstanceRole
+  EC2LogGroup:
+    Value: !Ref EC2LogGroup
 
   # EKS Cluster
   ControlPlaneSecurityGroup:
@@ -423,7 +528,7 @@ Outputs:
   EksServiceRoleArn:
     Value: !GetAtt BastionAndEksClusterStack.Outputs.EksServiceRoleArn
   NodeInstanceRoleArn:
-    Value: !GetAtt BastionAndEksClusterStack.Outputs.NodeInstanceRoleArn
+    Value: !GetAtt NodeInstanceRole.Arn
   NodeSecurityGroupId:
     Value: !Ref NodeSecurityGroup
 
@@ -434,6 +539,18 @@ Outputs:
     Value: !GetAtt EFSStack.Outputs.EFSName
   EFSMountTargets:
     Value: !GetAtt EFSStack.Outputs.MountTargets
+  
+  # S3 Stack
+  S3SubstackName:
+    Value: !GetAtt S3Stack.Outputs.SubstackName
+  S3BucketName:
+    Value: !GetAtt S3Stack.Outputs.S3BucketName
+  S3BucketKMSKey:
+    Value: !GetAtt S3Stack.Outputs.S3BucketKMSKey
+  S3EmptyBucketLambda:
+    Value: !GetAtt S3Stack.Outputs.S3EmptyBucketLambda
+  S3EmptyBucketLambdaRole:
+    Value: !GetAtt S3Stack.Outputs.S3EmptyBucketLambdaRole
 
   # RDS Stack
   RDSSubstackName:

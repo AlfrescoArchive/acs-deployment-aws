@@ -58,8 +58,8 @@ else
       --template-body file://$TEMPLATE_BODY \
       --parameters file://$PARAMETERS_FILE \
       --region $6 \
-      --capabilities $CAPABILITIES
-      # --disable-rollback
+      --capabilities $CAPABILITIES \
+      --disable-rollback
 
   if [ $? -ne 0 ]; then
     logError "Stack creation failed."

@@ -16,6 +16,7 @@ Metadata:
             - PrivateSubnet2ID
             - PublicSubnet1ID
             - PublicSubnet2ID
+            - EC2LogGroup
             - KeyPairName
             - NodeSecurityGroup
             - RemoteAccessCIDR
@@ -23,12 +24,14 @@ Metadata:
             - MaxNumberOfBastionNodes
             - MinNumberOfBastionNodes
             - DesiredNumberOfBastionNodes
-            - RDSEndpoint
-            - RDSUsername
-            - RDSPassword
+            # - RDSEndpoint
+            # - RDSUsername
+            # - RDSPassword
         - Label:
             default: EKS Worker Nodes Stack Configuration
           Parameters:
+            - NodeInstanceRole
+            - NodeInstanceRoleArn
             - NodeInstanceType
             - MaxNumberOfNodes
             - MinNumberOfNodes
@@ -52,6 +55,8 @@ Metadata:
           default: The ID of the first public subet to deploy APS into
         PublicSubnet2ID:
           default: The ID of the second public subnet to deploy APS into
+        EC2LogGroup:
+          default: The bastion log group name
         KeyPairName:
           default: The key pair name to use to access the instances
         RemoteAccessCIDR:
@@ -64,6 +69,10 @@ Metadata:
           default: The minimum number of nodes to scale down to for Bastion
         DesiredNumberOfBastionNodes:
           default: The desired number of nodes to keep running for Bastion
+        NodeInstanceRole:
+          default: The AWS IAM Role to be applied to the EKS Worker Nodes
+        NodeInstanceRoleArn:
+          default: The AWS IAM Role ARN to be applied to the EKS Worker Nodes
         NodeInstanceType:
           default: The instance type to deploy EKS Worker Node to
         MaxNumberOfNodes:
@@ -78,12 +87,12 @@ Metadata:
           default: The Key prefix for the templates in the S3 template bucket
         EksExternalUserArn:
           default: The AWS IAM user arn who will be authorised to connect the cluster externally
-        RDSEndpoint:
-          default: The connection to the RDS
-        RDSPassword:
-          default: RDS Password
-        RDSUsername:
-          default: RDS User Name
+        # RDSEndpoint:
+        #   default: The connection to the RDS
+        # RDSPassword:
+        #   default: RDS Password
+        # RDSUsername:
+        #   default: RDS User Name
           
 Parameters:
     NodeSecurityGroup:
@@ -104,6 +113,9 @@ Parameters:
     PrivateSubnet2ID:
       Description: "ID of Private Subnet 2"
       Type: "AWS::EC2::Subnet::Id"
+    EC2LogGroup:
+      Description: The bastion log group name
+      Type: "String"
     KeyPairName:
       Description: "The name of an existing public/private key pair, which allows you to securely connect to your instance after it launches"
       Type: "AWS::EC2::KeyPair::KeyName"
@@ -137,6 +149,12 @@ Parameters:
       MinLength: 1
       Description: "The minimum number of Bastion instances to run"
       Default: 1
+    NodeInstanceRole:
+      Type: "String"
+      Description: "The AWS IAM Role to be applied to the EKS Worker Nodes"
+    NodeInstanceRoleArn:
+      Type: "String"
+      Description: "The AWS IAM Role ARN to be applied to the EKS Worker Nodes"
     NodeInstanceType:
       Type: "String"
       Default: "m5.xlarge"
@@ -179,17 +197,17 @@ Parameters:
     EksExternalUserArn:
       Type: String
       Description: The AWS IAM user arn who will be authorised to connect the cluster externally
-    RDSEndpoint:
-      Type: String
-      Description: The connection to the RDS
-    RDSPassword:
-      Description: Password for the Amazon RDS database
-      NoEcho: True
-      Type: String
-    RDSUsername:
-      Default: alfresco
-      Description: User name for the Amazon RDS database
-      Type: String
+    # RDSEndpoint:
+    #   Type: String
+    #   Description: The connection to the RDS
+    # RDSPassword:
+    #   Description: Password for the Amazon RDS database
+    #   NoEcho: True
+    #   Type: String
+    # RDSUsername:
+    #   Default: alfresco
+    #   Description: User name for the Amazon RDS database
+    #   Type: String
 
 Mappings:
   BastionAmiRegionMap:
@@ -204,8 +222,6 @@ Mappings:
       AmiId: ami-73a6e20b
       
 Resources:
-  EC2LogGroup:
-    Type: AWS::Logs::LogGroup
 
   SSHMetricFilter:
     Type: 'AWS::Logs::MetricFilter'
@@ -307,49 +323,6 @@ Resources:
       Path: /
       Roles:
       - !Ref NodeInstanceRole
-
-  NodeInstanceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      Policies:
-        - PolicyName: aws-quick-start-s3-policy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Action:
-                  - s3:GetObject
-                Resource: arn:aws:s3:::aws-quickstart/quickstart-linux-bastion/*
-                Effect: Allow
-        - PolicyName: cloudwatch-logs-policy
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Action:
-                  - logs:CreateLogStream
-                  - logs:GetLogEvents
-                  - logs:PutLogEvents
-                  - logs:DescribeLogGroups
-                  - logs:DescribeLogStreams
-                  - logs:PutRetentionPolicy
-                  - logs:PutMetricFilter
-                  - logs:CreateLogGroup
-                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${EC2LogGroup}:*"
-                Effect: Allow
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-            - ec2.amazonaws.com
-          Action:
-          - sts:AssumeRole
-      Path: /
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
-        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
-        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
-        - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
 
   # Bastion resources
   BastionEIP:
@@ -468,7 +441,7 @@ Resources:
                     "aws eks describe-cluster --region ", { Ref: "AWS::Region" }, " --name ", { Ref: "AWS::StackName" }, "-cluster &> /dev/null\n",
                     "if [ $? -ne 0 ]; then\n",
                     "  echo Cluster does not exist, creating...\n",
-                    "  aws eks create-cluster --region ", { Ref: "AWS::Region" },
+                    "  aws eks create-cluster --debug --region ", { Ref: "AWS::Region" },
                     " --name ", { Ref: "AWS::StackName" }, "-cluster",
                     " --role-arn ", { "Fn::GetAtt" : "EKSServiceRole.Arn" },
                     " --resources-vpc-config subnetIds=", { Ref: PrivateSubnet1ID }, ",", { Ref: PrivateSubnet2ID },
@@ -519,7 +492,7 @@ Resources:
                     "  namespace: kube-system\n",
                     "data:\n",
                     "  mapRoles: |\n",
-                    "    - rolearn: ", { "Fn::GetAtt": "NodeInstanceRole.Arn" }, "\n",
+                    "    - rolearn: ", { Ref: "NodeInstanceRoleArn" }, "\n",
                     "      username: system:node:{{EC2PrivateDNSName}}\n",
                     "      groups:\n",
                     "        - system:bootstrappers\n",
@@ -1061,9 +1034,6 @@ Outputs:
   BastionEIP:
     Description: The Elastic IP of Bastion host
     Value: !Ref BastionEIP
-  EC2LogGroup:
-    Description: The Bastion host main log group
-    Value: !Ref EC2LogGroup
   BastionInstanceProfile:
     Description: IAM Instance profile of Bastion host
     Value: !Ref BastionInstanceProfile
@@ -1084,6 +1054,3 @@ Outputs:
     Value: !GetAtt EksHelperLambdaCustomResource.certificateAuthority
   EksServiceRoleArn:
     Value: !GetAtt EKSServiceRole.Arn
-  NodeInstanceRoleArn:
-    Description: The node instance role ARN
-    Value: !GetAtt NodeInstanceRole.Arn
