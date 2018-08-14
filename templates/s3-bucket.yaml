@@ -1,0 +1,304 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "S3 template for deploying S3 to be used by ACS s3 connector."
+
+Metadata:
+    AWS::CloudFormation::Interface:
+      ParameterGroups:
+        - Label:
+            default: S3 Stack Configuration
+          Parameters:
+            - UseCrossRegionReplication
+            - ReplicationBucketRegion
+            - ReplicationBucket
+            - ReplicationBucketKMSEncryptionKey
+            - TemplateBucketName
+            - TemplateBucketKeyPrefix
+            - NodeInstanceRole
+
+      ParameterLabels:
+        UseCrossRegionReplication:
+          default: Enable Cross Region Replication fro This Bucket
+        ReplicationBucketRegion:
+          default: Destination Bucket region
+        ReplicationBucket:
+          default: Destination Replication Bucket
+        ReplicationBucketKMSEncryptionKey:
+          default: Destination Bucket KMS Encryption Key
+        TemplateBucketName:
+          default: The name of the S3 bucket that holds the templates
+        TemplateBucketKeyPrefix:
+          default: The Key prefix for the templates in the S3 template bucket
+        NodeInstanceRole:
+          default: The AWS IAM Role to which the S3 bucket policy will be attached
+
+Parameters:
+    UseCrossRegionReplication:
+      Description: "Set to true if you want to add an S3 Bucket for replication"
+      Type: String
+      Default: false
+      AllowedValues: 
+        - "true"
+        - "false"
+    ReplicationBucketRegion:
+      Description: "The Region of the Replication bucket"
+      Type: String
+      Default: ""
+    ReplicationBucket:
+      Description: "Name of the destionation S3 Bucket you want to replicate data into. "
+      Type: String
+      Default: ""
+    ReplicationBucketKMSEncryptionKey:
+      Description: "The KMS encryption key for the destination bucket"
+      Type: "String"
+      Default: ""
+    TemplateBucketName:
+      AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
+      ConstraintDescription: "Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+      Description: "S3 bucket name that contains the CFN templates (VPC, Bastion etc). This string can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+      Type: "String"
+    TemplateBucketKeyPrefix:
+      AllowedPattern: "^[0-9a-zA-Z-/]*$"
+      ConstraintDescription: "Template bucket key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
+      Type: "String"
+    NodeInstanceRole:
+      Type: "String"
+      Description: "The AWS IAM Role to which the S3 bucket policy will be attached"
+
+Conditions:
+  CRRenabled: !Equals [ !Ref UseCrossRegionReplication, "true" ]
+
+Resources:      
+  ACSContentStoreBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              KMSMasterKeyID: !Ref ContentStoreKMSKey
+              SSEAlgorithm: "aws:kms"
+      ReplicationConfiguration:
+        !If 
+          - CRRenabled
+          -
+            Role: !GetAtt ReplicationBucketRole.Arn
+            Rules:
+              - Destination:
+                  Bucket: !Sub "arn:aws:s3:::${ReplicationBucket}"
+                  EncryptionConfiguration:
+                    ReplicaKmsKeyID: !Sub "${ReplicationBucketKMSEncryptionKey}"
+                Prefix: ""
+                Status: Enabled
+                SourceSelectionCriteria:
+                  SseKmsEncryptedObjects:
+                    Status: Enabled
+          - !Ref "AWS::NoValue"
+      Tags:
+        - Key: Product
+          Value: 'Alfresco Content Services'
+        - Key: Stack
+          Value: !Ref 'AWS::StackName'
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-ACS'
+
+  ReplicationBucketRole:
+    Condition: CRRenabled
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action: [ "sts:AssumeRole" ]
+            Effect: Allow
+            Principal:
+              Service: [ "s3.amazonaws.com" ]
+
+  ReplicationBucketPolicy:
+    Condition: CRRenabled
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: ReplicationBucketPolicy
+      Roles: [ !Ref ReplicationBucketRole ]
+      PolicyDocument:
+        Statement:
+          - Action:
+              - s3:GetReplicationConfiguration
+              - s3:ListBucket
+            Effect: Allow
+            Resource: [ !Sub "arn:aws:s3:::${ACSContentStoreBucket}" ]
+          - Action:
+              - s3:GetObjectVersionForReplication
+              - s3:GetObjectVersionAcl
+            Effect: Allow
+            Resource: [ !Sub "arn:aws:s3:::${ACSContentStoreBucket}/*" ]
+          - Action:
+              - s3:ReplicateObject
+            Effect: Allow
+            Resource: [ !Sub "arn:aws:s3:::${ReplicationBucket}/*" ]
+          - Action:
+              - kms:Decrypt
+            Effect: Allow
+            Condition:
+              StringLike:
+                kms:ViaService: !Sub "s3.${AWS::Region}.amazonaws.com"
+                kms:EncryptionContext:aws:s3:arn: [ !Sub "arn:aws:s3:::${ACSContentStoreBucket}/*" ]
+            Resource: [  !GetAtt ContentStoreKMSKey.Arn ]
+          - Action:
+              - kms:Encrypt
+            Effect: Allow
+            Condition:
+              StringLike:
+                kms:ViaService: !Sub "s3.${ReplicationBucketRegion}.amazonaws.com"
+                kms:EncryptionContext:aws:s3:arn: [ !Sub "arn:aws:s3:::${ReplicationBucket}/*" ]
+            Resource: [  !Sub "${ReplicationBucketKMSEncryptionKey}" ]
+
+  EmptyBucketHandlerIamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - s3.amazonaws.com
+                - lambda.amazonaws.com
+                - events.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: EmptyBucketHandlerLoggingPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
+        - PolicyName: EmptyBucketReaderPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:DeleteBucket
+                  - s3:ListBucketVersions
+                  - s3:DeleteObject
+                  - s3:DeleteObjectVersion
+                  - s3:PutObject
+                Resource:
+                  - '*'
+
+  EmptyBucketLifeCycleHandler:
+    Type: AWS::Lambda::Function
+    DependsOn:
+      - EmptyBucketHandlerIamRole
+    Properties:
+      FunctionName: !Sub '${AWS::StackName}-ACS'
+      Description: 'A custom lambda function to empty a given s3 buckets and delete it'
+      Handler: org.alfresco.aws.lambda.handlers.cfn.EmptyS3Bucket
+      Code:
+        S3Bucket: !Ref TemplateBucketName
+        S3Key: !Sub "${TemplateBucketKeyPrefix}/lambdas/alfresco-lambda-empty-s3-bucket.jar"
+      MemorySize: 512
+      Role: !GetAtt EmptyBucketHandlerIamRole.Arn
+      Runtime: java8
+      Timeout: 180
+      Tags:
+        - Key: Product
+          Value: 'Alfresco Content Services'
+        - Key: Stack
+          Value: !Ref 'AWS::StackName'
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-ACS'
+
+  BucketCustomResource:
+    Type: Custom::EmptyContentStoreBucket
+    Properties:
+      ServiceToken: !GetAtt EmptyBucketLifeCycleHandler.Arn
+      BucketName: !Ref ACSContentStoreBucket
+
+  ContentStoreKMSKey:
+    Type: 'AWS::KMS::Key'
+    Properties:
+      Description: !Sub '${AWS::StackName} - A KMS master key to encrypt contents of S3 bucket'
+      KeyPolicy:
+        Version: '2012-10-17'
+        Id: '${AWS::StackName}-key'
+        Statement:
+          -
+            Sid: 'Allow administration of the key'
+            Effect: 'Allow'
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action:
+              - 'kms:Create*'
+              - 'kms:Describe*'
+              - 'kms:Enable*'
+              - 'kms:List*'
+              - 'kms:Put*'
+              - 'kms:Update*'
+              - 'kms:Revoke*'
+              - 'kms:Disable*'
+              - 'kms:Get*'
+              - 'kms:Delete*'
+              - 'kms:ScheduleKeyDeletion'
+              - 'kms:CancelKeyDeletion'
+            Resource: '*'
+          -
+            Sid: 'Allow use of the key'
+            Effect: 'Allow'
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action:
+              - 'kms:Encrypt'
+              - 'kms:Decrypt'
+              - 'kms:ReEncrypt*'
+              - 'kms:GenerateDataKey*'
+              - 'kms:DescribeKey'
+            Resource: '*'
+
+  NodeInstanceS3Policy:
+    Type: AWS::IAM::Policy
+    Properties: 
+      PolicyName: "Node-instance-s3-policy"
+      PolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - 
+            Effect: "Allow"
+            Action: 
+              - s3:DeleteObject
+              - s3:PutObject
+            Resource: 
+              Fn::Join: [
+                "",
+                [ 
+                  { "Fn::GetAtt" : "ACSContentStoreBucket.Arn" }, "/*" 
+                ]
+              ]
+      Roles: 
+        - 
+          Ref: NodeInstanceRole
+
+Outputs:
+  SubstackName:
+    Description: The S3 stack name
+    Value: !Sub "${AWS::StackName}" 
+  S3BucketName:
+    Description: The S3 bucket created
+    Value: !Ref ACSContentStoreBucket
+  S3BucketKMSKey:
+    Description: S3 bucket KMS encryption Key
+    Value: !Ref ContentStoreKMSKey
+  S3EmptyBucketLambda:
+    Description: S3 bucket Lambda for cleaning up the bucket before deletion
+    Value: !Ref EmptyBucketLifeCycleHandler
+  S3EmptyBucketLambdaRole:
+    Description: S3 bucket Lambda Role
+    Value: !Ref EmptyBucketHandlerIamRole
