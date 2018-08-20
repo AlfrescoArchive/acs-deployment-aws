@@ -4,16 +4,12 @@
     "ParameterValue": "@@AvailabilityZonesValue@@"
   },
   {
-    "ParameterKey": "RemoteAccessCIDR",
-    "ParameterValue": "@@RemoteAccessCIDRValue@@"
-  },
-  {
-    "ParameterKey": "EksExternalUserArn",
-    "ParameterValue": "@@EksExternalUserArn@@"
-  },
-  {
     "ParameterKey": "KeyPairName",
     "ParameterValue": "@@KeyPairNameValue@@"
+  },
+  {
+    "ParameterKey": "RemoteAccessCIDR",
+    "ParameterValue": "@@RemoteAccessCIDRValue@@"
   },
   {
     "ParameterKey": "TemplateBucketName",
@@ -24,20 +20,36 @@
     "ParameterValue": "@@TemplateBucketKeyPrefixValue@@"
   },
   {
+    "ParameterKey": "EksExternalUserArn",
+    "ParameterValue": "@@EksExternalUserArnValue@@"
+  },
+  {
+    "ParameterKey": "ElbCertArn",
+    "ParameterValue": "@@ElbCertArnValue@@"
+  },
+  {
+    "ParameterKey": "AcsExternalName",
+    "ParameterValue": "@@AcsExternalNameValue@@"
+  },
+  {
+    "ParameterKey": "Route53DnsZone",
+    "ParameterValue": "@@Route53DnsZoneValue@@"
+  },
+  {
     "ParameterKey": "UseCrossRegionReplication",
-    "ParameterValue": "@@UseCrossRegionReplication@@"
+    "ParameterValue": "@@UseCrossRegionReplicationValue@@"
   },
   {
     "ParameterKey": "ReplicationBucketRegion",
-    "ParameterValue": "@@ReplicationBucketRegion@@"
+    "ParameterValue": "@@ReplicationBucketRegionValue@@"
   },
   {
     "ParameterKey": "ReplicationBucket",
-    "ParameterValue": "@@ReplicationBucket@@"
+    "ParameterValue": "@@ReplicationBucketValue@@"
   },
   {
     "ParameterKey": "ReplicationBucketKMSEncryptionKey",
-    "ParameterValue": "@@ReplicationBucketKMSEncryptionKey@@"
+    "ParameterValue": "@@ReplicationBucketKMSEncryptionKeyValue@@"
   },
   {
     "ParameterKey": "RDSPassword",
