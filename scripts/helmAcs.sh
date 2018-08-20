@@ -12,13 +12,14 @@ usage() {
   echo -e "--efs-name \t Elastic File System name"
   echo -e "--namespace \t Namespace to install nginx-ingress"
   echo -e "--alfresco-password \t Alfresco admin password"
+  echo -e "--rds-endpoint \t RDS Endpoint for Aurora MySql connection"
   echo -e "--database-password \t Database password"
   echo -e "--external-name \t External host name of ACS"
   echo -e "--install \t Install a new ACS Helm chart"
   echo -e "--upgrade \t Upgrade an existing ACS Helm Chart"
 }
 
-if [ $# -lt 7 ]; then
+if [ $# -lt 8 ]; then
   usage
 else
   # extract options and their arguments into variables.
@@ -42,6 +43,10 @@ else
               ;;
           --alfresco-password)
               ALFRESCO_PASSWORD="$2";
+              shift 2
+              ;;
+          --rds-endpoint)
+              RDS_ENDPOINT="$2";
               shift 2
               ;;
           --database-password)
@@ -85,8 +90,14 @@ else
       --set alfresco-search.environment.SOLR_JAVA_MEM="-Xms2000M -Xmx2000M" \
       --set persistence.repository.data.subPath="$DESIREDNAMESPACE/alfresco-content-services/repository-data" \
       --set persistence.solr.data.subPath="$DESIREDNAMESPACE/alfresco-content-services/solr-data" \
-      --set postgresql.postgresPassword="$DATABASE_PASSWORD" \
       --set postgresql.persistence.subPath="$DESIREDNAMESPACE/alfresco-content-services/database-data" \
+      --set postgresql.enabled=false \
+      --set database.external=true \
+      --set database.driver="org.mariadb.jdbc.Driver" \
+      --set database.url="jdbc:mariadb://$RDS_ENDPOINT:3306/alfresco" \
+      --set database.password="$DATABASE_PASSWORD" \
+      --set repository.image.repository="quay.io/alfresco/alfresco-content-repository" \
+      --set repository.image.tag="6.0.0-AWS" \
       --namespace=$DESIREDNAMESPACE
   fi
 
