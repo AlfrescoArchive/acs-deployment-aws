@@ -24,21 +24,26 @@ Metadata:
             - MaxNumberOfBastionNodes
             - MinNumberOfBastionNodes
             - DesiredNumberOfBastionNodes
-            # - RDSEndpoint
-            # - RDSUsername
-            # - RDSPassword
         - Label:
             default: EKS Worker Nodes Stack Configuration
           Parameters:
+            - TemplateBucketName
+            - TemplateBucketKeyPrefix
             - NodeInstanceRole
             - NodeInstanceRoleArn
             - NodeInstanceType
+            - NodeSecurityGroup
             - MaxNumberOfNodes
             - MinNumberOfNodes
             - DesiredNumberOfNodes
             - EksExternalUserArn
+            - K8sNamespace
 
       ParameterLabels:
+        TemplateBucketName:
+          default: The name of the S3 bucket that holds the templates
+        TemplateBucketKeyPrefix:
+          default: The Key prefix for the templates in the S3 template bucket
         AvailabilityZones:
           default: The AZ's to deploy to
         NumberOfAZs:
@@ -52,9 +57,9 @@ Metadata:
         PrivateSubnet2ID:
           default: The ID of the second private subnet to deploy EKS Workers into
         PublicSubnet1ID:
-          default: The ID of the first public subet to deploy APS into
+          default: The ID of the first public subet to deploy EKS into
         PublicSubnet2ID:
-          default: The ID of the second public subnet to deploy APS into
+          default: The ID of the second public subnet to deploy EKS into
         EC2LogGroup:
           default: The bastion log group name
         KeyPairName:
@@ -75,26 +80,29 @@ Metadata:
           default: The AWS IAM Role ARN to be applied to the EKS Worker Nodes
         NodeInstanceType:
           default: The instance type to deploy EKS Worker Node to
+        NodeSecurityGroup:
+          default: The Security Group of EKS Worker nodes
         MaxNumberOfNodes:
           default: The maximum number of nodes to scale up to for EKS Worker Node
         MinNumberOfNodes:
           default: The minimum number of nodes to scale down to for EKS Worker Node
         DesiredNumberOfNodes:
           default: The desired number of nodes to keep running for EKS Worker Node
-        TemplateBucketName:
-          default: The name of the S3 bucket that holds the templates
-        TemplateBucketKeyPrefix:
-          default: The Key prefix for the templates in the S3 template bucket
         EksExternalUserArn:
           default: The AWS IAM user arn who will be authorised to connect the cluster externally
-        # RDSEndpoint:
-        #   default: The connection to the RDS
-        # RDSPassword:
-        #   default: RDS Password
-        # RDSUsername:
-        #   default: RDS User Name
+        K8sNamespace:
+          default: The namespace in EKS to deploy Helm charts
           
 Parameters:
+    TemplateBucketName:
+      AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
+      ConstraintDescription: "Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+      Description: "S3 bucket name that contains the CFN templates (VPC, Bastion etc). This string can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+      Type: "String"
+    TemplateBucketKeyPrefix:
+      AllowedPattern: "^[0-9a-zA-Z-/]*$"
+      ConstraintDescription: "Template bucket key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
+      Type: "String"
     NodeSecurityGroup:
       Description: "ID for the VPC, This will be used to get the node security group"
       Type: "AWS::EC2::SecurityGroup::Id"
@@ -126,7 +134,6 @@ Parameters:
       Type: "String"
     BastionInstanceType:
       Type: "String"
-      Default: "t2.micro"
       Description: "The type of EC2 instance to be launched for Bastion Host"
       AllowedValues:
         # Add more instance types if needed
@@ -138,12 +145,10 @@ Parameters:
       Type: "String"
       MinLength: 1
       Description: "The desired number of Bastion instance to run"
-      Default: 1
     MaxNumberOfBastionNodes:
       Type: "String"
       MinLength: 1
       Description: "The maximum number of Bastion instances to run"
-      Default: 1
     MinNumberOfBastionNodes:
       Type: "String"
       MinLength: 1
@@ -157,7 +162,6 @@ Parameters:
       Description: "The AWS IAM Role ARN to be applied to the EKS Worker Nodes"
     NodeInstanceType:
       Type: "String"
-      Default: "m5.xlarge"
       Description: "The type of EC2 instance to be launched for EKS Worker Node"
       AllowedValues:
         # Add more instance types if needed
@@ -170,44 +174,27 @@ Parameters:
         - m5.xlarge
         - m5.2xlarge
       ConstraintDescription: "Must contain a valid instance type"
+    NodeSecurityGroup:
+      Type: String
+      Description: The Security Group of EKS Worker nodes
     DesiredNumberOfNodes:
       Type: "String"
       MinLength: 1
       Description: "The desired number of EKS Worker Nodes to run"
-      Default: 1
     MaxNumberOfNodes:
       Type: "String"
       MinLength: 1
       Description: "The maximum number of EKS Worker Nodes to run"
-      Default: 1
     MinNumberOfNodes:
       Type: "String"
       MinLength: 1
       Description: "The minimum number of EKS Worker Nodes to run"
-      Default: 1
-    TemplateBucketName:
-      AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
-      ConstraintDescription: "Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
-      Description: "S3 bucket name that contains the CFN templates (VPC, Bastion etc). This string can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
-      Type: "String"
-    TemplateBucketKeyPrefix:
-      AllowedPattern: "^[0-9a-zA-Z-/]*$"
-      ConstraintDescription: "Template bucket key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
-      Type: "String"
     EksExternalUserArn:
       Type: String
       Description: The AWS IAM user arn who will be authorised to connect the cluster externally
-    # RDSEndpoint:
-    #   Type: String
-    #   Description: The connection to the RDS
-    # RDSPassword:
-    #   Description: Password for the Amazon RDS database
-    #   NoEcho: True
-    #   Type: String
-    # RDSUsername:
-    #   Default: alfresco
-    #   Description: User name for the Amazon RDS database
-    #   Type: String
+    K8sNamespace:
+      Type: String
+      Description: The namespace in EKS to deploy Helm charts
 
 Mappings:
   BastionAmiRegionMap:
@@ -444,7 +431,7 @@ Resources:
                     "  aws eks create-cluster --debug --region ", { Ref: "AWS::Region" },
                     " --name ", { Ref: "AWS::StackName" }, "-cluster",
                     " --role-arn ", { "Fn::GetAtt" : "EKSServiceRole.Arn" },
-                    " --resources-vpc-config subnetIds=", { Ref: PrivateSubnet1ID }, ",", { Ref: PrivateSubnet2ID },
+                    " --resources-vpc-config subnetIds=", { Ref: PrivateSubnet1ID }, ",", { Ref: PrivateSubnet2ID }, ",", { Ref: PublicSubnet1ID }, ",", { Ref: PublicSubnet2ID },
                     ",securityGroupIds=", { Ref: "ControlPlaneSecurityGroup" }, "\n",
                     "  if [ $? -ne 0 ]; then\n",
                     "    exit 1\n",
@@ -474,6 +461,12 @@ Resources:
                     "if [ $? -gt 0 ]; then\n",
                     "  echo tiller serviceaccount does not exist, applying...\n",
                     "  kubectl apply -f /tmp/helm-rbac-config.yaml\n",
+                    "fi\n",
+                    "echo Checking whether namespace exists...\n",
+                    "kubectl get namespace/", { Ref: "K8sNamespace" }, " -n ", { Ref: "K8sNamespace" }, " --no-headers --output=jsonpath={.metadata.name} &> /dev/null\n",
+                    "if [ $? -gt 0 ]; then\n",
+                    "  echo namespace does not exist, creating...\n",
+                    "  kubectl create namespace ", { Ref: "K8sNamespace" },  "\n",
                     "fi\n"
                   ]
                 ]
@@ -671,16 +664,6 @@ Resources:
       GroupDescription: Cluster communication with worker nodes
       VpcId: !Ref VPCID
 
-  # Worker nodes resources
-#  NodeSecurityGroup:
-#    Type: AWS::EC2::SecurityGroup
-#    Properties:
-#      GroupDescription: Security group for all nodes in the cluster
-#      VpcId: !Ref VPCID
-#      Tags:
-#      - Key: !Sub "kubernetes.io/cluster/${AWS::StackName}-cluster"
-#        Value: 'owned'
-
   NodeSecurityGroupIngress:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -771,6 +754,7 @@ Resources:
           packages:
             yum:
               awslogs: []
+              amazon-efs-utils: []
           files:
             '/etc/awslogs/awscli.conf':
               content: !Sub |
@@ -897,56 +881,13 @@ Resources:
               "sed -i s,CLIENT_CA_FILE,$CA_CERTIFICATE_FILE_PATH,g  /etc/systemd/system/kubelet.service" , "\n",
               "systemctl daemon-reload", "\n",
               "systemctl restart kubelet", "\n",
+              "yum install -y amazon-efs-utils awslog\n",
               "/opt/aws/bin/cfn-signal -e $? ",
               "         --stack ", { Ref: "AWS::StackName" },
               "         --resource NodeGroup ",
               "         --region ", { Ref: "AWS::Region" }, "\n"
             ]
           ]
-
-  # SSM documents to run helm commands on the bastion
-  HelmInitDocumentCommand:
-    Type: "AWS::SSM::Document"
-    Properties:
-      Content:
-        schemaVersion: "2.2"
-        description: Initialises helm
-        parameters: {}
-        mainSteps:
-          - action: aws:runShellScript
-            name: helmInit
-            inputs:
-              workingDirectory: "/root"
-              runCommand: 
-                - "export HOME=/root"
-                - "export KUBECONFIG=/home/ec2-user/.kube/config"
-                - "helm init --service-account tiller"
-                - "helm repo add alfresco-incubator http://kubernetes-charts.alfresco.com/incubator"
-                - "helm repo add alfresco-stable http://kubernetes-charts.alfresco.com/stable"
-              timeoutSeconds: 30
-      DocumentType: Command
-
-  HelmInstallDocumentCommand:
-    Type: "AWS::SSM::Document"
-    Properties:
-      Content:
-        schemaVersion: "2.2"
-        description: Installs a helm chart
-        parameters:
-          chartName:
-            type: String
-            description: (Required) The name of the chart to install
-        mainSteps:
-          - action: aws:runShellScript
-            name: helmInstall
-            inputs:
-              workingDirectory: "/root"
-              runCommand: 
-                - "export HOME=/root"
-                - "export KUBECONFIG=/home/ec2-user/.kube/config"
-                - "helm install {{ chartName }}"
-              timeoutSeconds: 30
-      DocumentType: Command
 
   EksHelperLambdaRole:
     Type: AWS::IAM::Role
@@ -991,32 +932,28 @@ Resources:
                 Action:
                   - s3:GetObject
                 Resource:
-                  # Temporarily using a dedicated s3 bucket for storing lambda functions
-                  - "arn:aws:s3:::alfresco-acs-deployment-aws-lambdas"
-                  - "arn:aws:s3:::alfresco-acs-deployment-aws-lambdas/eks-helper-lambda/*"
+                  - !Sub "arn:aws:s3:::${TemplateBucketName}"
+                  - !Sub "arn:aws:s3:::${TemplateBucketName}/${TemplateBucketKeyPrefix}/lambdas/eks-helper-lambda.zip"
 
   EksHelperLambda:
     Type: AWS::Lambda::Function
-    DependsOn:
-      - NodeLaunchConfig
     Properties:
       Code:
         S3Bucket: !Ref TemplateBucketName
         S3Key: !Sub "${TemplateBucketKeyPrefix}/lambdas/eks-helper-lambda.zip"
-      Environment:
-        Variables:
-          EKS_NAME: !Join ["-", [ !Ref "AWS::StackName", "cluster"]]
-      Handler: eksHelperLambda.lambda_handler
+      Handler: eksHelperLambda.handler
       Role: !GetAtt EksHelperLambdaRole.Arn
       Runtime: python2.7
       Timeout: 60
       FunctionName: !Ref "AWS::StackName"
       Description: "A custom resource to manage EKS Cluster used for deploying ACS"    
+
   EksHelperLambdaCustomResource:
     Type: Custom::EksHelper
+    DependsOn: BastionAutoScalingGroup
     Properties:
       ServiceToken: !GetAtt EksHelperLambda.Arn
-      EKS_NAME: !Join ["-", [ !Ref "AWS::StackName", "cluster"]]
+      EKSName: !Join ["-", [ !Ref "AWS::StackName", "cluster"]]
 
 Outputs:
   SubstackName:
@@ -1049,8 +986,7 @@ Outputs:
   EksEndpoint:
     Description: EKS Cluster endpoint
     Value: !GetAtt EksHelperLambdaCustomResource.endpoint
-  EksCertAuthority:
-    Description: EKS Cluster endpoint certificate authority
-    Value: !GetAtt EksHelperLambdaCustomResource.certificateAuthority
+  EksServiceRoleArn:
+    Value: !GetAtt EKSServiceRole.Arn
   EksServiceRoleArn:
     Value: !GetAtt EKSServiceRole.Arn

@@ -9,25 +9,25 @@ Metadata:
             default: EFS Stack Configuration
           Parameters:
             - SecurityGroup
-            - PrivateSubnet1
-            - PrivateSubnet2
+            - PrivateSubnet1ID
+            - PrivateSubnet2ID
 
       ParameterLabels:
         SecurityGroup:
           default: The Security Group ID to use for EFS
-        PrivateSubnet1:
+        PrivateSubnet1ID:
           default: The ID of Private Subnet 1
-        PrivateSubnet2:
+        PrivateSubnet2ID:
           default: The ID of Private Subnet 2
 
 Parameters:
     SecurityGroup:
       Description: "ID for the VPC, This will be used to get the default security group"
       Type: "AWS::EC2::SecurityGroup::Id"
-    PrivateSubnet1:
+    PrivateSubnet1ID:
       Description: "ID of Private Subnet 1"
       Type: "AWS::EC2::Subnet::Id"   
-    PrivateSubnet2:
+    PrivateSubnet2ID:
       Description: "ID of Private Subnet 2"
       Type: "AWS::EC2::Subnet::Id"
 
@@ -47,7 +47,7 @@ Resources:
       FileSystemId: !Ref Filesystem
       SecurityGroups:
         - !Ref SecurityGroup
-      SubnetId: !Ref PrivateSubnet1
+      SubnetId: !Ref PrivateSubnet1ID
 
   MountTarget2:
     Type: AWS::EFS::MountTarget
@@ -55,7 +55,7 @@ Resources:
       FileSystemId: !Ref Filesystem
       SecurityGroups:
         - !Ref SecurityGroup
-      SubnetId: !Ref PrivateSubnet2
+      SubnetId: !Ref PrivateSubnet2ID
 
   NFSIngressRule:
     Type: AWS::EC2::SecurityGroupIngress
@@ -70,8 +70,10 @@ Resources:
 Outputs:
   SubstackName:
     Value: !Sub "${AWS::StackName}" 
-  EFSName:
+  EFSId:
     Value: !Ref Filesystem
+  EFSName:
+    Value: !Sub "${Filesystem}.efs.${AWS::Region}.amazonaws.com"
   MountTargets:
     Value: !Join
       - ","

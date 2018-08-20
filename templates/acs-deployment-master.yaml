@@ -28,6 +28,7 @@ Metadata:
             - MinNumberOfNodes
             - DesiredNumberOfNodes
             - EksExternalUserArn
+            - K8sNamespace
         - Label:
             default: S3 Bucket Stack for storing ACS content store
           Parameters:
@@ -43,6 +44,21 @@ Metadata:
             - RDSDBName
             - RDSUsername
             - RDSPassword
+        - Label:
+            default: ACS Stack Configuration
+          Parameters:
+            - TemplateBucketName
+            - TemplateBucketKeyPrefix
+            - K8sNamespace
+            - ElbCertArn
+            - ElbCertPolicy
+            - AcsExternalName
+            - NginxIngressVersion
+            - IngressReleaseName
+            - AcsReleaseName
+            - AlfrescoPassword
+            - DatabasePassword
+            - Route53DnsZone
 
       ParameterLabels:
         AvailabilityZones:
@@ -95,6 +111,26 @@ Metadata:
           default: The Key prefix for the templates in the S3 template bucket
         EksExternalUserArn:
           default: The AWS IAM user arn who will be authorised to connect the cluster externally
+        K8sNamespace:
+          default: The namespace in EKS to deploy Helm charts
+        ElbCertArn:
+          default: The ACS SSL Certificate arn to use with ELB
+        ElbCertPolicy:
+          default: The ACS SSL Certificate policy to use with ELB
+        AcsExternalName:
+          default: The ACS external endpoint name
+        NginxIngressVersion:
+          default: The nginx-ingress chart version
+        AlfrescoPassword:
+          default: The Admin password for Alfresco
+        DatabasePassword:
+          default: The Database password for Alfresco
+        IngressReleaseName:
+          default: The helm chart release name of nginx-ingress
+        AcsReleaseName:
+          default: The helm chart release name of alfresco content services
+        Route53DnsZone:
+          default: The hosted zone to create Route53 Record for ACS
         UseCrossRegionReplication:
           default: Enable Cross Region Replication for This Bucket
         ReplicationBucketRegion:
@@ -156,34 +192,6 @@ Parameters:
     RDSDBName:
       Default: alfresco
       Description: DB name for the Amazon RDS Aurora database (MySQL if non-Amazon Aurora region).
-      Type: String
-    RDSInstanceType:
-      AllowedValues:
-        - "db.r3.large"
-        - "db.r3.xlarge"
-        - "db.r3.2xlarge"
-        - "db.r3.4xlarge"
-        - "db.r3.8xlarge"
-        - "db.r4.large"
-        - "db.r4.2xlarge"
-        - "db.r4.8xlarge"
-        - "db.r4.xlarge"
-        - "db.r4.16xlarge"
-      ConstraintDescription: Must contain valid RDS instance type
-      Default: db.r4.xlarge
-      Description: EC2 instance type for the Amazon RDS instances
-      Type: String
-    RDSPassword:
-      Description: Password for the Amazon RDS database
-      NoEcho: True
-      Type: String
-    RDSUsername:
-      Default: alfresco
-      Description: User name for the Amazon RDS database
-      Type: String
-    RDSAllocatedStorage:
-      Default: 5
-      Description: Size in GiB for the Amazon RDS MySQL database allocated storage (only non-Amazon Aurora region)
       Type: String
     RDSInstanceType:
       AllowedValues:
@@ -280,24 +288,59 @@ Parameters:
       Default: "aws/vpc/latest"
       Description: "S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
       Type: "String"
-    RDSPassword:
-      Description: Password for the Amazon RDS database
-      NoEcho: True
-      Type: String
-      MinLength: 8
-      ConstraintDescription: Minimum 8 characters
     TemplateBucketName:
       AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
       ConstraintDescription: "Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
       Description: "S3 bucket name that contains the CFN templates (VPC, Bastion etc). This string can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
       Type: "String"
+      Default: "alfresco-cs-enterprise-helm-eks"
     TemplateBucketKeyPrefix:
       AllowedPattern: "^[0-9a-zA-Z-/]*$"
       ConstraintDescription: "Template bucket key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
       Type: "String"
+      Default: "development"
     EksExternalUserArn:
       Type: String
       Description: The AWS IAM user arn who will be authorised to connect the cluster externally
+    K8sNamespace:
+      Type: String
+      Description: The namespace in EKS to deploy Helm charts
+      Default: "acs-deployment"
+    ElbCertArn:
+      Type: String
+      Description: The ACS SSL Certificate arn to use with ELB
+    ElbCertPolicy:
+      Type: String
+      Description: The ACS SSL Certificate policy to use with ELB
+      Default: "ELBSecurityPolicy-TLS-1-2-2017-01"
+    AcsExternalName:
+      Type: String
+      Description: The ACS external endpoint name
+    NginxIngressVersion:
+      Type: String
+      Description: The nginx-ingress chart version
+      Default: "0.14.0"
+    IngressReleaseName:
+      Type: String
+      Description: The helm chart release name of nginx-ingress
+      Default: "alfresco"
+    AcsReleaseName:
+      Type: String
+      Description: The helm chart release name of alfresco content services
+      Default: "enterprise"
+    AlfrescoPassword:
+      Type: String
+      Description: The Admin password for Alfresco
+      NoEcho: True
+      Default: "admin"
+    DatabasePassword:
+      Type: String
+      Description: The Database password for Alfresco
+      NoEcho: True
+      Default: "admin"
+    Route53DnsZone:
+      Type: String
+      Description: The hosted zone to create Route53 Record for ACS
     UseCrossRegionReplication:
       Description: "Set to true if you want to add an S3 Bucket for replication"
       Type: String
@@ -390,8 +433,29 @@ Resources:
         GroupDescription: Security group for all nodes in the cluster
         VpcId: !GetAtt VPCStack.Outputs.VPCID
         Tags:
-        - Key: !Sub "kubernetes.io/cluster/${AWS::StackName}-cluster"
-          Value: 'owned'
+          - Key: Name
+            Value: !Sub "${AWS::StackName}" 
+          - Key: Component
+            Value: ACS-NodeSG
+          - Key: !Sub "kubernetes.io/cluster/${AWS::StackName}-cluster"
+            Value: 'owned'
+
+    EFSStack:
+      Type: AWS::CloudFormation::Stack
+      DependsOn:
+        - VPCStack
+        - NodeSecurityGroup
+      Properties:
+        Tags:
+          - Key: Name
+            Value: !Sub "${AWS::StackName}" 
+          - Key: Component
+            Value: ACS-EFS 
+        TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/templates/efs.yaml"
+        Parameters:
+          PrivateSubnet1ID: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
+          PrivateSubnet2ID: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
+          SecurityGroup: !Ref NodeSecurityGroup
 
     BastionAndEksClusterStack:
       Type: AWS::CloudFormation::Stack
@@ -403,8 +467,8 @@ Resources:
           - Key: Name
             Value: !Sub "${AWS::StackName}"
           - Key: Component
-            Value: ACS-Bastion
-        TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/bastion-and-eks-cluster.yaml"
+            Value: ACS-Bastion 
+        TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/templates/bastion-and-eks-cluster.yaml"
         Parameters:
           # Bastion stack params
           KeyPairName: !Ref KeyPairName
@@ -419,38 +483,19 @@ Resources:
           MinNumberOfBastionNodes: !Ref MinNumberOfBastionNodes
           DesiredNumberOfBastionNodes: !Ref DesiredNumberOfBastionNodes
           # EKS Worker Node stack params
+          TemplateBucketName: !Ref TemplateBucketName
+          TemplateBucketKeyPrefix: !Ref TemplateBucketKeyPrefix
           EC2LogGroup: !Ref EC2LogGroup
           NodeSecurityGroup: !Ref NodeSecurityGroup
           NodeInstanceRole: !Ref NodeInstanceRole
           NodeInstanceRoleArn: !GetAtt NodeInstanceRole.Arn
           NodeInstanceType: !Ref NodeInstanceType
+          NodeSecurityGroup: !Ref NodeSecurityGroup
           MaxNumberOfNodes: !Ref MaxNumberOfNodes
           MinNumberOfNodes: !Ref MinNumberOfNodes
           DesiredNumberOfNodes: !Ref DesiredNumberOfNodes
-          TemplateBucketName: !Ref TemplateBucketName
-          TemplateBucketKeyPrefix: !Ref TemplateBucketKeyPrefix
           EksExternalUserArn: !Ref EksExternalUserArn
-          # Removed indirect dependency to RDS Stack Untill the helm stack gets created
-          # RDSUsername: !Ref RDSUsername
-          # RDSPassword: !Ref RDSPassword
-          # RDSEndpoint: !GetAtt RDSStack.Outputs.Endpoint
-
-    EFSStack:
-      Type: AWS::CloudFormation::Stack
-      DependsOn:
-        - VPCStack
-        - NodeSecurityGroup
-      Properties:
-        Tags:
-          - Key: Name
-            Value: !Sub "${AWS::StackName}"
-          - Key: Component
-            Value: ACS-EFS
-        TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/efs.yaml"
-        Parameters:
-          PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
-          PrivateSubnet2: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
-          SecurityGroup: !Ref NodeSecurityGroup
+          K8sNamespace: !Ref K8sNamespace
 
     RDSStack:
       Type: AWS::CloudFormation::Stack
@@ -462,7 +507,7 @@ Resources:
             Value: !Sub "${AWS::StackName}"
           - Key: Component
             Value: ACS-RDS
-        TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/rds.yaml"
+        TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/templates/rds.yaml"
         Parameters:
           PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
           PrivateSubnet2: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
@@ -480,7 +525,7 @@ Resources:
             Value: !Sub "${AWS::StackName}" 
           - Key: Component
             Value: ACS-S3
-        TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/s3-bucket.yaml"
+        TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/templates/s3-bucket.yaml"
         Parameters:
           TemplateBucketName: !Ref TemplateBucketName
           TemplateBucketKeyPrefix: !Ref TemplateBucketKeyPrefix
@@ -489,9 +534,46 @@ Resources:
           ReplicationBucket: !Ref ReplicationBucket
           ReplicationBucketKMSEncryptionKey: !Ref ReplicationBucketKMSEncryptionKey
           NodeInstanceRole: !Ref NodeInstanceRole
+    
+    ACSStack:
+      Type: AWS::CloudFormation::Stack
+      DependsOn:
+        - EFSStack
+        - BastionAndEksClusterStack
+        - RDSStack
+        - S3Stack
+      Properties:
+        Tags:
+          - Key: Name
+            Value: !Sub "${AWS::StackName}"
+          - Key: Component
+            Value: ACS-Main 
+        TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/templates/acs.yaml"
+        Parameters:
+          TemplateBucketName: !Ref TemplateBucketName
+          TemplateBucketKeyPrefix: !Ref TemplateBucketKeyPrefix
+          EFSName: !GetAtt EFSStack.Outputs.EFSName
+          EKSName: !GetAtt BastionAndEksClusterStack.Outputs.EksClusterName
+          BastionAutoScalingGroup: !GetAtt BastionAndEksClusterStack.Outputs.BastionAutoScalingGroup
+          VPCID: !GetAtt VPCStack.Outputs.VPCID
+          NodeSecurityGroup: !Ref NodeSecurityGroup
+          K8sNamespace: !Ref K8sNamespace
+          ElbCertArn: !Ref ElbCertArn
+          ElbCertPolicy: !Ref ElbCertPolicy
+          AcsExternalName: !Ref AcsExternalName
+          NginxIngressVersion: !Ref NginxIngressVersion
+          AlfrescoPassword: !Ref AlfrescoPassword
+          DatabasePassword: !Ref DatabasePassword
+          IngressReleaseName: !Ref IngressReleaseName
+          AcsReleaseName: !Ref AcsReleaseName
+          Route53DnsZone: !Ref Route53DnsZone
+          # Removed indirect dependency to RDS Stack Untill the helm stack gets created
+          # RDSUsername: !Ref RDSUsername
+          # RDSPassword: !Ref RDSPassword
+          # RDSEndpoint: !GetAtt RDSStack.Outputs.Endpoint
+
 
 Outputs:
-
   # VPC stack
   VPCID: 
     Value: !GetAtt VPCStack.Outputs.VPCID
@@ -523,8 +605,6 @@ Outputs:
     Value: !GetAtt BastionAndEksClusterStack.Outputs.EksClusterName
   EksEndpoint:
     Value: !GetAtt BastionAndEksClusterStack.Outputs.EksEndpoint
-  EksCertAuthority:
-    Value: !GetAtt BastionAndEksClusterStack.Outputs.EksCertAuthority
   EksServiceRoleArn:
     Value: !GetAtt BastionAndEksClusterStack.Outputs.EksServiceRoleArn
   NodeInstanceRoleArn:
@@ -557,3 +637,11 @@ Outputs:
     Value: !GetAtt RDSStack.Outputs.SubstackName
   RDSEndPoint:
     Value: !GetAtt RDSStack.Outputs.Endpoint
+
+  # ACS Stack
+  AcsElbEndpoint:
+    Description: Alfresco Content Services Elb Address
+    Value: !GetAtt ACSStack.Outputs.AcsElbEndpoint
+  AcsDnsEndpoint:
+    Description: Alfresco Content Services Elb Address
+    Value: !GetAtt ACSStack.Outputs.AcsDnsEndpoint
