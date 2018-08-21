@@ -94,7 +94,7 @@ else
       --set postgresql.enabled=false \
       --set database.external=true \
       --set database.driver="org.mariadb.jdbc.Driver" \
-      --set database.url="jdbc:mariadb://$RDS_ENDPOINT:3306/alfresco" \
+      --set database.url="jdbc:mariadb://$RDS_ENDPOINT:3306/alfresco?useUnicode=yes&characterEncoding=UTF-8" \
       --set database.password="$DATABASE_PASSWORD" \
       --set repository.image.repository="quay.io/alfresco/alfresco-content-repository" \
       --set repository.image.tag="6.0.0-AWS" \
@@ -113,7 +113,7 @@ else
       --set alfresco-infrastructure.persistence.efs.dns="$EFS_NAME" \
       --set alfresco-search.resources.requests.memory="2500Mi",alfresco-search.resources.limits.memory="2500Mi" \
       --set alfresco-search.environment.SOLR_JAVA_MEM="-Xms2000M -Xmx2000M" \
-      --set postgresql.postgresPassword="$DATABASE_PASSWORD" \
+      --set database.password="$DATABASE_PASSWORD" \
       --namespace=$DESIREDNAMESPACE
   fi
 

@@ -134,7 +134,6 @@ Resources:
       DBInstanceClass: !Ref RDSInstanceType
       VPCSecurityGroups:
         - !Ref RDSSecurityGroup
-      DBSubnetGroupName: !Ref RDSDBSubnetGroup
     DeletionPolicy: Snapshot
 
   RDSDBCluster:

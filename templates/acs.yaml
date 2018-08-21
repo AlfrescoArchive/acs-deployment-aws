@@ -270,7 +270,6 @@ Resources:
                   \ --acs-release ${AcsReleaseName}\
                   \ --efs-name ${EFSName}\
                   \ --namespace ${K8sNamespace}\
-                  \ --rds-endpoint ${RDSEndpoint}\
                   \ --alfresco-password ${AlfrescoPassword}\
                   \ --database-password ${DatabasePassword}\
                   \ --external-name ${AcsExternalName}\
