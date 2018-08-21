@@ -44,6 +44,18 @@ else
     sleep 1
     CONTROLLER=$(kubectl get pods -l app=nginx-ingress,component=controller --namespace $DESIREDNAMESPACE -o jsonpath={.items..phase})
   done
+
+  # Double check the ELBADDRESS is not empty to eliminate race situation.
+  ELBADDRESS=$(kubectl get services $INGRESS_RELEASE-nginx-ingress-controller --namespace=$DESIREDNAMESPACE -o jsonpath={.status.loadBalancer.ingress[0].hostname})
+  if [ -z "$ELBADDRESS" ]; then
+    ELBADDRESS=$(kubectl get services $INGRESS_RELEASE-nginx-ingress-controller --namespace=$DESIREDNAMESPACE -o jsonpath={.status.loadBalancer.ingress[0].hostname})
+    while [ -z "$ELBADDRESS" ]; do
+      sleep 1
+      ELBADDRESS=$(kubectl get services $INGRESS_RELEASE-nginx-ingress-controller --namespace=$DESIREDNAMESPACE -o jsonpath={.status.loadBalancer.ingress[0].hostname})
+    done
+  fi
+  
   ELBADDRESS=$(kubectl get services $INGRESS_RELEASE-nginx-ingress-controller --namespace=$DESIREDNAMESPACE -o jsonpath={.status.loadBalancer.ingress[0].hostname})
   echo $ELBADDRESS
+
 fi
