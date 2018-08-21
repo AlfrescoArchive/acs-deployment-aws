@@ -986,6 +986,9 @@ Outputs:
   EksEndpoint:
     Description: EKS Cluster endpoint
     Value: !GetAtt EksHelperLambdaCustomResource.endpoint
+  EksCertAuthority:
+    Description: EKS Cluster endpoint certificate authority
+    Value: !GetAtt EksHelperLambdaCustomResource.certificateAuthority
   EksServiceRoleArn:
     Value: !GetAtt EKSServiceRole.Arn
   EksServiceRoleArn:

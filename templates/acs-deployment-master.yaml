@@ -605,6 +605,8 @@ Outputs:
     Value: !GetAtt BastionAndEksClusterStack.Outputs.EksClusterName
   EksEndpoint:
     Value: !GetAtt BastionAndEksClusterStack.Outputs.EksEndpoint
+  EksCertAuthority:
+    Value: !GetAtt BastionAndEksClusterStack.Outputs.EksCertAuthority
   EksServiceRoleArn:
     Value: !GetAtt BastionAndEksClusterStack.Outputs.EksServiceRoleArn
   NodeInstanceRoleArn:
