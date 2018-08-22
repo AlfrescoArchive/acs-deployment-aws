@@ -1,5 +1,18 @@
 K8sNamespace = attribute('K8sNamespace', default: 'acs-deployment', description: 'K8s Namespace')
 AcsReleaseName = attribute('AcsReleaseName', default: 'enterprise', description: 'K8s Release')
+AcsBaseDnsName = attribute('AcsBaseDnsName', default: 'enterprise', description: 'K8s Release')
+
+
+# Endpoints check
+
+describe command("acs-deployment-aws/inspec/controls/endpoints.sh https://#{AcsBaseDnsName}") do
+  its('stdout') { should match /Alfresco Endpoint is reachable/ }
+  its('exit_status') { should eq 0 }
+end
+
+describe http("https://#{AcsBaseDnsName}/share/page", open_timeout: 60, read_timeout: 60, ssl_verify: true) do
+  its('status') { should eq 200 }
+end
 
 # Custom inspec checks to determine various component status
 

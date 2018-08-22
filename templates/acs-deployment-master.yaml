@@ -642,8 +642,8 @@ Outputs:
 
   # ACS Stack
   AcsElbEndpoint:
-    Description: Alfresco Content Services Elb Address
     Value: !GetAtt ACSStack.Outputs.AcsElbEndpoint
+  AcsBaseDnsName: 
+    Value: !Ref AcsExternalName
   AcsDnsEndpoint:
-    Description: Alfresco Content Services Elb Address
     Value: !GetAtt ACSStack.Outputs.AcsDnsEndpoint
