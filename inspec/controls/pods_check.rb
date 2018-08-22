@@ -1,6 +1,6 @@
-K8sNamespace = attribute('K8sNamespace', default: 'acs-deployment', description: 'K8s Namespace')
-AcsReleaseName = attribute('AcsReleaseName', default: 'enterprise', description: 'K8s Release')
-AcsBaseDnsName = attribute('AcsBaseDnsName', default: 'enterprise', description: 'K8s Release')
+K8sNamespace = attribute('K8sNamespace', description: 'K8s Namespace')
+AcsReleaseName = attribute('AcsReleaseName', description: 'K8s Release')
+AcsBaseDnsName = attribute('AcsBaseDnsName', description: 'K8s Release')
 
 
 # Endpoints check
