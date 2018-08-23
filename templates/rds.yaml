@@ -126,7 +126,6 @@ Resources:
       MultiAZ: true
       DBSubnetGroupName: !Ref RDSDBSubnetGroup
       Engine: MySQL
-      EngineVersion: 5.7
       MasterUsername: !Ref RDSUsername
       MasterUserPassword: !Ref RDSPassword
       DBName: !Ref RDSDBName
@@ -147,8 +146,7 @@ Resources:
           Value: !Sub "${AWS::StackName}"
       MasterUsername: !Ref RDSUsername
       MasterUserPassword: !Ref RDSPassword
-      Engine: aurora
-      EngineVersion: 5.7
+      Engine: aurora-mysql
       DatabaseName: !Ref RDSDBName
       VpcSecurityGroupIds:
         - !Ref RDSSecurityGroup
@@ -162,8 +160,7 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-instance-1"
       DBSubnetGroupName: !Ref RDSDBSubnetGroup
-      Engine: aurora
-      EngineVersion: 5.7
+      Engine: aurora-mysql
       DBClusterIdentifier: !Ref RDSDBCluster
       PubliclyAccessible: false
       DBInstanceClass: !Ref RDSInstanceType
@@ -177,8 +174,7 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-instance-2"
       DBSubnetGroupName: !Ref RDSDBSubnetGroup
-      Engine: aurora
-      EngineVersion: 5.7
+      Engine: aurora-mysql
       DBClusterIdentifier: !Ref RDSDBCluster
       PubliclyAccessible: false
       DBInstanceClass: !Ref RDSInstanceType
