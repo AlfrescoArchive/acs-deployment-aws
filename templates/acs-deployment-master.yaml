@@ -647,3 +647,5 @@ Outputs:
     Value: !Ref AcsExternalName
   AcsDnsEndpoint:
     Value: !GetAtt ACSStack.Outputs.AcsDnsEndpoint
+  AcsReleaseName:
+    Value: !Ref AcsReleaseName
