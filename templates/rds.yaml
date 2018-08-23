@@ -146,7 +146,7 @@ Resources:
           Value: !Sub "${AWS::StackName}"
       MasterUsername: !Ref RDSUsername
       MasterUserPassword: !Ref RDSPassword
-      Engine: aurora-mysql
+      Engine: aurora
       DatabaseName: !Ref RDSDBName
       VpcSecurityGroupIds:
         - !Ref RDSSecurityGroup
@@ -160,7 +160,7 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-instance-1"
       DBSubnetGroupName: !Ref RDSDBSubnetGroup
-      Engine: aurora-mysql
+      Engine: aurora
       DBClusterIdentifier: !Ref RDSDBCluster
       PubliclyAccessible: false
       DBInstanceClass: !Ref RDSInstanceType
@@ -174,7 +174,7 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-instance-2"
       DBSubnetGroupName: !Ref RDSDBSubnetGroup
-      Engine: aurora-mysql
+      Engine: aurora
       DBClusterIdentifier: !Ref RDSDBCluster
       PubliclyAccessible: false
       DBInstanceClass: !Ref RDSInstanceType
