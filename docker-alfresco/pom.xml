@@ -11,7 +11,7 @@
         <image.registry>quay.io</image.registry>
         <alfresco.s3.version>2.2.0</alfresco.s3.version>
         <fabric8.version>3.5.37</fabric8.version>
-        <dependency.mariadb.version>2.0.1</dependency.mariadb.version>
+        <dependency.mariadb.version>2.2.6</dependency.mariadb.version>
     </properties>
 
     <dependencies>

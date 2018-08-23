@@ -90,7 +90,6 @@ else
       --set alfresco-search.environment.SOLR_JAVA_MEM="-Xms2000M -Xmx2000M" \
       --set persistence.repository.data.subPath="$DESIREDNAMESPACE/alfresco-content-services/repository-data" \
       --set persistence.solr.data.subPath="$DESIREDNAMESPACE/alfresco-content-services/solr-data" \
-      --set postgresql.persistence.subPath="$DESIREDNAMESPACE/alfresco-content-services/database-data" \
       --set postgresql.enabled=false \
       --set database.external=true \
       --set database.driver="org.mariadb.jdbc.Driver" \
