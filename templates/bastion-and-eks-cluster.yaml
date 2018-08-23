@@ -432,7 +432,7 @@ Resources:
                     " --name ", { Ref: "AWS::StackName" }, "-cluster",
                     " --role-arn ", { "Fn::GetAtt" : "EKSServiceRole.Arn" },
                     " --resources-vpc-config subnetIds=", { Ref: PrivateSubnet1ID }, ",", { Ref: PrivateSubnet2ID }, ",", { Ref: PublicSubnet1ID }, ",", { Ref: PublicSubnet2ID },
-                    ",securityGroupIds=", { Ref: "ControlPlaneSecurityGroup" }, ",", { Ref: "NodeSecurityGroup" }, "\n",
+                    ",securityGroupIds=", { Ref: "ControlPlaneSecurityGroup" }, "\n",
                     "  if [ $? -ne 0 ]; then\n",
                     "    exit 1\n",
                     "  fi\n",
