@@ -20,6 +20,7 @@ def handler(event, context):
             data = {}
             response = eks_client.describe_cluster( name=str(event['ResourceProperties']['EKSName']) )
             data['endpoint'] = str(response['cluster']['endpoint'])
+            data['certificateAuthority'] = str(response['cluster']['certificateAuthority']['data'])
             cfnresponse.send(event, context, cfnresponse.SUCCESS, data, physicalResourceId)
 
         if eventType == 'Delete':
