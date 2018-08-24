@@ -15,6 +15,7 @@ Metadata:
             - TemplateBucketName
             - TemplateBucketKeyPrefix
             - NodeInstanceRole
+            - NodeInstanceRoleArn
 
       ParameterLabels:
         UseCrossRegionReplication:
@@ -31,6 +32,8 @@ Metadata:
           default: The Key prefix for the templates in the S3 template bucket
         NodeInstanceRole:
           default: The AWS IAM Role to which the S3 bucket policy will be attached
+        NodeInstanceRoleArn:
+          default: The AWS IAM Role Arn to which the S3 bucket policy will be attached
 
 Parameters:
     UseCrossRegionReplication:
@@ -64,6 +67,9 @@ Parameters:
     NodeInstanceRole:
       Type: "String"
       Description: "The AWS IAM Role to which the S3 bucket policy will be attached"
+    NodeInstanceRoleArn:
+      Type: "String"
+      Description: "The AWS IAM Role ARN to which the S3 bucket policy will be attached"
 
 Conditions:
   CRRenabled: !Equals [ !Ref UseCrossRegionReplication, "true" ]
@@ -262,6 +268,24 @@ Resources:
               - 'kms:GenerateDataKey*'
               - 'kms:DescribeKey'
             Resource: '*'
+          -
+            Sid: 'Allow use of the key'
+            Effect: 'Allow'
+            Principal:
+              AWS: !Ref NodeInstanceRoleArn
+            Action:
+              - 'kms:Encrypt'
+              - 'kms:Decrypt'
+              - 'kms:ReEncrypt*'
+              - 'kms:GenerateDataKey*'
+              - 'kms:DescribeKey'
+            Resource: '*'
+
+  ContentStoreKMSAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub 'alias/${AWS::StackName}'
+      TargetKeyId: !Ref ContentStoreKMSKey
 
   NodeInstanceS3Policy:
     Type: AWS::IAM::Policy
@@ -275,11 +299,12 @@ Resources:
             Action: 
               - s3:DeleteObject
               - s3:PutObject
+              - s3:GetObject
             Resource: 
               Fn::Join: [
                 "",
                 [ 
-                  { "Fn::GetAtt" : "ACSContentStoreBucket.Arn" }, "/*" 
+                  { "Fn::GetAtt" : "ACSContentStoreBucket.Arn" }, "/*"
                 ]
               ]
       Roles: 
@@ -293,9 +318,9 @@ Outputs:
   S3BucketName:
     Description: The S3 bucket created
     Value: !Ref ACSContentStoreBucket
-  S3BucketKMSKey:
-    Description: S3 bucket KMS encryption Key
-    Value: !Ref ContentStoreKMSKey
+  S3BucketKMSAlias:
+    Description: S3 bucket KMS key Alias
+    Value: !Ref ContentStoreKMSAlias
   S3EmptyBucketLambda:
     Description: S3 bucket Lambda for cleaning up the bucket before deletion
     Value: !Ref EmptyBucketLifeCycleHandler
