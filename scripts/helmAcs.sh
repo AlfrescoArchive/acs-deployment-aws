@@ -120,6 +120,7 @@ kubectl create -f secret.yaml
       --set database.external=true \
       --set database.driver="org.mariadb.jdbc.Driver" \
       --set database.url="'jdbc:mariadb:aurora//$RDS_ENDPOINT:3306/alfresco?useUnicode=yes&characterEncoding=UTF-8'" \
+      --set database.user="alfresco" \
       --set database.password="$DATABASE_PASSWORD" \
       --set persistence.repository.enabled=false \
       --set s3connector.enabled=true \
