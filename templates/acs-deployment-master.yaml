@@ -601,6 +601,8 @@ Outputs:
     Value: !GetAtt BastionAndEksClusterStack.Outputs.EksClusterName
   EksEndpoint:
     Value: !GetAtt BastionAndEksClusterStack.Outputs.EksEndpoint
+  EksCertAuthority:
+    Value: !GetAtt BastionAndEksClusterStack.Outputs.EksCertAuthority
   EksServiceRoleArn:
     Value: !GetAtt BastionAndEksClusterStack.Outputs.EksServiceRoleArn
   NodeInstanceRoleArn:
@@ -636,8 +638,10 @@ Outputs:
 
   # ACS Stack
   AcsElbEndpoint:
-    Description: Alfresco Content Services Elb Address
     Value: !GetAtt ACSStack.Outputs.AcsElbEndpoint
+  AcsBaseDnsName: 
+    Value: !Ref AcsExternalName
   AcsDnsEndpoint:
-    Description: Alfresco Content Services Elb Address
     Value: !GetAtt ACSStack.Outputs.AcsDnsEndpoint
+  AcsReleaseName:
+    Value: !Ref AcsReleaseName
