@@ -58,6 +58,7 @@ Metadata:
             - AcsReleaseName
             - AlfrescoPassword
             - DatabasePassword
+            - RegistryCredentials
             - Route53DnsZone
 
       ParameterLabels:
@@ -125,6 +126,8 @@ Metadata:
           default: The Admin password for Alfresco
         DatabasePassword:
           default: The Database password for Alfresco
+        RegistryCredentials:
+          default: Private Registry Credentials. Base64 encryption of dockerconfig json.
         IngressReleaseName:
           default: The helm chart release name of nginx-ingress
         AcsReleaseName:
@@ -338,6 +341,11 @@ Parameters:
       Description: The Database password for Alfresco
       NoEcho: True
       Default: "admin"
+    RegistryCredentials:
+      Type: String
+      Description: The private registry credentials base64
+      NoEcho: True
+      Default: false
     Route53DnsZone:
       Type: String
       Description: The hosted zone to create Route53 Record for ACS
@@ -534,6 +542,7 @@ Resources:
           ReplicationBucket: !Ref ReplicationBucket
           ReplicationBucketKMSEncryptionKey: !Ref ReplicationBucketKMSEncryptionKey
           NodeInstanceRole: !Ref NodeInstanceRole
+          NodeInstanceRoleArn: !GetAtt NodeInstanceRole.Arn
     
     ACSStack:
       Type: AWS::CloudFormation::Stack
@@ -553,6 +562,8 @@ Resources:
           TemplateBucketName: !Ref TemplateBucketName
           TemplateBucketKeyPrefix: !Ref TemplateBucketKeyPrefix
           EFSName: !GetAtt EFSStack.Outputs.EFSName
+          S3BucketName: !GetAtt S3Stack.Outputs.S3BucketName
+          S3BucketKMSAlias: !GetAtt S3Stack.Outputs.S3BucketKMSAlias
           EKSName: !GetAtt BastionAndEksClusterStack.Outputs.EksClusterName
           BastionAutoScalingGroup: !GetAtt BastionAndEksClusterStack.Outputs.BastionAutoScalingGroup
           VPCID: !GetAtt VPCStack.Outputs.VPCID
@@ -564,6 +575,7 @@ Resources:
           NginxIngressVersion: !Ref NginxIngressVersion
           AlfrescoPassword: !Ref AlfrescoPassword
           DatabasePassword: !Ref DatabasePassword
+          RegistryCredentials: !Ref RegistryCredentials
           IngressReleaseName: !Ref IngressReleaseName
           AcsReleaseName: !Ref AcsReleaseName
           Route53DnsZone: !Ref Route53DnsZone
@@ -571,7 +583,6 @@ Resources:
           # RDSUsername: !Ref RDSUsername
           # RDSPassword: !Ref RDSPassword
           # RDSEndpoint: !GetAtt RDSStack.Outputs.Endpoint
-
 
 Outputs:
   # VPC stack
@@ -627,8 +638,8 @@ Outputs:
     Value: !GetAtt S3Stack.Outputs.SubstackName
   S3BucketName:
     Value: !GetAtt S3Stack.Outputs.S3BucketName
-  S3BucketKMSKey:
-    Value: !GetAtt S3Stack.Outputs.S3BucketKMSKey
+  S3BucketKMSAlias:
+    Value: !GetAtt S3Stack.Outputs.S3BucketKMSAlias
   S3EmptyBucketLambda:
     Value: !GetAtt S3Stack.Outputs.S3EmptyBucketLambda
   S3EmptyBucketLambdaRole:

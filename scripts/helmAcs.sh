@@ -14,11 +14,12 @@ usage() {
   echo -e "--alfresco-password \t Alfresco admin password"
   echo -e "--database-password \t Database password"
   echo -e "--external-name \t External host name of ACS"
+  echo -e "--registry-secret \t Base64 dockerconfig.json string to private registry"
   echo -e "--install \t Install a new ACS Helm chart"
   echo -e "--upgrade \t Upgrade an existing ACS Helm Chart"
 }
 
-if [ $# -lt 7 ]; then
+if [ $# -lt 11 ]; then
   usage
 else
   # extract options and their arguments into variables.
@@ -36,6 +37,18 @@ else
               EFS_NAME="$2";
               shift 2
               ;;
+          --s3bucket-name)
+              S3BUCKET_NAME="$2";
+              shift 2
+              ;;
+          --s3bucket-kms-alias)
+              S3BUCKET_KMS_ALIAS="$2";
+              shift 2
+              ;;
+          --s3bucket-location)
+              S3BUCKET_LOCATION="$2";
+              shift 2
+              ;;
           --namespace)
               DESIREDNAMESPACE="$2";
               shift 2
@@ -50,6 +63,10 @@ else
               ;;
           --external-name)
               EXTERNAL_NAME="$2";
+              shift 2
+              ;;
+          --registry-secret)
+              REGISTRYCREDENTIALS="$2";
               shift 2
               ;;
           --install)
@@ -69,6 +86,16 @@ else
       esac
   done
 
+echo "apiVersion: v1
+kind: Secret
+metadata:
+  name: quay-registry-secret
+  namespace: $DESIREDNAMESPACE
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: $REGISTRYCREDENTIALS" >> secret.yaml
+kubectl create -f secret.yaml
+
   ALFRESCO_PASSWORD=$(printf %s $ALFRESCO_PASSWORD | iconv -t utf16le | openssl md4| awk '{ print $2}')
 
   if [ "$INSTALL" = "true" ]; then
@@ -83,10 +110,18 @@ else
       --set alfresco-infrastructure.persistence.efs.dns="$EFS_NAME" \
       --set alfresco-search.resources.requests.memory="2500Mi",alfresco-search.resources.limits.memory="2500Mi" \
       --set alfresco-search.environment.SOLR_JAVA_MEM="-Xms2000M -Xmx2000M" \
-      --set persistence.repository.data.subPath="$DESIREDNAMESPACE/alfresco-content-services/repository-data" \
       --set persistence.solr.data.subPath="$DESIREDNAMESPACE/alfresco-content-services/solr-data" \
       --set postgresql.postgresPassword="$DATABASE_PASSWORD" \
       --set postgresql.persistence.subPath="$DESIREDNAMESPACE/alfresco-content-services/database-data" \
+      --set persistence.repository.enabled=false \
+      --set s3connector.enabled=true \
+      --set s3connector.config.bucketName="$S3BUCKET_NAME" \
+      --set s3connector.config.bucketLocation="$S3BUCKET_LOCATION" \
+      --set s3connector.secrets.encryption=kms \
+      --set s3connector.secrets.awsKmsKeyId="$S3BUCKET_KMS_ALIAS" \
+      --set repository.image.repository="quay.io/alfresco/alfresco-content-repository-aws" \
+      --set repository.image.tag="0.1.0-repo-6.0.0" \
+      --set registryPullSecrets=quay-registry-secret \
       --namespace=$DESIREDNAMESPACE
   fi
 
