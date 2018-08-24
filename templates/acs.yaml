@@ -12,6 +12,8 @@ Metadata:
             - TemplateBucketKeyPrefix
             - EKSName
             - EFSName
+            - S3BucketName
+            - S3BucketKMSAlias
             - BastionAutoScalingGroup
             - VPCID
             - NodeSecurityGroup
@@ -24,6 +26,7 @@ Metadata:
             - AcsReleaseName
             - AlfrescoPassword
             - DatabasePassword
+            - RegistryCredentials
             - Route53DnsZone
 
       ParameterLabels:
@@ -35,6 +38,10 @@ Metadata:
           default: The EKS name
         EFSName:
           default: The EFS name
+        S3BucketName:
+          default: The bucket used for S3 connector
+        S3BucketKMSAlias:
+          default: The S3 bucket KMS alias used for S3 connector
         BastionAutoScalingGroup:
           default: BastionAutoScalingGroup Id
         VPCID:
@@ -55,6 +62,8 @@ Metadata:
           default: The Admin password for Alfresco
         DatabasePassword:
           default: The Database password for Alfresco
+        RegistryCredentials:
+          default: Private Registry Credentials. Base64 encryption of dockerconfig json.
         IngressReleaseName:
           default: The helm chart release name of nginx-ingress
         AcsReleaseName:
@@ -78,6 +87,12 @@ Parameters:
     EFSName:
       Type: String
       Description: The EFS name
+    S3BucketName:
+      Type: String
+      Description: The bucket used for S3 connector
+    S3BucketKMSAlias:
+      Type: String
+      Description: The S3 bucket KMS alias used for S3 connector
     BastionAutoScalingGroup:
       Type: String
       Description: BastionAutoScalingGroup Id
@@ -110,6 +125,11 @@ Parameters:
       Type: String
       Description: The Database password for Alfresco
       NoEcho: True
+    RegistryCredentials:
+      Type: String
+      Description: The private registry credentials base64
+      NoEcho: True
+      Default: false
     IngressReleaseName:
       Type: String
       Description: The helm chart release name of nginx-ingress
@@ -119,7 +139,10 @@ Parameters:
     Route53DnsZone:
       Type: String
       Description: The hosted zone to create Route53 Record for ACS
-      
+
+Conditions:
+  PrivateRegistry: !Not [!Equals [!Ref RegistryCredentials, false]]
+
 Resources:
   # SSM documents to run helm commands on the bastion
   HelmInitDownloadScript:
@@ -206,7 +229,7 @@ Resources:
               sourceInfo: !Sub "{ \"path\": \"https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/scripts/helmAcs.sh\" }"
               destinationPath: "/tmp/helmAcs.sh"
       DocumentType: Command
-
+      
   HelmInstallAcsRunScript:
     Type: "AWS::SSM::Document"
     Properties:
@@ -227,6 +250,10 @@ Resources:
                   \ --alfresco-password ${AlfrescoPassword}\
                   \ --database-password ${DatabasePassword}\
                   \ --external-name ${AcsExternalName}\
+                  \ --s3bucket-name ${S3BucketName}\
+                  \ --s3bucket-kms-alias ${S3BucketKMSAlias}\
+                  \ --s3bucket-location ${AWS::Region}\
+                  \ --registry-secret ${RegistryCredentials}\
                   \ --install"
               timeoutSeconds: 60
       DocumentType: Command
