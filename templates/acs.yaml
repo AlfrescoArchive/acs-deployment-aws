@@ -25,6 +25,7 @@ Metadata:
             - IngressReleaseName
             - AcsReleaseName
             - AlfrescoPassword
+            - RDSEndpoint
             - DatabasePassword
             - RegistryCredentials
             - Route53DnsZone
@@ -60,6 +61,8 @@ Metadata:
           default: The nginx-ingress chart version
         AlfrescoPassword:
           default: The Admin password for Alfresco
+        RDSEndpoint:
+          default: RDS Endpoint for Aurora MySql connection
         DatabasePassword:
           default: The Database password for Alfresco
         RegistryCredentials:
@@ -121,6 +124,9 @@ Parameters:
       Type: String
       Description: The Admin password for Alfresco
       NoEcho: True
+    RDSEndpoint:
+      Type: String
+      Description: RDS Endpoint for Aurora MySql connection
     DatabasePassword:
       Type: String
       Description: The Database password for Alfresco
@@ -248,6 +254,7 @@ Resources:
                   \ --efs-name ${EFSName}\
                   \ --namespace ${K8sNamespace}\
                   \ --alfresco-password ${AlfrescoPassword}\
+                  \ --rds-endpoint ${RDSEndpoint}\
                   \ --database-password ${DatabasePassword}\
                   \ --external-name ${AcsExternalName}\
                   \ --s3bucket-name ${S3BucketName}\

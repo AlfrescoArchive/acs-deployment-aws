@@ -574,15 +574,12 @@ Resources:
           AcsExternalName: !Ref AcsExternalName
           NginxIngressVersion: !Ref NginxIngressVersion
           AlfrescoPassword: !Ref AlfrescoPassword
+          RDSEndpoint: !GetAtt RDSStack.Outputs.Endpoint
           DatabasePassword: !Ref DatabasePassword
           RegistryCredentials: !Ref RegistryCredentials
           IngressReleaseName: !Ref IngressReleaseName
           AcsReleaseName: !Ref AcsReleaseName
           Route53DnsZone: !Ref Route53DnsZone
-          # Removed indirect dependency to RDS Stack Untill the helm stack gets created
-          # RDSUsername: !Ref RDSUsername
-          # RDSPassword: !Ref RDSPassword
-          # RDSEndpoint: !GetAtt RDSStack.Outputs.Endpoint
 
 Outputs:
   # VPC stack

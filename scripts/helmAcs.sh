@@ -12,6 +12,7 @@ usage() {
   echo -e "--efs-name \t Elastic File System name"
   echo -e "--namespace \t Namespace to install nginx-ingress"
   echo -e "--alfresco-password \t Alfresco admin password"
+  echo -e "--rds-endpoint \t RDS Endpoint for Aurora MySql connection"
   echo -e "--database-password \t Database password"
   echo -e "--external-name \t External host name of ACS"
   echo -e "--registry-secret \t Base64 dockerconfig.json string to private registry"
@@ -19,7 +20,7 @@ usage() {
   echo -e "--upgrade \t Upgrade an existing ACS Helm Chart"
 }
 
-if [ $# -lt 11 ]; then
+if [ $# -lt 12 ]; then
   usage
 else
   # extract options and their arguments into variables.
@@ -55,6 +56,10 @@ else
               ;;
           --alfresco-password)
               ALFRESCO_PASSWORD="$2";
+              shift 2
+              ;;
+          --rds-endpoint)
+              RDS_ENDPOINT="$2";
               shift 2
               ;;
           --database-password)
@@ -111,8 +116,11 @@ kubectl create -f secret.yaml
       --set alfresco-search.resources.requests.memory="2500Mi",alfresco-search.resources.limits.memory="2500Mi" \
       --set alfresco-search.environment.SOLR_JAVA_MEM="-Xms2000M -Xmx2000M" \
       --set persistence.solr.data.subPath="$DESIREDNAMESPACE/alfresco-content-services/solr-data" \
-      --set postgresql.postgresPassword="$DATABASE_PASSWORD" \
-      --set postgresql.persistence.subPath="$DESIREDNAMESPACE/alfresco-content-services/database-data" \
+      --set postgresql.enabled=false \
+      --set database.external=true \
+      --set database.driver="org.mariadb.jdbc.Driver" \
+      --set database.url="jdbc:mariadb:aurora//$RDS_ENDPOINT:3306/alfresco?useUnicode=yes&characterEncoding=UTF-8" \
+      --set database.password="$DATABASE_PASSWORD" \
       --set persistence.repository.enabled=false \
       --set s3connector.enabled=true \
       --set s3connector.config.bucketName="$S3BUCKET_NAME" \
@@ -120,7 +128,7 @@ kubectl create -f secret.yaml
       --set s3connector.secrets.encryption=kms \
       --set s3connector.secrets.awsKmsKeyId="$S3BUCKET_KMS_ALIAS" \
       --set repository.image.repository="quay.io/alfresco/alfresco-content-repository-aws" \
-      --set repository.image.tag="0.1.0-repo-6.0.0" \
+      --set repository.image.tag="0.1.1-repo-6.0.0" \
       --set registryPullSecrets=quay-registry-secret \
       --namespace=$DESIREDNAMESPACE
   fi
@@ -137,7 +145,7 @@ kubectl create -f secret.yaml
       --set alfresco-infrastructure.persistence.efs.dns="$EFS_NAME" \
       --set alfresco-search.resources.requests.memory="2500Mi",alfresco-search.resources.limits.memory="2500Mi" \
       --set alfresco-search.environment.SOLR_JAVA_MEM="-Xms2000M -Xmx2000M" \
-      --set postgresql.postgresPassword="$DATABASE_PASSWORD" \
+      --set database.password="$DATABASE_PASSWORD" \
       --namespace=$DESIREDNAMESPACE
   fi
 
