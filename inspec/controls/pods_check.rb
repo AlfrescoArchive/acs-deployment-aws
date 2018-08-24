@@ -64,10 +64,3 @@ describe command("kubectl get pods -l app=#{AcsReleaseName}-alfresco-search-solr
   its('stdout') { should match /Running/ }
   its('stderr') { should eq "" }
 end
-
-# Check Postgresql pod status 
-describe command("kubectl get pods -l app=#{AcsReleaseName}-postgresql-acs --namespace #{K8sNamespace} -o jsonpath={.items..phase}") do
-  its('exit_status') { should eq 0 }
-  its('stdout') { should match /Running/ }
-  its('stderr') { should eq "" }
-end

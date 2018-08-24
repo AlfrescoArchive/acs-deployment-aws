@@ -3,7 +3,7 @@
     <artifactId>alfresco-content-repository-aws</artifactId>
     <name>Alfresco Content Services Docker Image Builder</name>
     <packaging>pom</packaging>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
     <groupId>org.alfresco</groupId>
 
     <properties>

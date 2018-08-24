@@ -96,7 +96,7 @@ else
       --set database.url="jdbc:mariadb:aurora//$RDS_ENDPOINT:3306/alfresco?useUnicode=yes&characterEncoding=UTF-8" \
       --set database.password="$DATABASE_PASSWORD" \
       --set repository.image.repository="quay.io/alfresco/alfresco-content-repository-aws" \
-      --set repository.image.tag="0.1.0-repo-6.0.0" \
+      --set repository.image.tag="0.1.1-repo-6.0.0" \
       --namespace=$DESIREDNAMESPACE
   fi
 
