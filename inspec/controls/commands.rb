@@ -1,4 +1,5 @@
 S3BucketName = attribute('S3BucketName', default: '', description: 'K8s S3BucketName')
+S3ReplicationBucket = attribute('S3ReplicationBucket', default: '', description: 'CRR Bucket')
 
 describe command('kubectl get svc -n kube-system') do
   its('exit_status') { should eq 0 }
@@ -27,6 +28,13 @@ describe command("aws s3 cp outputs.yaml s3://#{S3BucketName}/outputs.yaml --cli
 end
 
 describe command("sleep 2; aws s3 ls s3://#{S3BucketName} --cli-read-timeout 3 --cli-connect-timeout 3") do
+  its('exit_status') { should eq 0 }
+  its('stdout') { should match /outputs.yaml/ }
+  its('stderr') { should eq "" }
+end
+
+# Check Cross Region Replication
+describe command("sleep 2; aws s3 ls s3://#{S3ReplicationBucket} --cli-read-timeout 3 --cli-connect-timeout 3") do
   its('exit_status') { should eq 0 }
   its('stdout') { should match /outputs.yaml/ }
   its('stderr') { should eq "" }
