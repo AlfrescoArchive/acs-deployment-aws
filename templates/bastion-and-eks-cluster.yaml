@@ -574,7 +574,9 @@ Resources:
                 - '/etc/awslogs/awslogs.conf'
                 - '/etc/awslogs/awscli.conf'
           commands:
-            bastion-bootstrap:
+            01_eks-bootstrap:
+              command: "./tmp/eks_bootstrap.sh"
+            02_bastion-bootstrap:
               command: !Join 
                 - ""
                 - - "./tmp/bastion_bootstrap.sh"
@@ -582,8 +584,6 @@ Resources:
                   - " --enable false"
                   - " --tcp-forwarding false"
                   - " --x11-forwarding false"
-            eks-bootstrap:
-              command: "./tmp/eks_bootstrap.sh"
     Properties:
       AssociatePublicIpAddress: true
       PlacementTenancy: default
