@@ -1,14 +1,32 @@
-K8sNamespace = attribute('K8sNamespace', description: 'K8s Namespace')
 AcsBaseDnsName = attribute('AcsBaseDnsName', description: 'K8s Release')
+Bastion = attribute('BastionSubstackName', default: '', description: 'K8s BastionSubStackName')
+S3BucketName = attribute('S3BucketName', default: '', description: 'K8s S3BucketName')
+EksClusterName = attribute('EksClusterName', default: '', description: 'EKS Cluster Name')
 
 
-# Endpoints check
-
+# check if alfresco DNS is not available anymore
 describe command("acs-deployment-aws/inspec/controls/endpoints.sh https://#{AcsBaseDnsName} 1") do
-  its('stdout') { should match /DNS is not available - exit/ }
+  its('stdout') { should match /.*DNS is not available - exit.*/ }
   its('exit_status') { should eq 1 }
 end
 
-describe http("https://#{AcsBaseDnsName}/share/page", open_timeout: 60, read_timeout: 60, ssl_verify: true) do
-  its('status') { should eq 404 }
+# Check if bastion is deleted
+describe command("aws ec2 describe-instances --filters 'Name=tag:Name,Values=#{Bastion}' --query 'Reservations[*]'") do
+  its('exit_status') { should eq 0 }
+  its('stdout') { should eq "[]\n" }
+  its('stderr') { should eq "" }
+end
+
+# Check if Bucket is deleted
+describe command("aws s3 ls s3://#{S3BucketName}") do
+  its('exit_status') { should_not eq 0 }
+  its('stdout') { should eq "" }
+  its('stderr') { should match /.*NoSuchBucket.*/ }
+end
+
+# Check if EKS Cluster is deleted
+describe command("aws eks describe-cluster --name #{EksClusterName}") do
+  its('exit_status') { should_not eq 0 }
+  its('stdout') { should eq ""}
+  its('stderr') { should match /.*No cluster found.*/}
 end
