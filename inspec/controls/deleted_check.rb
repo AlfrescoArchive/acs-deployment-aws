@@ -1,8 +1,6 @@
 AcsBaseDnsName = attribute('AcsBaseDnsName', description: 'K8s Release')
 Bastion = attribute('BastionSubstackName', default: '', description: 'K8s BastionSubStackName')
 S3BucketName = attribute('S3BucketName', default: '', description: 'K8s S3BucketName')
-EksClusterName = attribute('EksClusterName', default: '', description: 'EKS Cluster Name')
-
 
 # check if alfresco DNS is not available anymore
 describe command("acs-deployment-aws/inspec/controls/endpoints.sh https://#{AcsBaseDnsName} 1") do
@@ -25,8 +23,8 @@ describe command("aws s3 ls s3://#{S3BucketName}") do
 end
 
 # Check if EKS Cluster is deleted
-describe command("aws eks describe-cluster --name #{EksClusterName}") do
-  its('exit_status') { should_not eq 0 }
-  its('stdout') { should eq ""}
-  its('stderr') { should match /.*No cluster found.*/}
+describe command('kubectl get svc -n kube-system') do
+  its('exit_status') { should eq 1 }
+  its('stdout') { should eq "" }
+  its('stderr') { should match /.*no such host.*/ }
 end
