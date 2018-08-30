@@ -11,7 +11,7 @@ end
 # Check if bastion is deleted
 describe command("aws ec2 describe-instances --filters 'Name=tag:Name,Values=#{Bastion}' --query 'Reservations[].Instances[].State.Name' --output text") do
   its('exit_status') { should eq 0 }
-  its('stdout') { should eq "terminated" }
+  its('stdout') { should eq "terminated\n" }
   its('stderr') { should eq "" }
 end
 
