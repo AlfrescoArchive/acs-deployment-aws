@@ -1,5 +1,6 @@
 S3BucketName = attribute('S3BucketName', default: '', description: 'K8s S3BucketName')
 S3BucketKMSAlias = attribute('S3BucketKMSAlias', default: '', description: 'K8s S3BucketKMSAlias')
+S3ReplicationBucket = attribute('S3ReplicationBucket', default: '', description: 'CRR Bucket')
 
 describe 'Validate KMS' do
 
@@ -54,7 +55,15 @@ describe 'Validate KMS' do
         expect(putObjectWithoutEncryption.stderr).to match /AccessDenied/
     end
 
-  let(:putObjectWithEncryption) { command("aws s3api put-object --output text --bucket #{S3BucketName} --key upload2 --server-side-encryption aws:kms --ssekms-key-id #{KeyID} --body testfile ")  }
+  let(:fileName) { command("date +%s") }
+
+    it "Generate file name for uploading to s3" do
+      expect(fileName.exit_status).to eq 0
+      Filename = "upload2-" + fileName.stdout.strip
+      puts "Obtained #{Filename} and setting it as Filename"
+    end
+
+  let(:putObjectWithEncryption) { command("aws s3api put-object --output text --bucket #{S3BucketName} --key #{Filename} --server-side-encryption aws:kms --ssekms-key-id #{KeyID} --body testfile ")  }
 
     it "Uploading a file with the KeyID encription exit status should be 0" do
         expect(putObjectWithEncryption.exit_status).to eq 0
@@ -62,6 +71,17 @@ describe 'Validate KMS' do
 
     it "Uploading a file with the KeyID encryption stdout should match /KeyID/" do
         expect(putObjectWithEncryption.stdout).to match /#{KeyID}/
+    end
+
+  # Check if object is in CRR bucket
+  let(:lsObject) { command("sleep 2; aws s3 ls s3://#{S3ReplicationBucket}/#{Filename} --cli-read-timeout 3 --cli-connect-timeout 3")  }
+
+    it "Listing the file from the CRR bucket should exit status should be 0" do
+      expect(lsObject.exit_status).to eq 0
+    end
+
+    it "Listing the file from the CRR bucket stdout should match /upload2-<timestamp>/" do
+      expect(lsObject.stdout).to match /#{Filename}/
     end
 
 end

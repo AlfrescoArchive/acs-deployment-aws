@@ -361,6 +361,9 @@ Parameters:
       Type: "String"
       Default: "arn:aws:kms:eu-west-1:586394462691:key/2bcfed06-7c73-47aa-93d4-af45e47683b8"
 
+Conditions:
+  isUseCrossRegionReplication: !Equals [!Ref UseCrossRegionReplication, "true"]
+
 Resources:
     VPCStack:
       Type: AWS::CloudFormation::Stack
@@ -633,6 +636,9 @@ Outputs:
     Value: !GetAtt S3Stack.Outputs.S3EmptyBucketLambda
   S3EmptyBucketLambdaRole:
     Value: !GetAtt S3Stack.Outputs.S3EmptyBucketLambdaRole
+  S3ReplicationBucket:
+    Value: !Ref ReplicationBucket
+    Condition: isUseCrossRegionReplication
 
   # RDS Stack
   RDSSubstackName:
