@@ -139,7 +139,7 @@ Resources:
   RDSDBCluster:
     Type: AWS::RDS::DBCluster
     Condition: isAmazonAuroraRegion
-    DeletionPolicy: Snapshot
+    DeletionPolicy: Delete
     Properties:
       Tags:
         - Key: Name
