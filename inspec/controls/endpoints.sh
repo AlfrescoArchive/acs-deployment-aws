@@ -51,13 +51,18 @@ RETRY=0
 MAX_RETRY=20
 SLEEP=30
 
+if [ $# -eq 2 ]
+  then
+    SLEEP=$2
+fi
+
 while [ "$STATUS" != "200" ]; do
   if [ "$RETRY" -eq "$MAX_RETRY" ]; then
     echo "DNS resolution timed out"
     echo "DNS is not available - exit"
     exit 1
   fi
-  echo "DNS is not ready yet.  Sleeping..."
+  echo "DNS is not ready yet." $(($MAX_RETRY - $RETRY)) "  Sleeping..."
   sleep $SLEEP
   STATUS=$(curl -s -o /dev/null -w ''%{http_code}'' $share_url)
   RETRY=`expr $RETRY + 1`
