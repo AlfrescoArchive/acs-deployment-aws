@@ -44,6 +44,7 @@ Metadata:
             - RDSDBName
             - RDSUsername
             - RDSPassword
+            - RDSCreateSnapshotWhenDeleted
         - Label:
             default: ACS Stack Configuration
           Parameters:
@@ -89,6 +90,8 @@ Metadata:
           default: RDS Password
         RDSUsername:
           default: RDS User Name
+        RDSCreateSnapshotWhenDeleted:
+          default: Creates a snapshot when the stack gets delted
         BastionInstanceType:
           default: The instance type to deploy Bastion to
         MaxNumberOfBastionNodes:
@@ -221,6 +224,13 @@ Parameters:
       Default: 5
       Description: Size in GiB for the Amazon RDS MySQL database allocated storage (only non-Amazon Aurora region)
       Type: String
+    RDSCreateSnapshotWhenDeleted:
+      Description: Creates a snapshot when the stack gets delted
+      Type: String
+      Default: true
+      AllowedValues:
+      - "true"
+      - "false"
     BastionInstanceType:
       Type: "String"
       Default: "t2.micro"
@@ -517,6 +527,7 @@ Resources:
           NodeSecurityGroup: !Ref NodeSecurityGroup
           VPCID: !GetAtt VPCStack.Outputs.VPCID
           RDSPassword: !Ref RDSPassword
+          RDSCreateSnapshotWhenDeleted: !Ref RDSCreateSnapshotWhenDeleted
 
     S3Stack:
       Type: AWS::CloudFormation::Stack

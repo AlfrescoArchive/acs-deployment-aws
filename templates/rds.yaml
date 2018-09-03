@@ -20,6 +20,7 @@ Metadata:
           - RDSDBName
           - RDSUsername
           - RDSPassword
+          - RDSCreateSnapshotWhenDeleted
 
     ParameterLabels:
       NodeSecurityGroup:
@@ -38,6 +39,8 @@ Metadata:
         default: RDS Password
       RDSUsername:
         default: RDS User Name
+      RDSCreateSnapshotWhenDeleted:
+        default: Creates a snapshot when the stack gets delted
       VPCID:
         default: VPC ID
 
@@ -86,10 +89,20 @@ Parameters:
     Default: 5
     Description: Size in GiB for the Amazon RDS MySQL database allocated storage (only non-Amazon Aurora region)
     Type: String
+  RDSCreateSnapshotWhenDeleted:
+    Description: Creates a snapshot when the stack gets delted
+    Type: String
+    Default: true
+    AllowedValues:
+      - "true"
+      - "false"
 
 Conditions:
   isAmazonAuroraRegion: !Not [Condition: isNotAmazonAuroraRegion]
   isNotAmazonAuroraRegion: !Equals [!Ref "AWS::Region", "sa-east-1"]
+  isAuroraAndCreateSnasphot: !And [Condition: isAmazonAuroraRegion, Condition: CreateSnapshot]
+  isAuroraAndNotCreateSnasphot: !And [Condition: isAmazonAuroraRegion, !Not [Condition: CreateSnapshot]]
+  CreateSnapshot: !Equals [!Ref RDSCreateSnapshotWhenDeleted, "true"]
 
 Resources:
   RDSDBSubnetGroup:
@@ -136,10 +149,26 @@ Resources:
         - !Ref RDSSecurityGroup
     DeletionPolicy: Snapshot
 
-  RDSDBCluster:
+  RDSDBClusterWithSnapshot:
     Type: AWS::RDS::DBCluster
-    Condition: isAmazonAuroraRegion
+    Condition: isAuroraAndCreateSnasphot
     DeletionPolicy: Snapshot
+    Properties:
+      Tags:
+      - Key: Name
+        Value: !Sub "${AWS::StackName}"
+      MasterUsername: !Ref RDSUsername
+      MasterUserPassword: !Ref RDSPassword
+      Engine: aurora
+      DatabaseName: !Ref RDSDBName
+      VpcSecurityGroupIds:
+      - !Ref RDSSecurityGroup
+      DBSubnetGroupName: !Ref RDSDBSubnetGroup
+
+  RDSDBClusterNoSnapshot:
+    Type: AWS::RDS::DBCluster
+    Condition: isAuroraAndNotCreateSnasphot
+    DeletionPolicy: Delete
     Properties:
       Tags:
         - Key: Name
@@ -161,7 +190,7 @@ Resources:
           Value: !Sub "${AWS::StackName}-instance-1"
       DBSubnetGroupName: !Ref RDSDBSubnetGroup
       Engine: aurora
-      DBClusterIdentifier: !Ref RDSDBCluster
+      DBClusterIdentifier: !If [isAuroraAndCreateSnasphot, !Ref RDSDBClusterWithSnapshot, !Ref RDSDBClusterNoSnapshot]
       PubliclyAccessible: false
       DBInstanceClass: !Ref RDSInstanceType
     DeletionPolicy: Delete
@@ -175,7 +204,7 @@ Resources:
           Value: !Sub "${AWS::StackName}-instance-2"
       DBSubnetGroupName: !Ref RDSDBSubnetGroup
       Engine: aurora
-      DBClusterIdentifier: !Ref RDSDBCluster
+      DBClusterIdentifier: !If [isAuroraAndCreateSnasphot, !Ref RDSDBClusterWithSnapshot, !Ref RDSDBClusterNoSnapshot]
       PubliclyAccessible: false
       DBInstanceClass: !Ref RDSInstanceType
     DeletionPolicy: Delete
@@ -184,4 +213,4 @@ Outputs:
   SubstackName:
     Value: !Sub "${AWS::StackName}"
   Endpoint:
-    Value: !If [isAmazonAuroraRegion, !GetAtt RDSDBCluster.Endpoint.Address, !GetAtt RDSDBInstance.Endpoint.Address]
+    Value: !If [isAuroraAndCreateSnasphot, !GetAtt RDSDBClusterWithSnapshot.Endpoint.Address, !If [isAuroraAndNotCreateSnasphot, !GetAtt RDSDBClusterNoSnapshot.Endpoint.Address, !GetAtt RDSDBInstance.Endpoint.Address]]
