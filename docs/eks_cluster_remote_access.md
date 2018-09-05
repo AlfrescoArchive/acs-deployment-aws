@@ -86,9 +86,9 @@ data:
         - system:masters
 ```
 
-8. Save & exit the file.  At this point, the provided IAM user has been granted access to the EKS Cluster.
+8. Save & exit the file. At this point, the provided IAM user has been granted access to the EKS Cluster.
 
-9. On your local machine, create a `kubeconfig` file in your home directory and copy the contents of Step 5 in it and save it.
+9. On your local machine, create a `kubeconfig` file in your home directory and copy the contents of Step 5 in it and save it. E.g.: ~/.kube/config-acs-eks . Set the kube config path with `export KUBECONFIG=$KUBECONFIG:~/.kube/config-acs-eks`
 
 10. Install `aws-iam-authenticator` binary on your local host following AWS Documentation at https://docs.aws.amazon.com/eks/latest/userguide/getting-started.html and look for `To install aws-iam-authenticator for Amazon EKS` section.
 
@@ -116,4 +116,4 @@ Flags:
 Use "aws-iam-authenticator [command] --help" for more information about a command.
 ```
 
-12.  Try running Step 2 and 3 commands from your local host.  If you get exactly the same output then you have successfully setup access to EKS Cluster.
+12.  Try running Step 3 and 4 commands from your local host. If you get exactly the same output then you have successfully setup access to EKS Cluster.
