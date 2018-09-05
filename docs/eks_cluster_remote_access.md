@@ -68,9 +68,14 @@ data:
       groups:
         - system:bootstrappers
         - system:nodes
+  mapUsers: |
+    - userarn: arn:aws:iam::<AccountId>:user/bamboo.awsquickstarts.build
+      username: admin
+      groups:
+        - system:masters
 ```
 
-* To allow external access to EKS Cluster, the AWS IAM user name and Arn is required.  Add entries like below in above `aws-auth` configmap
+* To allow external access to EKS Cluster, the AWS IAM user name and Arn is required. Change the mapped user above `aws-auth` configmap
 ```
 data:
   mapRoles: |
