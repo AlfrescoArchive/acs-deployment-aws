@@ -59,7 +59,7 @@ aws cloudformation create-stack \
                ParameterKey=TemplateBucketName,ParameterValue=my-bucket-name \
                ParameterKey=TemplateBucketKeyPrefix,ParameterValue=development \
                ParameterKey=EksExternalUserArn,ParameterValue=arn:aws:iam::<AccountId>:user/<IamUser> \
-               ParameterKey=AcsExternalName,ParameterValue=alfresco \
+               ParameterKey=AcsExternalName,ParameterValue=<dns-name> \
                ParameterKey=RDSPassword,ParameterValue=<password> \
                ParameterKey=Route53DnsZone,ParameterValue=<dnsZone> \
                ParameterKey=ElbCertArn,ParameterValue=arn:aws:acm:us-east-1:<AccountId>:certificate/<elbCertId>          
