@@ -11,8 +11,7 @@ Once the EKS Cluster is created, only the worker nodes can access it.  In order 
 3. To get EKS cluster information
 ```bash
 [ec2-user@ip-10-0-153-59 ~]$ kubectl cluster-info
-Kubernetes master is running at https://4DB60B3D8DE3418CB349578ADFC4DE2D.sk1.us-east-1.eks.amazonaws.com
-
+Kubernetes master is running at https://4DB60B3D8DE3418CB349578ADFC4DE2D.sk1.us-east-1.eks.amazonaws.com  
 To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
 ```
 
@@ -58,8 +57,7 @@ users:
 ```bash
 [ec2-user@ip-10-0-153-59 ~]$ kubectl edit -n kube-system configmap/aws-auth
 ```
-
-It should have contents like below:
+ It should have contents like below:
 ```
 data:
   mapRoles: |
@@ -74,8 +72,7 @@ data:
       groups:
         - system:masters
 ```
-
-* To allow external access to EKS Cluster, the AWS IAM user name and Arn is required. Change the mapped user above `aws-auth` configmap
+To allow external access to EKS Cluster, the AWS IAM user name and Arn is required. Change the mapped user above `aws-auth` configmap:  
 ```
 data:
   mapRoles: |
@@ -90,7 +87,6 @@ data:
       groups:
         - system:masters
 ```
-
 8. Save & exit the file. At this point, the provided IAM user has been granted access to the EKS Cluster.
 
 9. On your local machine, create a `kubeconfig` file in your home directory and copy the contents of Step 5 in it and save it. E.g.: ~/.kube/config-acs-eks . Set the kube config path with `export KUBECONFIG=$KUBECONFIG:~/.kube/config-acs-eks`
@@ -101,23 +97,19 @@ data:
 ```bash
 $ aws-iam-authenticator help
 A tool to authenticate to Kubernetes using AWS IAM credentials
-apiVersion: v1
-
+apiVersion: v1  
 Usage:
   aws-iam-authenticator [command]
-
 Available Commands:
   help        Help about any command
   init        Pre-generate certificate, private key, and kubeconfig files for the server.
   server      Run a webhook validation server suitable that validates tokens using AWS IAM
   token       Authenticate using AWS IAM and get token for Kubernetes
   verify      Verify a token for debugging purpose
-
 Flags:
   -i, --cluster-id ID     Specify the cluster ID, a unique-per-cluster identifier for your aws-iam-authenticator installation.
   -c, --config filename   Load configuration from filename
   -h, --help              help for aws-iam-authenticator
-
 Use "aws-iam-authenticator [command] --help" for more information about a command.
 ```
 
