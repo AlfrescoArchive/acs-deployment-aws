@@ -27,6 +27,7 @@ Metadata:
             - MaxNumberOfNodes
             - MinNumberOfNodes
             - DesiredNumberOfNodes
+            - NodesMetricsEnabled
             - EksExternalUserArn
             - K8sNamespace
         - Label:
@@ -100,6 +101,8 @@ Metadata:
           default: The minimum number of nodes to scale down to for Bastion
         DesiredNumberOfBastionNodes:
           default: The desired number of nodes to keep running for Bastion
+        NodesMetricsEnabled:
+          default: Enables all CloudWatch metrics for the nodes auto scaling group
         NodeInstanceType:
           default: The instance type to deploy EKS Worker Node to
         MaxNumberOfNodes:
@@ -280,12 +283,19 @@ Parameters:
       Type: "String"
       MinLength: 1
       Description: "The maximum number of EKS Worker Nodes to run"
-      Default: 1
+      Default: 3
     MinNumberOfNodes:
       Type: "String"
       MinLength: 1
       Description: "The minimum number of EKS Worker Nodes to run"
       Default: 1
+    NodesMetricsEnabled:
+      Description: Enables all CloudWatch metrics for the nodes auto scaling group
+      Type: String
+      Default: false
+      AllowedValues:
+      - "true"
+      - "false"
     QSS3BucketName:
       AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
       ConstraintDescription: "Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
@@ -503,10 +513,10 @@ Resources:
           NodeInstanceRole: !Ref NodeInstanceRole
           NodeInstanceRoleArn: !GetAtt NodeInstanceRole.Arn
           NodeInstanceType: !Ref NodeInstanceType
-          NodeSecurityGroup: !Ref NodeSecurityGroup
           MaxNumberOfNodes: !Ref MaxNumberOfNodes
           MinNumberOfNodes: !Ref MinNumberOfNodes
           DesiredNumberOfNodes: !Ref DesiredNumberOfNodes
+          NodesMetricsEnabled: !Ref NodesMetricsEnabled
           EksExternalUserArn: !Ref EksExternalUserArn
           K8sNamespace: !Ref K8sNamespace
 
