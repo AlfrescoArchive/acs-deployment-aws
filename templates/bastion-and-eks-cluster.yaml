@@ -36,6 +36,7 @@ Metadata:
             - MaxNumberOfNodes
             - MinNumberOfNodes
             - DesiredNumberOfNodes
+            - NodesMetricsEnabled
             - EksExternalUserArn
             - K8sNamespace
 
@@ -88,6 +89,8 @@ Metadata:
           default: The minimum number of nodes to scale down to for EKS Worker Node
         DesiredNumberOfNodes:
           default: The desired number of nodes to keep running for EKS Worker Node
+        NodesMetricsEnabled:
+          default: Enables all CloudWatch metrics for the nodes auto scaling group
         EksExternalUserArn:
           default: The AWS IAM user arn who will be authorised to connect the cluster externally
         K8sNamespace:
@@ -174,9 +177,6 @@ Parameters:
         - m5.xlarge
         - m5.2xlarge
       ConstraintDescription: "Must contain a valid instance type"
-    NodeSecurityGroup:
-      Type: String
-      Description: The Security Group of EKS Worker nodes
     DesiredNumberOfNodes:
       Type: "String"
       MinLength: 1
@@ -189,6 +189,9 @@ Parameters:
       Type: "String"
       MinLength: 1
       Description: "The minimum number of EKS Worker Nodes to run"
+    NodesMetricsEnabled:
+      Description: Enables all CloudWatch metrics for the nodes auto scaling group
+      Type: String
     EksExternalUserArn:
       Type: String
       Description: The AWS IAM user arn who will be authorised to connect the cluster externally
@@ -207,6 +210,9 @@ Mappings:
       AmiId: ami-dea4d5a1
     us-west-2:
       AmiId: ami-73a6e20b
+
+Conditions:
+  isNodesMetricsEnabled: !Equals [!Ref NodesMetricsEnabled, "true"]
       
 Resources:
 
@@ -722,6 +728,12 @@ Resources:
       LaunchConfigurationName: !Ref NodeLaunchConfig
       MinSize: !Ref MinNumberOfNodes
       MaxSize: !Ref MaxNumberOfNodes
+      MetricsCollection:
+        !If
+      - isNodesMetricsEnabled
+      -
+        - Granularity: 1Minute
+      - !Ref "AWS::NoValue"
       VPCZoneIdentifier:
         - !Ref PrivateSubnet1ID
         - !Ref PrivateSubnet2ID

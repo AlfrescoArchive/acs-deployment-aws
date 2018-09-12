@@ -40,6 +40,10 @@
     "ParameterValue": "@@UseCrossRegionReplicationValue@@"
   },
   {
+    "ParameterKey": "NodesMetricsEnabled",
+    "ParameterValue": "@@NodesMetricsEnabledValue@@"
+  },
+  {
     "ParameterKey": "ReplicationBucketRegion",
     "ParameterValue": "@@ReplicationBucketRegionValue@@"
   },
