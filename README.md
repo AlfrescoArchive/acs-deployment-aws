@@ -22,7 +22,8 @@ This setup will work as of now only in AWS US East (N.Virginia) and West (Oregon
 # How to deploy ACS Cluster on AWS
 ## Upload step
 The master template (templates/acs-deployment-master.yaml) requires a couple of in S3 uploaded files like lambdas, scripts and cfn templates. For doing so please create or use an S3 bucket. As well the S3 bucket needs to have an key prefix in it:
-```s3://<bucket_name>/<key_prefix>```
+```s3://<bucket_name>/<key_prefix>``` e.g. ```s3://my-s3-bucket/development```
+
 For simplifying the upload we created a helper script named uploadHelper.sh. Please initiate the upload with doing the following instructions:
 1) Open terminal and change the dir to the cloned repository.
 2) ```chmod +x uploadHelper.sh```
@@ -30,8 +31,8 @@ For simplifying the upload we created a helper script named uploadHelper.sh. Ple
 4) Please check if the bucket has the following files:
 
 ```
-s3://<bucket_name>
-          |-- <key_prefix>
+s3://<bucket_name> e.g. my-s3-bucket
+          |-- <key_prefix> e.g. development
           |       |-- lambdas
           |       |      |-- eks-helper-lambda.zip
           |       |      +-- alfresco-lambda-empty-s3-bucket.jar
@@ -60,35 +61,38 @@ s3://<bucket_name>
 
 ### Permissions
 Ensure that the IAM Role or IAM user which is creating the stack allows the following permissions:
-ec2:AssociateAddress
+
+ec2:AssociateAddress \
 ec2:DescribeAddresses
 
 eks:*
 
 iam:PassRole
 
-kms:Decrypt
+kms:Decrypt \
 kms:Encrypt
                   
-logs:CreateLogStream
-logs:GetLogEvents
-logs:PutLogEvents
-logs:DescribeLogGroups
-logs:DescribeLogStreams
-logs:PutRetentionPolicy
-logs:PutMetricFilter
+logs:CreateLogStream \
+logs:GetLogEvents \
+logs:PutLogEvents \
+logs:DescribeLogGroups \
+logs:DescribeLogStreams \
+logs:PutRetentionPolicy \
+logs:PutMetricFilter \
 logs:CreateLogGroup
      
-s3:GetObject
-s3:GetReplicationConfiguration
-s3:ListBucket
-s3:GetObjectVersionForReplication
-s3:GetObjectVersionAcl
+s3:GetObject \
+s3:GetReplicationConfiguration \
+s3:ListBucket \
+s3:GetObjectVersionForReplication \
+s3:GetObjectVersionAcl \
 s3:ReplicateObject
                   
 sts:*
 
 ### Deploy ACS EKS with AWS Console
+**Note:** For using the AWS Console make sure that you uploaded the needed files to S3 how described in the [Upload Step](#Upload step)!
+
 * Go to AWS Console and open CloudFormation
 * In: ```Upload a template to Amazon S3``` choose templates/acs-deployment-master.yaml
 * Choose a stack name like my-acs-eks
@@ -102,18 +106,43 @@ we will provide some extra information.
 **ACS Stack Configuration**
 
 ```The name of the S3 bucket that holds the templates``` : Take the bucket name from the upload step.
+
 ```The Key prefix for the templates in the S3 template bucket``` : Take the key prefix from the upload step.
+
 ```The ACS SSL Certificate arn to use with ELB``` : Take the SSL certificate arn for your domains in the hosted zone.
+
 ```The ACS external endpoint name``` : Choose the available endpoint which will be used for the url e.g. my-acs-eks.example.com 
+
 ```The hosted zone to create Route53 Record for ACS``` : Enter your hosted zone e.g. example.com.
 
 
 ### Deploy ACS EKS with AWS CLI
-[Create Cluster](./docs/eks_create_cluster.md)
+**Note:** For using the CLI make sure that you uploaded the needed files to S3 how described in the [Upload Step](#Upload step)!
+
+Create ACS EKS with using the the [cloudformation command](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/index.html). Make sure that you use the same bucket name and key prefix in the CLI command as you used in the [Upload Step](#Upload step)!
+
+```bash
+aws cloudformation create-stack \
+  --stack-name my-acs-eks \
+  --template-body file://templates/acs-deployment-master.yaml \
+  --capabilities CAPABILITY_IAM \
+  --parameters ParameterKey=KeyPairName,ParameterValue=<MyKey.pem> \
+               ParameterKey=AvailabilityZones,ParameterValue=us-east-1a\\,us-east-1b \
+               ParameterKey=RemoteAccessCIDR,ParameterValue=<my_ip/32> \
+               ParameterKey=TemplateBucketName,ParameterValue=<bucket_name> \
+               ParameterKey=TemplateBucketKeyPrefix,ParameterValue=<key_prefix> \
+               ParameterKey=EksExternalUserArn,ParameterValue=arn:aws:iam::<AccountId>:user/<IamUser> \
+               ParameterKey=AcsExternalName,ParameterValue=<dns-name> \
+               ParameterKey=RDSPassword,ParameterValue=<password> \
+               ParameterKey=Route53DnsZone,ParameterValue=<dnsZone> \
+               ParameterKey=ElbCertArn,ParameterValue=arn:aws:acm:us-east-1:<AccountId>:certificate/<elbCertId>
+
+### Delete ACS EKS with AWS Console
+Go to Cloudformation and delete the master acs eks stack. Th
 
 * Docker Alfresco
 The private image is published on:
-https://quay.io/repository/alfresco/alfresco-content-repository?tab=tags
+https://quay.io/repository/alfresco/alfresco-content-repository-aws
 
 For testing locally:
 1. Go to docker-alfresco folder
