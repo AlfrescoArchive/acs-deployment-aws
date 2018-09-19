@@ -12,6 +12,7 @@ To run the Alfresco Content Services (ACS) deployment on AWS provided Kubernetes
 | ------------| --------------------- |
 | Kubectl     | https://kubernetes.io/docs/tasks/tools/install-kubectl/ |
 | AWS Cli     | https://github.com/aws/aws-cli#installation |
+
 **Note:** You need to clone this repository to deploy Alfresco Content Services.
 
 ## Limitations
@@ -136,9 +137,16 @@ aws cloudformation create-stack \
                ParameterKey=RDSPassword,ParameterValue=<password> \
                ParameterKey=Route53DnsZone,ParameterValue=<dnsZone> \
                ParameterKey=ElbCertArn,ParameterValue=arn:aws:acm:us-east-1:<AccountId>:certificate/<elbCertId>
+```
 
 ### Delete ACS EKS with AWS Console
-Go to Cloudformation and delete the master acs eks stack. Th
+Go to Cloudformation and delete the master acs eks stack. The nested stacks will be deleted first and at the end the master stack.
+
+### Delete ACS EKS with AWS CLI
+Open a terminal an enter:
+```
+aws cloudformation delete-stack --stack-name <master-acs-eks-stack>
+```
 
 * Docker Alfresco
 The private image is published on:
