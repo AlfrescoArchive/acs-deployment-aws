@@ -1,3 +1,9 @@
+# Alfresco Enterprise ACS Deployment AWS
+# Copyright (C) 2005 - 2018 Alfresco Software Limited
+# License rights for this program may be obtained from Alfresco Software, Ltd.
+# pursuant to a written agreement and any use of this program without such an
+# agreement is prohibited.
+
 K8sNamespace = attribute('K8sNamespace', description: 'K8s Namespace')
 AcsReleaseName = attribute('AcsReleaseName', description: 'K8s Release')
 AcsBaseDnsName = attribute('AcsBaseDnsName', description: 'K8s Release')

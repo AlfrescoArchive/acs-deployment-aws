@@ -1,4 +1,9 @@
----
+# Alfresco Enterprise ACS Deployment AWS
+# Copyright (C) 2005 - 2018 Alfresco Software Limited
+# License rights for this program may be obtained from Alfresco Software, Ltd.
+# pursuant to a written agreement and any use of this program without such an
+# agreement is prohibited.
+
 AWSTemplateFormatVersion: "2010-09-09"
 Description: "Master template to deploy ACS to AWS using kubernetes."
 Metadata:
@@ -63,7 +68,7 @@ Metadata:
 
       ParameterLabels:
         AvailabilityZones:
-          default: The AZ's to deploy to. Please choose two zones.
+          default: The AZ's to deploy to.
         PrivateSubnet1CIDR:
           default: The CIDR block for the first private subnet
         PrivateSubnet2CIDR:
@@ -89,7 +94,7 @@ Metadata:
         RDSUsername:
           default: RDS User Name
         RDSCreateSnapshotWhenDeleted:
-          default: Creates a snapshot when the stack gets delted
+          default: Creates a snapshot when the stack gets deleted
         BastionInstanceType:
           default: The instance type to deploy Bastion to
         MaxNumberOfBastionNodes:
@@ -121,7 +126,7 @@ Metadata:
         ElbCertPolicy:
           default: The ACS SSL Certificate policy to use with ELB
         AcsExternalName:
-          default: The ACS external endpoint name
+          default: The ACS domain name
         NginxIngressVersion:
           default: The nginx-ingress chart version
         AlfrescoPassword:
@@ -145,7 +150,7 @@ Metadata:
 
 Parameters:
     AvailabilityZones:
-      Description: "List of Availability Zones to use for the subnets in the VPC."
+      Description: "List of Availability Zones to use for the subnets in the VPC. Please choose two or more zones."
       Type: "List<AWS::EC2::AvailabilityZone::Name>"
     PrivateSubnet1CIDR:
       AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
@@ -186,6 +191,7 @@ Parameters:
       Description: "The CIDR IP range that is permitted to access the AWS resources. It is recommended that you set this value to a trusted IP range. For example <my_ip>/32"
       Type: "String"
     RDSDBName:
+      AllowedPattern: ".+"
       Default: alfresco
       Description: DB name for the Amazon RDS Aurora database (MySQL if non-Amazon Aurora region).
       Type: String
@@ -206,19 +212,23 @@ Parameters:
       Description: EC2 instance type for the Amazon RDS instances
       Type: String
     RDSPassword:
+      AllowedPattern: ".+"
+      ConstraintDescription: The db password can not be empty
       Description: Password for the Amazon RDS database
       NoEcho: True
       Type: String
     RDSUsername:
+      AllowedPattern: ".+"
+      ConstraintDescription: The db username can not be empty
       Default: alfresco
       Description: User name for the Amazon RDS database
       Type: String
     RDSAllocatedStorage:
       Default: 5
       Description: Size in GiB for the Amazon RDS MySQL database allocated storage (only non-Amazon Aurora region)
-      Type: String
+      Type: Number
     RDSCreateSnapshotWhenDeleted:
-      Description: Creates a snapshot when the stack gets delted
+      Description: Creates a snapshot when the stack gets deleted
       Type: String
       Default: true
       AllowedValues:
@@ -235,17 +245,17 @@ Parameters:
         - t2.large
       ConstraintDescription: "Must contain a valid instance type"
     DesiredNumberOfBastionNodes:
-      Type: "String"
+      Type: String
       MinLength: 1
       Description: "The desired number of Bastion instance to run"
       Default: 1
     MaxNumberOfBastionNodes:
-      Type: "String"
+      Type: String
       MinLength: 1
       Description: "The maximum number of Bastion instances to run"
       Default: 1
     MinNumberOfBastionNodes:
-      Type: "String"
+      Type: String
       MinLength: 1
       Description: "The minimum number of Bastion instances to run"
       Default: 1
@@ -265,17 +275,17 @@ Parameters:
         - m5.2xlarge
       ConstraintDescription: "Must contain a valid instance type"
     DesiredNumberOfNodes:
-      Type: "String"
+      Type: String
       MinLength: 1
       Description: "The desired number of EKS Worker Nodes to run"
       Default: 1
     MaxNumberOfNodes:
-      Type: "String"
+      Type: String
       MinLength: 1
       Description: "The maximum number of EKS Worker Nodes to run"
       Default: 3
     MinNumberOfNodes:
-      Type: "String"
+      Type: String
       MinLength: 1
       Description: "The minimum number of EKS Worker Nodes to run"
       Default: 1
@@ -312,43 +322,62 @@ Parameters:
     EksExternalUserArn:
       Type: String
       Description: The AWS IAM user arn who will be authorised to connect the cluster externally
+      Default: ""
     K8sNamespace:
+      AllowedPattern: ".+"
+      ConstraintDescription: The K8s namespace can not be empty
       Type: String
       Description: The namespace in EKS to deploy Helm charts
       Default: "acs-deployment"
     ElbCertArn:
+      AllowedPattern: ".+"
+      ConstraintDescription: The Elastic Load Balancer Cert Arn can not be empty
       Type: String
       Description: The ACS SSL Certificate arn to use with ELB
     ElbCertPolicy:
+      AllowedPattern: ".+"
+      ConstraintDescription: The Elastic Load Balancer Cert Policy can not be empty
       Type: String
       Description: The ACS SSL Certificate policy to use with ELB
       Default: "ELBSecurityPolicy-TLS-1-2-2017-01"
     AcsExternalName:
+      AllowedPattern: ".+"
+      ConstraintDescription: The ACS domain name can not be empty
       Type: String
-      Description: The ACS external endpoint name
+      Description: The ACS domain name. E.g. my-acs-eks.example.com
     NginxIngressVersion:
+      AllowedPattern: ".+"
+      ConstraintDescription: The NGINX Ingress version can not be empty
       Type: String
       Description: The nginx-ingress chart version
       Default: "0.14.0"
     IngressReleaseName:
+      AllowedPattern: ".+"
+      ConstraintDescription: The helm chart release name of nginx-ingress can not be empty
       Type: String
       Description: The helm chart release name of nginx-ingress
       Default: "alfresco"
     AcsReleaseName:
+      AllowedPattern: ".+"
+      ConstraintDescription: The helm chart release name of alfresco content services can not be empty
       Type: String
       Description: The helm chart release name of alfresco content services
       Default: "enterprise"
     AlfrescoPassword:
+      AllowedPattern: ".+"
+      ConstraintDescription: The Admin password for Alfresco can not be empty
       Type: String
       Description: The Admin password for Alfresco
       NoEcho: True
-      Default: "admin"
     RegistryCredentials:
+      AllowedPattern: ".+"
+      ConstraintDescription: The private registry credentials can not be empty
       Type: String
       Description: The private registry credentials base64
       NoEcho: True
-      Default: false
     Route53DnsZone:
+      AllowedPattern: ".+"
+      ConstraintDescription: The hosted zone to create Route53 Record for ACS can not be empty
       Type: String
       Description: The hosted zone to create Route53 Record for ACS
     UseCrossRegionReplication:
@@ -365,11 +394,11 @@ Parameters:
     ReplicationBucket:
       Description: "Name of the destionation S3 Bucket you want to replicate data into. "
       Type: String
-      Default: "devacss3crr-acscontentstorebucket-1r1g0vcv7em8c"
+      Default: ""
     ReplicationBucketKMSEncryptionKey:
       Description: "The KMS encryption key for the destination bucket"
       Type: "String"
-      Default: "arn:aws:kms:eu-west-1:586394462691:key/2bcfed06-7c73-47aa-93d4-af45e47683b8"
+      Default: ""
 
 Conditions:
   isUseCrossRegionReplication: !Equals [!Ref UseCrossRegionReplication, "true"]
