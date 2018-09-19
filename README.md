@@ -21,42 +21,6 @@ This setup will work as of now only in AWS US East (N.Virginia), West (Oregon) a
 
 
 # How to deploy ACS Cluster on AWS
-## Upload step
-The master template (templates/acs-deployment-master.yaml) requires a couple of in S3 uploaded files like lambdas, scripts and cfn templates. For doing so please create or use an S3 bucket. As well the S3 bucket needs to have an key prefix in it:
-```s3://<bucket_name>/<key_prefix>``` e.g. ```s3://my-s3-bucket/development```
-
-**Note:** With S3 in AWS Console you can create the <key_prefix> with creating a folder.
-
-For simplifying the upload we created a helper script named uploadHelper.sh which only will work with Mac or Linux. For Windows please upload those files manually or execute the aws commands from the script in CMD. Please initiate the upload with doing the following instructions:
-1) Open terminal and change the dir to the cloned repository.
-2) ```chmod +x uploadHelper.sh```
-3) ```./uploadHelper.sh <bucket_name> <key_prefix>``` . This will upload the files to S3.
-4) Please check if the bucket has the following files:
-
-```
-s3://<bucket_name> e.g. my-s3-bucket
-          |-- <key_prefix> e.g. development
-          |       |-- lambdas
-          |       |      |-- eks-helper-lambda.zip
-          |       |      +-- alfresco-lambda-empty-s3-bucket.jar
-          |       |      +-- helm-helper-lambda.zip
-          |       |-- scripts
-          |       |      |-- deleteIngress.sh
-          |       |      +-- getElb.sh
-          |       |      +-- helmAcs.sh
-          |       |      +-- helmIngress.sh
-          |       |      +-- helmInit.sh
-          |       |-- templates
-          |       |      |-- acs.yaml
-          |       |      +-- acs-deployment-master.yaml
-          |       |      +-- acs-master-parameters.json
-          |       |      +-- bastion-and-eks-cluster.yaml
-          |       |      +-- efs.yaml
-          |       |      +-- rds.yaml
-          |       |      +-- s3-bucket.yaml
-```
-          
-## Deploy ACS EKS 
 ### Prerequisites
 * You need a hosted zone e.g. example.com.  [Creating Hosted Zone](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html)
 * An SSL certificate for the Elastic Load Balancer and the domains in the hosted zone [Creating SSL Cert](https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/ssl-server-cert.html)
@@ -93,6 +57,41 @@ s3:ReplicateObject
                   
 sts:*
 
+## Upload step
+The master template (templates/acs-deployment-master.yaml) requires a couple of in S3 uploaded files like lambdas, scripts and cfn templates. For doing so please create or use an S3 bucket. As well the S3 bucket needs to have an key prefix in it:
+```s3://<bucket_name>/<key_prefix>``` e.g. ```s3://my-s3-bucket/development```
+
+**Note:** With S3 in AWS Console you can create the <key_prefix> with creating a folder.
+
+For simplifying the upload we created a helper script named uploadHelper.sh which only will work with Mac or Linux. For Windows please upload those files manually or execute the aws commands from the script in CMD. Please initiate the upload with doing the following instructions:
+1) Open terminal and change the dir to the cloned repository.
+2) ```chmod +x uploadHelper.sh```
+3) ```./uploadHelper.sh <bucket_name> <key_prefix>``` . This will upload the files to S3.
+4) Please check if the bucket has the following files:
+
+```
+s3://<bucket_name> e.g. my-s3-bucket
+          |-- <key_prefix> e.g. development
+          |       |-- lambdas
+          |       |      |-- eks-helper-lambda.zip
+          |       |      +-- alfresco-lambda-empty-s3-bucket.jar
+          |       |      +-- helm-helper-lambda.zip
+          |       |-- scripts
+          |       |      |-- deleteIngress.sh
+          |       |      +-- getElb.sh
+          |       |      +-- helmAcs.sh
+          |       |      +-- helmIngress.sh
+          |       |      +-- helmInit.sh
+          |       |-- templates
+          |       |      |-- acs.yaml
+          |       |      +-- acs-deployment-master.yaml
+          |       |      +-- acs-master-parameters.json
+          |       |      +-- bastion-and-eks-cluster.yaml
+          |       |      +-- efs.yaml
+          |       |      +-- rds.yaml
+          |       |      +-- s3-bucket.yaml
+```
+
 ### Deploy ACS EKS with AWS Console
 **Note:** For using the AWS Console make sure that you uploaded the needed files to S3 how described in the [Upload Step](#upload-step)!
 
@@ -110,7 +109,7 @@ we will provide some extra information.
 
 ```The name of the S3 bucket that holds the templates``` : Take the bucket name from the upload step.
 
-```The Key prefix for the templates in the S3 template bucket``` : Take the folder_name upload step.
+```The Key prefix for the templates in the S3 template bucket``` : Take the key_prefix upload step.
 
 ```The ACS SSL Certificate arn to use with ELB``` : Take the SSL certificate arn for your domains in the hosted zone.
 
