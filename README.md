@@ -17,7 +17,7 @@ To run the Alfresco Content Services (ACS) deployment on AWS provided Kubernetes
 
 ## Limitations
 
-This setup will work as of now only in AWS US East (N.Virginia) and West (Oregon) regions due to current EKS support.
+This setup will work as of now only in AWS US East (N.Virginia), West (Oregon) and EU (Ireland) regions due to current EKS support.
 
 
 # How to deploy ACS Cluster on AWS
