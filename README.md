@@ -25,7 +25,9 @@ This setup will work as of now only in AWS US East (N.Virginia), West (Oregon) a
 The master template (templates/acs-deployment-master.yaml) requires a couple of in S3 uploaded files like lambdas, scripts and cfn templates. For doing so please create or use an S3 bucket. As well the S3 bucket needs to have an key prefix in it:
 ```s3://<bucket_name>/<key_prefix>``` e.g. ```s3://my-s3-bucket/development```
 
-For simplifying the upload we created a helper script named uploadHelper.sh. Please initiate the upload with doing the following instructions:
+**Note:** With S3 in AWS Console you can create the <key_prefix> with creating a folder.
+
+For simplifying the upload we created a helper script named uploadHelper.sh which only will work with Mac or Linux. For Windows please upload those files manually or execute the aws commands from the script in CMD. Please initiate the upload with doing the following instructions:
 1) Open terminal and change the dir to the cloned repository.
 2) ```chmod +x uploadHelper.sh```
 3) ```./uploadHelper.sh <bucket_name> <key_prefix>``` . This will upload the files to S3.
@@ -108,11 +110,17 @@ we will provide some extra information.
 
 ```The name of the S3 bucket that holds the templates``` : Take the bucket name from the upload step.
 
-```The Key prefix for the templates in the S3 template bucket``` : Take the key prefix from the upload step.
+```The Key prefix for the templates in the S3 template bucket``` : Take the folder_name upload step.
 
 ```The ACS SSL Certificate arn to use with ELB``` : Take the SSL certificate arn for your domains in the hosted zone.
 
 ```The ACS external endpoint name``` : Choose the available endpoint which will be used for the url e.g. my-acs-eks.example.com 
+
+```Private Registry Credentials. Base64 encryption of dockerconfig json``` : 
+1) Login to quay.io with ```docker login quay.io```.
+2) Validate that you can get the credentials with ```cat ~/.docker/config.json``` for quay.io.
+3) Get the encoded credentials with ```cat ~/.docker/config.json | base64```.
+4) Copy them into the textbox.
 
 ```The hosted zone to create Route53 Record for ACS``` : Enter your hosted zone e.g. example.com.
 
