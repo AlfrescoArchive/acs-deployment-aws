@@ -92,7 +92,7 @@ s3:ReplicateObject
 sts:*
 
 ### Deploy ACS EKS with AWS Console
-**Note:** For using the AWS Console make sure that you uploaded the needed files to S3 how described in the [Upload Step](#Upload step)!
+**Note:** For using the AWS Console make sure that you uploaded the needed files to S3 how described in the [Upload Step](#upload-step)!
 
 * Go to AWS Console and open CloudFormation
 * In: ```Upload a template to Amazon S3``` choose templates/acs-deployment-master.yaml
@@ -118,9 +118,9 @@ we will provide some extra information.
 
 
 ### Deploy ACS EKS with AWS CLI
-**Note:** For using the CLI make sure that you uploaded the needed files to S3 how described in the [Upload Step](#Upload step)!
+**Note:** For using the CLI make sure that you uploaded the needed files to S3 how described in the [Upload Step](#upload-step)!
 
-Create ACS EKS with using the the [cloudformation command](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/index.html). Make sure that you use the same bucket name and key prefix in the CLI command as you used in the [Upload Step](#Upload step)!
+Create ACS EKS with using the the [cloudformation command](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/index.html). Make sure that you use the same bucket name and key prefix in the CLI command as you used in the [Upload Step](#upload-step)!
 
 ```bash
 aws cloudformation create-stack \
