@@ -114,7 +114,7 @@ we will provide some extra information.
 
 ```The ACS SSL Certificate arn to use with ELB``` : Take the SSL certificate arn for your domains in the hosted zone.
 
-```The ACS external endpoint name``` : Choose the available endpoint which will be used for the url e.g. my-acs-eks.example.com 
+```The ACS external endpoint name``` : Choose the available endpoint which will be used for the url e.g. **my-acs-eks.example.com** 
 
 ```Private Registry Credentials. Base64 encryption of dockerconfig json``` : 
 1) Login to quay.io with ```docker login quay.io```.
@@ -122,7 +122,7 @@ we will provide some extra information.
 3) Get the encoded credentials with ```cat ~/.docker/config.json | base64```.
 4) Copy them into the textbox.
 
-```The hosted zone to create Route53 Record for ACS``` : Enter your hosted zone e.g. example.com.
+```The hosted zone to create Route53 Record for ACS``` : Enter your hosted zone e.g. **example.com.**
 
 
 ### Deploy ACS EKS with AWS CLI
@@ -156,14 +156,35 @@ Open a terminal an enter:
 aws cloudformation delete-stack --stack-name <master-acs-eks-stack>
 ```
 
-* Docker Alfresco
-The private image is published on:
+# Modified ACR docker images
+With the goal to use AWS services like RDS or S3 you need to enhance the basic ACR docker image distributed on:
+https://hub.docker.com/r/alfresco/alfresco-content-repository or \
+https://quay.io/repository/alfresco/alfresco-content-repository
+
+The sub module /docker-alfresco provides a sub project to do the modifications.
+
+Those modifications currently containing:
+* added mariadb-java-client-2.2.6.jar driver for connecting to Aurora MySql
+* installed alfresco-s3-connector-2.2.0.amp for storing the alf_data inside of an S3 bucket
+
+The official modified ACR docker images will be published on:
+https://hub.docker.com/r/alfresco/alfresco-content-repository-aws and \
 https://quay.io/repository/alfresco/alfresco-content-repository-aws
 
-For testing locally:
+Once a new image is created it can be picked up as part of the helm deploy in
+scripts/helmAcs.sh
+```
+--set repository.image.repository="quay.io/alfresco/alfresco-content-repository-aws" \
+--set repository.image.tag="0.1.1-repo-6.0.0" \
+```
+
+## Testing the modified images locally
 1. Go to docker-alfresco folder
 2. Run ```mvn clean install``` if you have not done so
 3. Build the docker image: ```docker build . --tag acr-aws:6.0.tag```
 4. Check that the image has been created locally, with your desired name/tag: ```docker images```
 
 More technical documentation is available inside [docs](docs/).
+
+# Other information
+If you are using one of our enterprise ACR base images from hub.docker.com or quay.io please keep in mind that Alfresco Content Services goes into read-only mode after 2-days. Request an extended 30-day trial at https://www.alfresco.com/platform/content-services-ecm/trial/docker
