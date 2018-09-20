@@ -96,6 +96,7 @@ s3://<bucket_name> e.g. my-s3-bucket
 **Note:** For using the AWS Console make sure that you uploaded the needed files to S3 how described in the [Upload Step](#upload-step)!
 
 * Go to AWS Console and open CloudFormation
+* Click on ```Create Stack```
 * In: ```Upload a template to Amazon S3``` choose templates/acs-deployment-master.yaml
 * Choose a stack name like my-acs-eks
 * Fill out the parameters. In many cases you can take the default parameter. For some parameter sections
