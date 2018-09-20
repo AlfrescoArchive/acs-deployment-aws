@@ -27,6 +27,8 @@ Metadata:
             - AlfrescoPassword
             - RDSEndpoint
             - DatabasePassword
+            - AcrImageRepository
+            - AcrImageTag
             - RegistryCredentials
             - Route53DnsZone
 
@@ -65,6 +67,10 @@ Metadata:
           default: RDS Endpoint for Aurora MySql connection
         DatabasePassword:
           default: The Database password for Alfresco
+        AcrImageRepository:
+          default: Alfresco Content Repository docker image repository
+        AcrImageTag:
+            default: Alfresco Content Repository docker image tag
         RegistryCredentials:
           default: Private Registry Credentials. Base64 encryption of dockerconfig json.
         IngressReleaseName:
@@ -131,6 +137,12 @@ Parameters:
       Type: String
       Description: The Database password for Alfresco
       NoEcho: True
+    AcrImageRepository:
+      Type: String
+      Description: The docker repository where the ACR image is stored
+    AcrImageTag:
+      Type: String
+      Description: The tag of the ACR image
     RegistryCredentials:
       Type: String
       Description: The private registry credentials base64
@@ -260,6 +272,8 @@ Resources:
                   \ --s3bucket-name ${S3BucketName}\
                   \ --s3bucket-kms-alias ${S3BucketKMSAlias}\
                   \ --s3bucket-location ${AWS::Region}\
+                  \ --acr-image-repository ${AcrImageRepository}\
+                  \ --acr-image-tag ${AcrImageTag}\
                   \ --registry-secret ${RegistryCredentials}\
                   \ --install"
               timeoutSeconds: 60

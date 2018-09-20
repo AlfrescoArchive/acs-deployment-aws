@@ -59,6 +59,8 @@ Metadata:
             - IngressReleaseName
             - AcsReleaseName
             - AlfrescoPassword
+            - ImageRepository
+            - ImageTag
             - RegistryCredentials
             - Route53DnsZone
 
@@ -129,6 +131,10 @@ Metadata:
           default: The nginx-ingress chart version
         AlfrescoPassword:
           default: The Admin password for Alfresco
+        AcrImageRepository:
+          default: Alfresco Content Repository docker image repository
+        AcrImageTag:
+          default: Alfresco Content Repository docker image tag
         RegistryCredentials:
           default: Private Registry Credentials. Base64 encryption of dockerconfig json.
         IngressReleaseName:
@@ -353,6 +359,14 @@ Parameters:
       Description: The Admin password for Alfresco
       NoEcho: True
       Default: "admin"
+    AcrImageRepository:
+      Type: String
+      Description: The docker repository where the ACR image is stored
+      Default: "quay.io/alfresco/alfresco-content-repository-aws"
+    AcrImageTag:
+      Type: String
+      Description: The tag of the ACR image
+      Default: "0.1.1-repo-6.0.0"
     RegistryCredentials:
       Type: String
       Description: The private registry credentials base64
@@ -592,6 +606,8 @@ Resources:
           AlfrescoPassword: !Ref AlfrescoPassword
           RDSEndpoint: !GetAtt RDSStack.Outputs.Endpoint
           DatabasePassword: !Ref RDSPassword
+          AcrImageRepository: !Ref AcrImageRepository
+          AcrImageTag: !Ref AcrImageTag
           RegistryCredentials: !Ref RegistryCredentials
           IngressReleaseName: !Ref IngressReleaseName
           AcsReleaseName: !Ref AcsReleaseName

@@ -20,7 +20,7 @@ usage() {
   echo -e "--upgrade \t Upgrade an existing ACS Helm Chart"
 }
 
-if [ $# -lt 12 ]; then
+if [ $# -lt 14 ]; then
   usage
 else
   # extract options and their arguments into variables.
@@ -68,6 +68,14 @@ else
               ;;
           --external-name)
               EXTERNAL_NAME="$2";
+              shift 2
+              ;;
+          --acr-image-repository)
+              ACR_IMAGE_REPOSITORY="$2";
+              shift 2
+              ;;
+          --acr-mage-tag)
+              ACR_IMAGE_TAG="$2";
               shift 2
               ;;
           --registry-secret)
