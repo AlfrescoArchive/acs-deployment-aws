@@ -89,7 +89,7 @@ Metadata:
         RDSUsername:
           default: RDS User Name
         RDSCreateSnapshotWhenDeleted:
-          default: Creates a snapshot when the stack gets delted
+          default: Creates a snapshot when the stack gets deleted
         BastionInstanceType:
           default: The instance type to deploy Bastion to
         MaxNumberOfBastionNodes:
@@ -218,7 +218,7 @@ Parameters:
       Description: Size in GiB for the Amazon RDS MySQL database allocated storage (only non-Amazon Aurora region)
       Type: String
     RDSCreateSnapshotWhenDeleted:
-      Description: Creates a snapshot when the stack gets delted
+      Description: Creates a snapshot when the stack gets deleted
       Type: String
       Default: true
       AllowedValues:

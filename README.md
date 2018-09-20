@@ -117,7 +117,7 @@ we will provide some extra information.
 
 ```Private Registry Credentials. Base64 encryption of dockerconfig json``` : 
 1) Login to quay.io with ```docker login quay.io```.
-2) Validate that you can get the credentials with ```cat ~/.docker/config.json``` for quay.io.
+2) Validate that you can see the credentials with ```cat ~/.docker/config.json``` for quay.io.
 3) Get the encoded credentials with ```cat ~/.docker/config.json | base64```.
 4) Copy them into the textbox.
 
