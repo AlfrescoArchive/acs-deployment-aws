@@ -110,11 +110,11 @@ we will provide some additional information.
 
 ```The name of the S3 bucket that holds the templates``` : Take the bucket name from the upload step.
 
-```The Key prefix for the templates in the S3 template bucket``` : Take the key_prefix upload step.
+```The Key prefix for the templates in the S3 template bucket``` : Take the key_prefix from the upload step.
 
-```The ACS SSL Certificate arn to use with ELB``` : Take the SSL certificate arn for your domains in the hosted zone.
+```The ACS SSL Certificate arn to use with ELB``` : Take the SSL certificate arn for your domains in the hosted zone. For more information about how to create SSL certificates visit the AWS [documentation](https://docs.aws.amazon.com/acm/latest/userguide/acm-overview.html)
 
-```The ACS external endpoint name``` : Choose the available endpoint which will be used for the url e.g. **my-acs-eks.example.com** 
+```The ACS domain name``` : Choose the subdomain which will be used for the url e.g. **my-acs-eks.example.com**. For more information about how to create a hosted zone and its subdomains visit the AWS [documentation](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingNewSubdomain.html) 
 
 ```Private Registry Credentials. Base64 encryption of dockerconfig json``` : 
 1) Login to quay.io with ```docker login quay.io```.
@@ -122,7 +122,7 @@ we will provide some additional information.
 3) Get the encoded credentials with ```cat ~/.docker/config.json | base64```.
 4) Copy them into the textbox.
 
-```The hosted zone to create Route53 Record for ACS``` : Enter your hosted zone e.g. **example.com.**
+```The hosted zone to create Route53 Record for ACS``` : Enter your hosted zone e.g. **example.com.**. For more information about how to create a hosted zone visit the AWS [documentation](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html)
 
 
 ### Deploy ACS EKS with AWS CLI

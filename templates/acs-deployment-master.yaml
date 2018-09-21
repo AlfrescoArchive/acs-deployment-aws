@@ -126,7 +126,7 @@ Metadata:
         ElbCertPolicy:
           default: The ACS SSL Certificate policy to use with ELB
         AcsExternalName:
-          default: The ACS external endpoint name
+          default: The ACS domain name
         NginxIngressVersion:
           default: The nginx-ingress chart version
         AlfrescoPassword:
@@ -213,11 +213,13 @@ Parameters:
       Type: String
     RDSPassword:
       AllowedPattern: ".+"
+      ConstraintDescription: The db password can not be empty
       Description: Password for the Amazon RDS database
       NoEcho: True
       Type: String
     RDSUsername:
       AllowedPattern: ".+"
+      ConstraintDescription: The db username can not be empty
       Default: alfresco
       Description: User name for the Amazon RDS database
       Type: String
@@ -322,50 +324,60 @@ Parameters:
       Description: The AWS IAM user arn who will be authorised to connect the cluster externally
     K8sNamespace:
       AllowedPattern: ".+"
+      ConstraintDescription: The K8s namespace can not be empty
       Type: String
       Description: The namespace in EKS to deploy Helm charts
       Default: "acs-deployment"
     ElbCertArn:
       AllowedPattern: ".+"
+      ConstraintDescription: The Elastic Load Balancer Cert Arn can not be empty
       Type: String
       Description: The ACS SSL Certificate arn to use with ELB
     ElbCertPolicy:
       AllowedPattern: ".+"
+      ConstraintDescription: The Elastic Load Balancer Cert Policy can not be empty
       Type: String
       Description: The ACS SSL Certificate policy to use with ELB
       Default: "ELBSecurityPolicy-TLS-1-2-2017-01"
     AcsExternalName:
       AllowedPattern: ".+"
+      ConstraintDescription: The ACS domain name can not be empty
       Type: String
-      Description: The ACS external endpoint name
+      Description: The ACS domain name. E.g. my-acs-eks.example.com
     NginxIngressVersion:
       AllowedPattern: ".+"
+      ConstraintDescription: The NGINX Ingress version can not be empty
       Type: String
       Description: The nginx-ingress chart version
       Default: "0.14.0"
     IngressReleaseName:
       AllowedPattern: ".+"
+      ConstraintDescription: The helm chart release name of nginx-ingress can not be empty
       Type: String
       Description: The helm chart release name of nginx-ingress
       Default: "alfresco"
     AcsReleaseName:
       AllowedPattern: ".+"
+      ConstraintDescription: The helm chart release name of alfresco content services can not be empty
       Type: String
       Description: The helm chart release name of alfresco content services
       Default: "enterprise"
     AlfrescoPassword:
       AllowedPattern: ".+"
+      ConstraintDescription: The Admin password for Alfresco can not be empty
       Type: String
       Description: The Admin password for Alfresco
       NoEcho: True
       Default: "admin"
     RegistryCredentials:
       AllowedPattern: ".+"
+      ConstraintDescription: The private registry credentials can not be empty
       Type: String
       Description: The private registry credentials base64
       NoEcho: True
     Route53DnsZone:
       AllowedPattern: ".+"
+      ConstraintDescription: The hosted zone to create Route53 Record for ACS can not be empty
       Type: String
       Description: The hosted zone to create Route53 Record for ACS
     UseCrossRegionReplication:
