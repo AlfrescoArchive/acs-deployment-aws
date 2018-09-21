@@ -186,5 +186,7 @@ scripts/helmAcs.sh
 
 More technical documentation is available inside [docs](docs/).
 
-# Other information
-If you are using one of our enterprise ACR base images from hub.docker.com or quay.io please keep in mind that Alfresco Content Services goes into read-only mode after 2-days. Request an extended 30-day trial at https://www.alfresco.com/platform/content-services-ecm/trial/docker
+# License information
+* The instructions how to upload a new license you can find [here](https://docs.alfresco.com/6.0/tasks/at-adminconsole-license.html)
+* If you are using one of our enterprise ACR base images from hub.docker.com or quay.io please keep in mind that Alfresco Content Services goes into read-only mode after 2-days. Request an extended 30-day trial from [here](https://www.alfresco.com/platform/content-services-ecm/trial/docker)
+* If you plan to use the AWS deployment in production you need to get an Enterprise License inclusive a specific license for S3 connector. Simply go on https://www.alfresco.com/platform/pricing and ask
