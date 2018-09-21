@@ -243,17 +243,17 @@ Parameters:
         - t2.large
       ConstraintDescription: "Must contain a valid instance type"
     DesiredNumberOfBastionNodes:
-      Type: Number
+      Type: String
       MinLength: 1
       Description: "The desired number of Bastion instance to run"
       Default: 1
     MaxNumberOfBastionNodes:
-      Type: Number
+      Type: String
       MinLength: 1
       Description: "The maximum number of Bastion instances to run"
       Default: 1
     MinNumberOfBastionNodes:
-      Type: Number
+      Type: String
       MinLength: 1
       Description: "The minimum number of Bastion instances to run"
       Default: 1
@@ -273,17 +273,17 @@ Parameters:
         - m5.2xlarge
       ConstraintDescription: "Must contain a valid instance type"
     DesiredNumberOfNodes:
-      Type: Number
+      Type: String
       MinLength: 1
       Description: "The desired number of EKS Worker Nodes to run"
       Default: 1
     MaxNumberOfNodes:
-      Type: Number
+      Type: String
       MinLength: 1
       Description: "The maximum number of EKS Worker Nodes to run"
       Default: 3
     MinNumberOfNodes:
-      Type: Number
+      Type: String
       MinLength: 1
       Description: "The minimum number of EKS Worker Nodes to run"
       Default: 1
@@ -364,7 +364,6 @@ Parameters:
       Type: String
       Description: The private registry credentials base64
       NoEcho: True
-      Default: false
     Route53DnsZone:
       AllowedPattern: ".+"
       Type: String
@@ -377,16 +376,13 @@ Parameters:
         - "true"
         - "false"
     ReplicationBucketRegion:
-      AllowedPattern: ".+"
       Description: "The Region of the Replication bucket"
       Type: String
       Default: "eu-west-1"
     ReplicationBucket:
-      AllowedPattern: ".+"
       Description: "Name of the destionation S3 Bucket you want to replicate data into. "
       Type: String
     ReplicationBucketKMSEncryptionKey:
-      AllowedPattern: ".+"
       Description: "The KMS encryption key for the destination bucket"
       Type: "String"
 

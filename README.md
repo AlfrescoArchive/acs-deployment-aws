@@ -100,7 +100,7 @@ s3://<bucket_name> e.g. my-s3-bucket
 * In: ```Upload a template to Amazon S3``` choose templates/acs-deployment-master.yaml
 * Choose a stack name like my-acs-eks
 * Fill out the parameters. In many cases you can take the default parameter. For some parameter sections
-we will provide some extra information.
+we will provide some additional information.
 
 **S3 Cross Replication Bucket for storing ACS content store**
 
@@ -187,6 +187,6 @@ scripts/helmAcs.sh
 More technical documentation is available inside [docs](docs/).
 
 # License information
-* The instructions how to upload a new license you can find [here](https://docs.alfresco.com/6.0/tasks/at-adminconsole-license.html)
+* The instructions how to upload a new license on a running ACS you can find [here](https://docs.alfresco.com/6.0/tasks/at-adminconsole-license.html)
 * If you are using one of our enterprise ACR base images from hub.docker.com or quay.io please keep in mind that Alfresco Content Services goes into read-only mode after 2-days. Request an extended 30-day trial from [here](https://www.alfresco.com/platform/content-services-ecm/trial/docker)
-* If you plan to use the AWS deployment in production you need to get an Enterprise License inclusive a specific license for S3 connector. Simply go on https://www.alfresco.com/platform/pricing and ask
+* If you plan to use the AWS deployment in production you need to get an Enterprise License in order to use the S3 connector amp. Go to https://www.alfresco.com/platform/pricing and ask for a 6.0 License.
