@@ -122,7 +122,7 @@ def handler(event, context):
             if ssm_commandstatus(helmdel['CommandId'], ssm_instance) is True:
                 logger.info('Nginx-ingress chart purged successfully!')
         
-            # Revoke elb SecurityGroup rule fron node sg and then delete elb SecurityGroup created by nginx-ingess
+            # Revoke elb SecurityGroup rule from node sg and then delete elb SecurityGroup created by nginx-ingess
             sgId = describe_sg(event['ResourceProperties']['VPCID'], event['ResourceProperties']['EKSName'])
             revoke_ingress(event['ResourceProperties']['NodeSecurityGroup'], sgId)
 
@@ -213,7 +213,7 @@ def ssm_commandstatus(command_id, instance_id):
         return err
 
 def describe_sg(vpcId, eksName):
-    '''A function to describe Secrity Group of K8s Cluster created by nginx-ingress'''
+    '''A function to describe Security Group of K8s Cluster created by nginx-ingress'''
     try:
         eks_tag = 'tag' + ':' + 'kubernetes.io/cluster' + '/' + eksName
         response = ec2_client.describe_security_groups(
@@ -230,11 +230,11 @@ def describe_sg(vpcId, eksName):
                 )
         return response['SecurityGroups'][0]['GroupId']
     except Exception as err:
-        logger.error('SSM Command Output error - "{type}": "{message}"'.format(type=type(err), message=str(err)))
+        logger.error('Describe security group error - "{type}": "{message}"'.format(type=type(err), message=str(err)))
         return err
 
 def revoke_ingress(sgId, revoke_id):
-    '''A function to revoke an ingress rule in a provided Secrity Group'''
+    '''A function to revoke an ingress rule in a provided Security Group'''
     try:        
         response = ec2_client.revoke_security_group_ingress(
                     GroupId=sgId,
@@ -248,13 +248,13 @@ def revoke_ingress(sgId, revoke_id):
                     ]
                 )
     except Exception as err:
-        logger.error('SSM Command Output error - "{type}": "{message}"'.format(type=type(err), message=str(err)))
+        logger.error('Revoke ingress error - "{type}": "{message}"'.format(type=type(err), message=str(err)))
         return err
 
 def delete_sg(sgId):
-    '''A function to delete Secrity Group of K8s Cluster created by nginx-ingress'''
+    '''A function to delete Security Group of K8s Cluster created by nginx-ingress'''
     try:
         response = ec2_client.delete_security_group(GroupId=sgId)
     except Exception as err:
-        logger.error('SSM Command Output error - "{type}": "{message}"'.format(type=type(err), message=str(err)))
+        logger.error('Delete security group error - "{type}": "{message}"'.format(type=type(err), message=str(err)))
         return err
