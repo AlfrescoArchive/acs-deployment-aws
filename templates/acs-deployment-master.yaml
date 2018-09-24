@@ -393,9 +393,11 @@ Parameters:
     ReplicationBucket:
       Description: "Name of the destionation S3 Bucket you want to replicate data into. "
       Type: String
+      Default: "crr-bucket"
     ReplicationBucketKMSEncryptionKey:
       Description: "The KMS encryption key for the destination bucket"
       Type: "String"
+      Default: "arn:aws:kms:<region>:<account-id>:key/<key-id>"
 
 Conditions:
   isUseCrossRegionReplication: !Equals [!Ref UseCrossRegionReplication, "true"]
