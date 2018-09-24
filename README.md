@@ -4,29 +4,19 @@
 
 This project contains the code for the AWS based Alfresco Content Services (Enterprise) product on AWS Cloud using Cloudformation template.  It is build with a main cloudformation template that will also spin sub-stacks for VPC, Bastion Host, EKS Cluster and Worker Nodes (including registering them with EKS Master) in an auto-scaling group.
 
-## Prerequisites
-
-To run the Alfresco Content Services (ACS) deployment on AWS provided Kubernetes cluster requires:
-
-| Component   | Getting Started Guide |
-| ------------| --------------------- |
-| Kubectl     | https://kubernetes.io/docs/tasks/tools/install-kubectl/ |
-| AWS Cli     | https://github.com/aws/aws-cli#installation |
-
 **Note:** You need to clone this repository to deploy Alfresco Content Services.
 
 ## Limitations
 
-This setup will work as of now only in AWS US East (N.Virginia), West (Oregon) and EU (Ireland) regions due to current EKS support.
+This setup will work as of now only in AWS US East (N.Virginia), West (Oregon) and EU (Ireland) regions due to current EKS support. For an overview in which regions EKS is currently available visit [Regional Product Services](https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/).
 
 
 # How to deploy ACS Cluster on AWS
-### Prerequisites
+## Prerequisites
 * You need a hosted zone e.g. example.com.  [Creating Hosted Zone](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html)
 * An SSL certificate for the Elastic Load Balancer and the domains in the hosted zone [Creating SSL Cert](https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/ssl-server-cert.html)
-* An IAM user for directly accessing the EKS cluster [Creating IAM user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html)
 
-### Permissions
+## Permissions
 Ensure that the IAM Role or IAM user which is creating the stack allows the following permissions:
 
 ```
@@ -66,7 +56,7 @@ The master template (templates/acs-deployment-master.yaml) requires a couple of 
 
 **Note:** With S3 in AWS Console you can create the <key_prefix> with creating a folder.
 
-For simplifying the upload we created a helper script named uploadHelper.sh which only will work with Mac or Linux. For Windows please upload those files manually or execute the aws commands from the script in CMD. Please initiate the upload with doing the following instructions:
+For simplifying the upload we created a helper script named **uploadHelper.sh** which only will works with Mac or Linux. For Windows please upload those files manually. Please initiate the upload with doing the following instructions:
 1) Open terminal and change the dir to the cloned repository.
 2) ```chmod +x uploadHelper.sh```
 3) ```./uploadHelper.sh <bucket_name> <key_prefix>``` . This will upload the files to S3.
@@ -95,8 +85,8 @@ s3://<bucket_name> e.g. my-s3-bucket
           |       |      +-- s3-bucket.yaml
 ```
 
-### Deploy ACS EKS with AWS Console
-**Note:** For using the AWS Console make sure that you uploaded the needed files to S3 how described in the [Upload Step](#upload-step)!
+## Deploy ACS EKS with AWS Console
+**Note:** For using the AWS Console make sure that you uploaded the required files to S3 how described in the section [Prepare the S3 bucket for CNF template deploy](#prepare-the-s3-bucket-for-cnf-template-deploy)!
 
 * Go to AWS Console and open CloudFormation
 * Click on ```Create Stack```
@@ -127,11 +117,25 @@ we will provide some additional information.
 
 ```The hosted zone to create Route53 Record for ACS``` : Enter your hosted zone e.g. **example.com.**. For more information about how to create a hosted zone visit the AWS [documentation](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html)
 
+After the creation of the CFN stack is finished you can find the alfresco url in the outputs from the master template.
 
-### Deploy ACS EKS with AWS CLI
-**Note:** For using the CLI make sure that you uploaded the needed files to S3 how described in the [Upload Step](#upload-step)!
+### Delete ACS EKS with AWS Console
+Go to Cloudformation and delete the master acs eks stack. The nested stacks will be deleted first and at the end the master stack.
 
-Create ACS EKS with using the [cloudformation command](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/index.html). Make sure that you use the same bucket name and key prefix in the CLI command as you used in the [Upload Step](#upload-step)!
+
+## Deploy ACS EKS with AWS CLI
+**Note:** For using the CLI make sure that you uploaded the needed files to S3 how described in the [Prepare the S3 bucket for CNF template deploy](#prepare-the-s3-bucket-for-cnf-template-deploy)!
+
+### Prerequisites
+
+To run the Alfresco Content Services (ACS) deployment on AWS provided Kubernetes cluster requires:
+
+| Component   | Getting Started Guide |
+| ------------| --------------------- |
+| AWS Cli     | https://github.com/aws/aws-cli#installation |
+
+
+Create ACS EKS with using the [cloudformation command](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/index.html). Make sure that you use the same bucket name and key prefix in the CLI command as you used in the [Prepare the S3 bucket for CNF template deploy](#prepare-the-s3-bucket-for-cnf-template-deploy)!
 
 ```bash
 aws cloudformation create-stack \
@@ -145,13 +149,12 @@ aws cloudformation create-stack \
                ParameterKey=TemplateBucketKeyPrefix,ParameterValue=<key_prefix> \
                ParameterKey=EksExternalUserArn,ParameterValue=arn:aws:iam::<AccountId>:user/<IamUser> \
                ParameterKey=AcsExternalName,ParameterValue=<dns-name> \
-               ParameterKey=RDSPassword,ParameterValue=<password> \
+               ParameterKey=RDSPassword,ParameterValue=<rds-password> \
+               ParameterKey=AlfrescoPassword,ParameterValue=<admin-password> \
                ParameterKey=Route53DnsZone,ParameterValue=<dnsZone> \
-               ParameterKey=ElbCertArn,ParameterValue=arn:aws:acm:us-east-1:<AccountId>:certificate/<elbCertId>
+               ParameterKey=ElbCertArn,ParameterValue=arn:aws:acm:us-east-1:<AccountId>:certificate/<elbCertId> \
+               ParameterKey=RegistryCredentials,ParameterValue=<docker-registry-credentials>
 ```
-
-### Delete ACS EKS with AWS Console
-Go to Cloudformation and delete the master acs eks stack. The nested stacks will be deleted first and at the end the master stack.
 
 ### Delete ACS EKS with AWS CLI
 Open a terminal an enter:
@@ -159,8 +162,23 @@ Open a terminal an enter:
 aws cloudformation delete-stack --stack-name <master-acs-eks-stack>
 ```
 
-# Modified ACR docker images
-With the goal to use AWS services like RDS or S3 you need to enhance the basic ACR docker image distributed on:
+# Cluster bastion access
+For accessing the cluster with using the deployed bastion follow the instructions [here](docs/bastion_access.md)
+
+# Cluster remote access
+## Prerequisites
+
+To access the Alfresco Content Services (ACS) deployment on AWS provided Kubernetes cluster requires:
+
+| Component   | Getting Started Guide |
+| ------------| --------------------- |
+| Kubectl     | https://kubernetes.io/docs/tasks/tools/install-kubectl/ |
+| IAM User    | https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html |
+
+Detailed instructions you can find [here](docs/eks_cluster_remote_access.md)
+
+# Modified ACS docker images
+With the goal to use AWS services like RDS or S3 you need to enhance the basic ACS docker image distributed on:
 https://hub.docker.com/r/alfresco/alfresco-content-repository or \
 https://quay.io/repository/alfresco/alfresco-content-repository
 
@@ -170,7 +188,7 @@ Those modifications currently containing:
 * added mariadb-java-client-2.2.6.jar driver for connecting to Aurora MySql
 * installed alfresco-s3-connector-2.2.0.amp for storing the alf_data inside of an S3 bucket
 
-The official modified ACR docker images will be published on:
+The official modified ACS docker images will be published on:
 https://hub.docker.com/r/alfresco/alfresco-content-repository-aws and \
 https://quay.io/repository/alfresco/alfresco-content-repository-aws
 
@@ -191,5 +209,5 @@ More technical documentation is available inside [docs](docs/).
 
 # License information
 * The instructions how to upload a new license on a running ACS you can find [here](https://docs.alfresco.com/6.0/tasks/at-adminconsole-license.html)
-* If you are using one of our enterprise ACR base images from hub.docker.com or quay.io please keep in mind that Alfresco Content Services goes into read-only mode after 2-days. Request an extended 30-day trial from [here](https://www.alfresco.com/platform/content-services-ecm/trial/docker)
+* If you are using one of our enterprise ACS base images from hub.docker.com or quay.io please keep in mind that Alfresco Content Services goes into read-only mode after 2-days. Request an extended 30-day trial from [here](https://www.alfresco.com/platform/content-services-ecm/trial/docker)
 * If you plan to use the AWS deployment in production you need to get an Enterprise License in order to use the S3 connector amp. Go to https://www.alfresco.com/platform/pricing and ask for a 6.0 License.

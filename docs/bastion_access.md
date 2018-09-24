@@ -17,3 +17,6 @@ $ ssh -i my-key-pair.pem ec2-user@<`BastionEIP`>
 # To become root user
 [ec2-user@<BastionHost> ~]$ sudo -i
 ```
+
+# Troubleshooting
+* If your connections hangs after the ssh command you probably need to authorize the inbound traffic to the bastion for allowing your ip to connect. For more details see [doc](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/authorizing-access-to-an-instance.html)
