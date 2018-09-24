@@ -29,36 +29,39 @@ This setup will work as of now only in AWS US East (N.Virginia), West (Oregon) a
 ### Permissions
 Ensure that the IAM Role or IAM user which is creating the stack allows the following permissions:
 
-ec2:AssociateAddress \
+```
+ec2:AssociateAddress
 ec2:DescribeAddresses
 
 eks:*
 
 iam:PassRole
 
-kms:Decrypt \
+kms:Decrypt
 kms:Encrypt
                   
-logs:CreateLogStream \
-logs:GetLogEvents \
-logs:PutLogEvents \
-logs:DescribeLogGroups \
-logs:DescribeLogStreams \
-logs:PutRetentionPolicy \
-logs:PutMetricFilter \
+logs:CreateLogStream
+logs:GetLogEvents
+logs:PutLogEvents
+logs:DescribeLogGroups
+logs:DescribeLogStreams
+logs:PutRetentionPolicy
+logs:PutMetricFilter
 logs:CreateLogGroup
      
-s3:GetObject \
-s3:GetReplicationConfiguration \
-s3:ListBucket \
-s3:GetObjectVersionForReplication \
-s3:GetObjectVersionAcl \
+s3:GetObject
+s3:GetReplicationConfiguration
+s3:ListBucket
+s3:GetObjectVersionForReplication
+s3:GetObjectVersionAcl 
+s3:PutObject
 s3:ReplicateObject
                   
 sts:*
+```
 
-## Upload step
-The master template (templates/acs-deployment-master.yaml) requires a couple of in S3 uploaded files like lambdas, scripts and cfn templates. For doing so please create or use an S3 bucket. As well the S3 bucket needs to have an key prefix in it:
+## Prepare the S3 bucket for CNF template deploy
+The master template (templates/acs-deployment-master.yaml) requires a couple of in S3 uploaded files like lambdas, scripts and cfn templates. For doing so please create or use an S3 bucket in the same region as you intend to deploy ACS. As well the S3 bucket needs to have an key prefix in it:
 ```s3://<bucket_name>/<key_prefix>``` e.g. ```s3://my-s3-bucket/development```
 
 **Note:** With S3 in AWS Console you can create the <key_prefix> with creating a folder.
@@ -128,7 +131,7 @@ we will provide some additional information.
 ### Deploy ACS EKS with AWS CLI
 **Note:** For using the CLI make sure that you uploaded the needed files to S3 how described in the [Upload Step](#upload-step)!
 
-Create ACS EKS with using the the [cloudformation command](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/index.html). Make sure that you use the same bucket name and key prefix in the CLI command as you used in the [Upload Step](#upload-step)!
+Create ACS EKS with using the [cloudformation command](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/index.html). Make sure that you use the same bucket name and key prefix in the CLI command as you used in the [Upload Step](#upload-step)!
 
 ```bash
 aws cloudformation create-stack \
