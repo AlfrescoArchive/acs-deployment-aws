@@ -392,7 +392,7 @@ Parameters:
       Type: String
       Default: "eu-west-1"
     ReplicationBucket:
-      Description: "Name of the destionation S3 Bucket you want to replicate data into. "
+      Description: "Name of the destination S3 Bucket you want to replicate data into. "
       Type: String
       Default: ""
     ReplicationBucketKMSEncryptionKey:

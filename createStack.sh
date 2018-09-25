@@ -44,7 +44,7 @@ else
   TEMPLATE_BODY="$3"
   PARAMETERS_FILE="$4"
   STACK_NAME=$(echo -n $5 | tr / - | awk '{print tolower($0)}')
-  AWS_REGIOM=$6
+  AWS_REGION=$6
 
   CAPABILITIES=CAPABILITY_IAM
   STACK_CREATION_TIMEOUT=600
@@ -55,7 +55,7 @@ else
   # Validate the template
   separator
   logInfo "Validate the Cloudformation template"
-  aws cloudformation validate-template --template-body file://$TEMPLATE_BODY --region $6
+  aws cloudformation validate-template --template-body file://$TEMPLATE_BODY --region $AWS_REGION
 
   # Create the stack
   separator
@@ -63,7 +63,7 @@ else
       --stack-name $STACK_NAME \
       --template-body file://$TEMPLATE_BODY \
       --parameters file://$PARAMETERS_FILE \
-      --region $6 \
+      --region $AWS_REGION \
       --capabilities $CAPABILITIES \
       --disable-rollback
 
