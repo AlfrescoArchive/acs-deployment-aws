@@ -23,7 +23,8 @@ Ensure that the IAM Role or IAM user which is creating the stack allows the foll
 ec2:AssociateAddress
 ec2:DescribeAddresses
 
-eks:*
+eks:CreateCluster
+eks:Describe
 
 iam:PassRole
 
@@ -47,16 +48,16 @@ s3:GetObjectVersionAcl
 s3:PutObject
 s3:ReplicateObject
                   
-sts:*
+sts:AssumeRole
 ```
 
 ## Prepare the S3 bucket for CNF template deploy
-The master template (templates/acs-deployment-master.yaml) requires a couple of in S3 uploaded files like lambdas, scripts and cfn templates. For doing so please create or use an S3 bucket in the same region as you intend to deploy ACS. As well the S3 bucket needs to have an key prefix in it:
+The master template (templates/acs-deployment-master.yaml) requires a few supporting files hosted in S3 like lambdas, scripts and cfn templates. For doing so please create or use an S3 bucket in the same region as you intend to deploy ACS. As well the S3 bucket needs to have an key prefix in it:
 ```s3://<bucket_name>/<key_prefix>``` e.g. ```s3://my-s3-bucket/development```
 
 **Note:** With S3 in AWS Console you can create the <key_prefix> with creating a folder.
 
-For simplifying the upload we created a helper script named **uploadHelper.sh** which only will works with Mac or Linux. For Windows please upload those files manually. Please initiate the upload with doing the following instructions:
+For simplifying the upload we created a helper script named **uploadHelper.sh** which only works with Mac or Linux. For Windows please upload those files manually. Please initiate the upload with doing the following instructions:
 1) Open terminal and change the dir to the cloned repository.
 2) ```chmod +x uploadHelper.sh```
 3) ```./uploadHelper.sh <bucket_name> <key_prefix>``` . This will upload the files to S3.
@@ -86,7 +87,7 @@ s3://<bucket_name> e.g. my-s3-bucket
 ```
 
 ## Deploy ACS EKS with AWS Console
-**Note:** For using the AWS Console make sure that you uploaded the required files to S3 how described in the section [Prepare the S3 bucket for CNF template deploy](#prepare-the-s3-bucket-for-cnf-template-deploy)!
+**Note:** For using the AWS Console make sure that you uploaded the required files to S3 as described in the section [Prepare the S3 bucket for CNF template deploy](#prepare-the-s3-bucket-for-cnf-template-deploy)!
 
 * Go to AWS Console and open CloudFormation
 * Click on ```Create Stack```
@@ -124,7 +125,7 @@ Go to Cloudformation and delete the master acs eks stack. The nested stacks will
 
 
 ## Deploy ACS EKS with AWS CLI
-**Note:** For using the CLI make sure that you uploaded the needed files to S3 how described in the [Prepare the S3 bucket for CNF template deploy](#prepare-the-s3-bucket-for-cnf-template-deploy)!
+**Note:** For using the CLI make sure that you uploaded the required files to S3 as described in the section [Prepare the S3 bucket for CNF template deploy](#prepare-the-s3-bucket-for-cnf-template-deploy)!
 
 ### Prerequisites
 
@@ -132,7 +133,7 @@ To run the Alfresco Content Services (ACS) deployment on AWS provided Kubernetes
 
 | Component   | Getting Started Guide |
 | ------------| --------------------- |
-| AWS Cli     | https://github.com/aws/aws-cli#installation |
+| AWS ClI     | https://github.com/aws/aws-cli#installation |
 
 
 Create ACS EKS with using the [cloudformation command](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/index.html). Make sure that you use the same bucket name and key prefix in the CLI command as you used in the [Prepare the S3 bucket for CNF template deploy](#prepare-the-s3-bucket-for-cnf-template-deploy)!
@@ -184,13 +185,12 @@ https://quay.io/repository/alfresco/alfresco-content-repository
 
 The sub module /docker-alfresco provides a sub project to do the modifications.
 
-Those modifications currently containing:
-* added mariadb-java-client-2.2.6.jar driver for connecting to Aurora MySql
-* installed alfresco-s3-connector-2.2.0.amp for storing the alf_data inside of an S3 bucket
+Those modifications currently include:
+* added Maria DB Java client for connecting to Aurora MySql
+* installed Alfresco S3 Connector for Content Services amp for storing data in an S3 bucket
 
 The official modified ACS docker images will be published on:
-https://hub.docker.com/r/alfresco/alfresco-content-repository-aws and \
-https://quay.io/repository/alfresco/alfresco-content-repository-aws
+https://hub.docker.com/r/alfresco/alfresco-content-repository-aws and 
 
 Once a new image is created it can be picked up as part of the helm deploy in
 scripts/helmAcs.sh
@@ -210,4 +210,4 @@ More technical documentation is available inside [docs](docs/).
 # License information
 * The instructions how to upload a new license on a running ACS you can find [here](https://docs.alfresco.com/6.0/tasks/at-adminconsole-license.html)
 * If you are using one of our enterprise ACS base images from hub.docker.com or quay.io please keep in mind that Alfresco Content Services goes into read-only mode after 2-days. Request an extended 30-day trial from [here](https://www.alfresco.com/platform/content-services-ecm/trial/docker)
-* If you plan to use the AWS deployment in production you need to get an Enterprise License in order to use the S3 connector amp. Go to https://www.alfresco.com/platform/pricing and ask for a 6.0 License.
+* If you plan to use the AWS deployment in production you need to get an Enterprise License in order to use the S3 connector amp. Please visit https://www.alfresco.com/platform/pricing and request a license.
