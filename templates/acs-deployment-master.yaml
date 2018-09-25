@@ -373,13 +373,13 @@ Parameters:
       Type: String
       Default: "eu-west-1"
     ReplicationBucket:
-      Description: "Name of the destionation S3 Bucket you want to replicate data into. "
+      Description: "Name of the destination S3 Bucket you want to replicate data into. "
       Type: String
-      Default: "devacss3crr-acscontentstorebucket-1r1g0vcv7em8c"
+      Default: ""
     ReplicationBucketKMSEncryptionKey:
       Description: "The KMS encryption key for the destination bucket"
       Type: "String"
-      Default: "arn:aws:kms:eu-west-1:586394462691:key/2bcfed06-7c73-47aa-93d4-af45e47683b8"
+      Default: ""
 
 Conditions:
   isUseCrossRegionReplication: !Equals [!Ref UseCrossRegionReplication, "true"]
