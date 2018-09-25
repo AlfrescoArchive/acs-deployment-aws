@@ -201,7 +201,7 @@ scripts/helmAcs.sh
 
 ## Testing the modified images locally
 1. Go to docker-alfresco folder
-2. Run ```mvn clean install``` if you have not done so
+2. Run ```mvn clean install``` if you have not done so far
 3. Build the docker image: ```docker build . --tag acr-aws:6.0.tag```
 4. Check that the image has been created locally, with your desired name/tag: ```docker images```
 

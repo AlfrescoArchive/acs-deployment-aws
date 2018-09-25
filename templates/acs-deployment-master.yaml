@@ -322,6 +322,7 @@ Parameters:
     EksExternalUserArn:
       Type: String
       Description: The AWS IAM user arn who will be authorised to connect the cluster externally
+      Default: ""
     K8sNamespace:
       AllowedPattern: ".+"
       ConstraintDescription: The K8s namespace can not be empty
@@ -393,11 +394,11 @@ Parameters:
     ReplicationBucket:
       Description: "Name of the destionation S3 Bucket you want to replicate data into. "
       Type: String
-      Default: "crr-bucket"
+      Default: ""
     ReplicationBucketKMSEncryptionKey:
       Description: "The KMS encryption key for the destination bucket"
       Type: "String"
-      Default: "arn:aws:kms:<region>:<account-id>:key/<key-id>"
+      Default: ""
 
 Conditions:
   isUseCrossRegionReplication: !Equals [!Ref UseCrossRegionReplication, "true"]
