@@ -5,7 +5,7 @@
 # agreement is prohibited.
 
 # Fetch image based on Stable Image of ACS
-FROM alfresco/alfresco-content-repository:6.0.0
+FROM alfresco/alfresco-content-repository:6.0.0.3
 
 # You need to run `mvn clean install` in the root of this project to update the following dependencies
 # Copy the JDBC drivers for the database you are using to the lib/ directory.
