@@ -112,7 +112,7 @@ kubectl create -f secret.yaml
 
   if [ "$INSTALL" = "true" ]; then
     echo Installing Alfresco Content Services helm chart...
-    helm install alfresco-incubator/alfresco-content-services \
+    helm install alfresco-incubator/alfresco-content-services --version 1.1.3 \
       --name $ACS_RELEASE \
       --set externalProtocol="https" \
       --set externalHost="$EXTERNAL_NAME" \
