@@ -3,13 +3,13 @@
     <artifactId>alfresco-content-repository-aws</artifactId>
     <name>Alfresco Content Services Docker Image Builder</name>
     <packaging>pom</packaging>
-    <version>0.1.2</version>
+    <version>0.1.3</version>
     <groupId>org.alfresco</groupId>
 
     <properties>
         <image.name>alfresco/${artifactId}</image.name>
         <image.registry>quay.io</image.registry>
-        <alfresco.s3.version>2.2.0</alfresco.s3.version>
+        <alfresco.s3.version>2.2.1</alfresco.s3.version>
         <fabric8.version>3.5.37</fabric8.version>
         <dependency.mariadb.version>2.2.6</dependency.mariadb.version>
     </properties>
@@ -96,7 +96,6 @@
                             <images>
                                 <image>
                                     <name>${image.name}:${image.tag}</name>
-                                    <registry>${image.registry}</registry>
                                     <build>
                                         <dockerFileDir>${project.basedir}/</dockerFileDir>
                                     </build>
