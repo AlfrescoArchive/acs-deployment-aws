@@ -46,7 +46,7 @@ end
 # Check ACS Repository pod status 
 describe command("kubectl get pods -l release=#{AcsReleaseName},component=repository --namespace #{K8sNamespace} -o jsonpath={.items..phase}") do
   its('exit_status') { should eq 0 }
-  its('stdout') { should match /Running Running/ }
+  its('stdout') { should match /Running/ }
   its('stderr') { should eq "" }
 end
 
