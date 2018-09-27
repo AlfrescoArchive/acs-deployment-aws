@@ -136,7 +136,7 @@ kubectl create -f secret.yaml
       --set s3connector.config.bucketLocation="$S3BUCKET_LOCATION" \
       --set s3connector.secrets.encryption=kms \
       --set s3connector.secrets.awsKmsKeyId="$S3BUCKET_KMS_ALIAS" \
-      --set repository.image.repository="hub.docker.com/r/alfresco/alfresco-content-repository-aws" \
+      --set repository.image.repository="alfresco/alfresco-content-repository-aws" \
       --set repository.image.tag="0.1.3-repo-6.0.0.3" \
       --set registryPullSecrets=quay-registry-secret \
       --namespace=$DESIREDNAMESPACE
