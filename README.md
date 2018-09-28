@@ -178,35 +178,6 @@ To access the Alfresco Content Services (ACS) deployment on AWS provided Kuberne
 
 Detailed instructions you can find [here](docs/eks_cluster_remote_access.md)
 
-# Modified ACS docker images
-With the goal to use AWS services like RDS or S3 you need to enhance the basic ACS docker image distributed on:
-https://hub.docker.com/r/alfresco/alfresco-content-repository or \
-https://quay.io/repository/alfresco/alfresco-content-repository
-
-The sub module /docker-alfresco provides a sub project to do the modifications.
-
-Those modifications currently include:
-* added Maria DB Java client for connecting to Aurora MySql
-* installed Alfresco S3 Connector for Content Services amp for storing data in an S3 bucket
-
-The official modified ACS docker images will be published on:
-https://hub.docker.com/r/alfresco/alfresco-content-repository-aws and 
-
-Once a new image is created it can be picked up as part of the helm deploy in
-scripts/helmAcs.sh
-```
---set repository.image.repository="quay.io/alfresco/alfresco-content-repository-aws" \
---set repository.image.tag="0.1.1-repo-6.0.0" \
-```
-
-## Testing the modified images locally
-1. Go to docker-alfresco folder
-2. Run ```mvn clean install``` if you have not done so far
-3. Build the docker image: ```docker build . --tag acr-aws:6.0.tag```
-4. Check that the image has been created locally, with your desired name/tag: ```docker images```
-
-More technical documentation is available inside [docs](docs/).
-
 # License information
 * The instructions how to upload a new license on a running ACS you can find [here](https://docs.alfresco.com/6.0/tasks/at-adminconsole-license.html)
 * If you are using one of our enterprise ACS base images from hub.docker.com or quay.io please keep in mind that Alfresco Content Services goes into read-only mode after 2-days. Request an extended 30-day trial from [here](https://www.alfresco.com/platform/content-services-ecm/trial/docker)
