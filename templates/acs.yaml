@@ -32,7 +32,6 @@ Metadata:
             - AlfrescoPassword
             - RDSEndpoint
             - DatabasePassword
-            - RegistryCredentials
             - Route53DnsZone
 
       ParameterLabels:
@@ -70,8 +69,6 @@ Metadata:
           default: RDS Endpoint for Aurora MySql connection
         DatabasePassword:
           default: The Database password for Alfresco
-        RegistryCredentials:
-          default: Private Registry Credentials. Base64 encryption of dockerconfig json.
         IngressReleaseName:
           default: The helm chart release name of nginx-ingress
         AcsReleaseName:
@@ -136,11 +133,6 @@ Parameters:
       Type: String
       Description: The Database password for Alfresco
       NoEcho: True
-    RegistryCredentials:
-      Type: String
-      Description: The private registry credentials base64
-      NoEcho: True
-      Default: false
     IngressReleaseName:
       Type: String
       Description: The helm chart release name of nginx-ingress
@@ -150,9 +142,6 @@ Parameters:
     Route53DnsZone:
       Type: String
       Description: The hosted zone to create Route53 Record for ACS
-
-Conditions:
-  PrivateRegistry: !Not [!Equals [!Ref RegistryCredentials, false]]
 
 Resources:
   # SSM documents to run helm commands on the bastion
@@ -265,7 +254,6 @@ Resources:
                   \ --s3bucket-name ${S3BucketName}\
                   \ --s3bucket-kms-alias ${S3BucketKMSAlias}\
                   \ --s3bucket-location ${AWS::Region}\
-                  \ --registry-secret ${RegistryCredentials}\
                   \ --install"
               timeoutSeconds: 60
       DocumentType: Command
