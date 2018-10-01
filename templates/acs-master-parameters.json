@@ -62,9 +62,5 @@
   {
     "ParameterKey": "AlfrescoPassword",
     "ParameterValue": "@@AlfrescoPasswordValue@@"
-  },
-  {
-    "ParameterKey": "RegistryCredentials",
-    "ParameterValue": "@@RegistryCredentialsValue@@"
   }
 ]

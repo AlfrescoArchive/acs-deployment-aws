@@ -22,12 +22,11 @@ usage() {
   echo -e "--rds-endpoint \t RDS Endpoint for Aurora MySql connection"
   echo -e "--database-password \t Database password"
   echo -e "--external-name \t External host name of ACS"
-  echo -e "--registry-secret \t Base64 dockerconfig.json string to private registry"
   echo -e "--install \t Install a new ACS Helm chart"
   echo -e "--upgrade \t Upgrade an existing ACS Helm Chart"
 }
 
-if [ $# -lt 12 ]; then
+if [ $# -lt 11 ]; then
   usage
 else
   # extract options and their arguments into variables.
@@ -77,10 +76,6 @@ else
               EXTERNAL_NAME="$2";
               shift 2
               ;;
-          --registry-secret)
-              REGISTRYCREDENTIALS="$2";
-              shift 2
-              ;;
           --install)
               INSTALL="true";
               shift
@@ -97,16 +92,6 @@ else
               ;;
       esac
   done
-
-echo "apiVersion: v1
-kind: Secret
-metadata:
-  name: quay-registry-secret
-  namespace: $DESIREDNAMESPACE
-type: kubernetes.io/dockerconfigjson
-data:
-  .dockerconfigjson: $REGISTRYCREDENTIALS" >> secret.yaml
-kubectl create -f secret.yaml
 
   ALFRESCO_PASSWORD=$(printf %s $ALFRESCO_PASSWORD | iconv -t utf16le | openssl md4| awk '{ print $2}')
 
@@ -138,7 +123,6 @@ kubectl create -f secret.yaml
       --set s3connector.secrets.awsKmsKeyId="$S3BUCKET_KMS_ALIAS" \
       --set repository.image.repository="alfresco/alfresco-content-repository-aws" \
       --set repository.image.tag="0.1.3-repo-6.0.0.3" \
-      --set registryPullSecrets=quay-registry-secret \
       --set repository.replicaCount=1 \
       --namespace=$DESIREDNAMESPACE
   fi

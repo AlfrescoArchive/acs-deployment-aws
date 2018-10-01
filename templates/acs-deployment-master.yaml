@@ -63,7 +63,6 @@ Metadata:
             - IngressReleaseName
             - AcsReleaseName
             - AlfrescoPassword
-            - RegistryCredentials
             - Route53DnsZone
 
       ParameterLabels:
@@ -131,8 +130,6 @@ Metadata:
           default: The nginx-ingress chart version
         AlfrescoPassword:
           default: The Admin password for Alfresco
-        RegistryCredentials:
-          default: Private Registry Credentials. Base64 encryption of dockerconfig json.
         IngressReleaseName:
           default: The helm chart release name of nginx-ingress
         AcsReleaseName:
@@ -368,12 +365,6 @@ Parameters:
       ConstraintDescription: The Admin password for Alfresco can not be empty
       Type: String
       Description: The Admin password for Alfresco
-      NoEcho: True
-    RegistryCredentials:
-      AllowedPattern: ".+"
-      ConstraintDescription: The private registry credentials can not be empty
-      Type: String
-      Description: The private registry credentials base64
       NoEcho: True
     Route53DnsZone:
       AllowedPattern: ".+"
@@ -611,7 +602,6 @@ Resources:
           AlfrescoPassword: !Ref AlfrescoPassword
           RDSEndpoint: !GetAtt RDSStack.Outputs.Endpoint
           DatabasePassword: !Ref RDSPassword
-          RegistryCredentials: !Ref RegistryCredentials
           IngressReleaseName: !Ref IngressReleaseName
           AcsReleaseName: !Ref AcsReleaseName
           Route53DnsZone: !Ref Route53DnsZone

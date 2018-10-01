@@ -110,12 +110,6 @@ we will provide some additional information.
 
 ```The ACS domain name``` : Choose the subdomain which will be used for the url e.g. **my-acs-eks.example.com**. For more information about how to create a hosted zone and its subdomains visit the AWS [documentation](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingNewSubdomain.html) 
 
-```Private Registry Credentials. Base64 encryption of dockerconfig json``` : 
-1) Login to quay.io with ```docker login quay.io```.
-2) Validate that you can see the credentials with ```cat ~/.docker/config.json``` for quay.io.
-3) Get the encoded credentials with ```cat ~/.docker/config.json | base64```.
-4) Copy them into the textbox.
-
 ```The hosted zone to create Route53 Record for ACS``` : Enter your hosted zone e.g. **example.com.**. For more information about how to create a hosted zone visit the AWS [documentation](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html)
 
 After the creation of the CFN stack is finished you can find the alfresco url in the outputs from the master template.
@@ -153,8 +147,7 @@ aws cloudformation create-stack \
                ParameterKey=RDSPassword,ParameterValue=<rds-password> \
                ParameterKey=AlfrescoPassword,ParameterValue=<admin-password> \
                ParameterKey=Route53DnsZone,ParameterValue=<dnsZone> \
-               ParameterKey=ElbCertArn,ParameterValue=arn:aws:acm:us-east-1:<AccountId>:certificate/<elbCertId> \
-               ParameterKey=RegistryCredentials,ParameterValue=<docker-registry-credentials>
+               ParameterKey=ElbCertArn,ParameterValue=arn:aws:acm:us-east-1:<AccountId>:certificate/<elbCertId>
 ```
 
 ### Delete ACS EKS with AWS CLI
