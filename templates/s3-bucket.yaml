@@ -241,7 +241,6 @@ Resources:
     DependsOn:
       - EmptyBucketHandlerIamRole
     Properties:
-      FunctionName: !Sub '${AWS::StackName}-ACS'
       Description: 'A custom lambda function to empty a given s3 buckets and delete it'
       Handler: org.alfresco.aws.lambda.handlers.cfn.EmptyS3Bucket
       Code:
@@ -256,8 +255,6 @@ Resources:
           Value: 'Alfresco Content Services'
         - Key: Stack
           Value: !Ref 'AWS::StackName'
-        - Key: Name
-          Value: !Sub '${AWS::StackName}-ACS'
 
   BucketCustomResource:
     Type: Custom::EmptyContentStoreBucket

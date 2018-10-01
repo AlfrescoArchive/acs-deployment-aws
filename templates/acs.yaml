@@ -440,7 +440,6 @@ Resources:
       Role: !GetAtt HelmHelperLambdaRole.Arn
       Runtime: python2.7
       Timeout: 90
-      FunctionName: !Ref "AWS::StackName"
       Description: "A custom resource to manage Helm charts used for deploying ACS"
 
   HelmHelperLambdaCustomResource:
