@@ -179,6 +179,6 @@ To access the Alfresco Content Services (ACS) deployment on AWS provided Kuberne
 Detailed instructions you can find [here](docs/eks_cluster_remote_access.md)
 
 # License information
-* The instructions how to upload a new license on a running ACS you can find [here](https://docs.alfresco.com/6.0/tasks/at-adminconsole-license.html)
-* If you are using one of our enterprise ACS base images from hub.docker.com or quay.io please keep in mind that Alfresco Content Services goes into read-only mode after 2-days. Request an extended 30-day trial from [here](https://www.alfresco.com/platform/content-services-ecm/trial/docker)
-* If you plan to use the AWS deployment in production you need to get an Enterprise License in order to use the S3 connector amp. Please visit https://www.alfresco.com/platform/pricing and request a license.
+* The ACS images downloaded directly from github.com, hub.docker.com, or Quay.io are for a limited trial of the Enterprise version of Alfresco Content Services that goes into read-only mode after 2 days. Request an extended 30-day trial at https://www.alfresco.com/platform/content-services-ecm/trial/docker.
+* To extend the trial license period and apply it to your running system, follow the steps in [Uploading a new license](http://docs.alfresco.com/6.0/tasks/at-adminconsole-license.html).
+* If you plan to use the AWS deployment in production, you need to get an Enterprise license in order to use the S3 Connector AMP.
