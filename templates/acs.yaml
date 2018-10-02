@@ -226,7 +226,7 @@ Resources:
               timeoutSeconds: 60
       DocumentType: Command
   
-  HelmInstallAcsDownloadScript:
+  HelmInstallDownloadScript:
     Type: "AWS::SSM::Document"
     Properties:
       Content:
@@ -241,7 +241,7 @@ Resources:
               destinationPath: "/tmp/helmAcs.sh"
       DocumentType: Command
       
-  HelmInstallAcsRunScript:
+  HelmInstallRunScript:
     Type: "AWS::SSM::Document"
     Properties:
       Content:
@@ -249,7 +249,7 @@ Resources:
         description: Install Alfresco Content Services Helm chart
         mainSteps:
           - action: aws:runShellScript
-            name: helmInstallAcs
+            name: helmInstall
             inputs:
               workingDirectory: "/root"
               runCommand:
@@ -270,7 +270,7 @@ Resources:
               timeoutSeconds: 60
       DocumentType: Command
 
-  HelmUpgradeAcsDownloadScript:
+  HelmUpgradeDownloadScript:
     Type: "AWS::SSM::Document"
     Properties:
       Content:
@@ -285,7 +285,7 @@ Resources:
               destinationPath: "/tmp/helmAcs.sh"
       DocumentType: Command
 
-  HelmUpgradeAcsRunScript:
+  HelmUpgradeRunScript:
     Type: "AWS::SSM::Document"
     Properties:
       Content:
@@ -293,7 +293,7 @@ Resources:
         description: Upgrade existing Alfresco Content Services Helm chart
         mainSteps:
           - action: aws:runShellScript
-            name: helmInstallAcs
+            name: helmInstall
             inputs:
               workingDirectory: "/root"
               runCommand:
@@ -452,13 +452,13 @@ Resources:
       BastionAutoScalingGroup: !Ref BastionAutoScalingGroup
       HelmInitDownloadScript: !Ref HelmInitDownloadScript
       HelmInstallIngressDownloadScript: !Ref HelmInstallIngressDownloadScript
-      HelmInstallAcsDownloadScript: !Ref HelmInstallAcsDownloadScript
-      HelmUpgradeAcsDownloadScript: !Ref HelmUpgradeAcsDownloadScript
+      HelmInstallDownloadScript: !Ref HelmInstallDownloadScript
+      HelmUpgradeDownloadScript: !Ref HelmUpgradeDownloadScript
       GetElbEndpointDownloadScript: !Ref GetElbEndpointDownloadScript
       HelmInitRunScript: !Ref HelmInitRunScript
       HelmInstallIngressRunScript: !Ref HelmInstallIngressRunScript
-      HelmInstallAcsRunScript: !Ref HelmInstallAcsRunScript
-      HelmUpgradeAcsRunScript: !Ref HelmUpgradeAcsRunScript
+      HelmInstallRunScript: !Ref HelmInstallRunScript
+      HelmUpgradeRunScript: !Ref HelmUpgradeRunScript
       GetElbEndpointRunScript: !Ref GetElbEndpointRunScript
       HelmDeleteIngressDownloadScript: !Ref HelmDeleteIngressDownloadScript
       HelmDeleteIngressRunScript: !Ref HelmDeleteIngressRunScript

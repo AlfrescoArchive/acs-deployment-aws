@@ -45,29 +45,29 @@ def handler(event, context):
             if ssm_commandstatus(installingress['CommandId'], ssm_instance) is True:
                 logger.info('HelmInstallIngressDownloadScript was downloaded successfully!')
 
-            installacs_doc = describe_document(event['ResourceProperties']['HelmInstallAcsDownloadScript'])
-            installacs = ssm_sendcommand(ssm_instance, installacs_doc['Name'], {})
-            if ssm_commandstatus(installacs['CommandId'], ssm_instance) is True:
-                logger.info('HelmInstallAcsDownloadScript was downloaded successfully!')
+            install_doc = describe_document(event['ResourceProperties']['HelmInstallDownloadScript'])
+            install = ssm_sendcommand(ssm_instance, install_doc['Name'], {})
+            if ssm_commandstatus(install['CommandId'], ssm_instance) is True:
+                logger.info('HelmInstallDownloadScript was downloaded successfully!')
 
-            upgradeacs_doc = describe_document(event['ResourceProperties']['HelmUpgradeAcsDownloadScript'])
-            upgradeacs = ssm_sendcommand(ssm_instance, upgradeacs_doc['Name'], {})
-            if ssm_commandstatus(upgradeacs['CommandId'], ssm_instance) is True:
-                logger.info('HelmUpgradeAcsDownloadScript was downloaded successfully!')
+            upgrade_doc = describe_document(event['ResourceProperties']['HelmUpgradeDownloadScript'])
+            upgrade = ssm_sendcommand(ssm_instance, upgrade_doc['Name'], {})
+            if ssm_commandstatus(upgrade['CommandId'], ssm_instance) is True:
+                logger.info('HelmUpgradeDownloadScript was downloaded successfully!')
 
             getelb_doc = describe_document(event['ResourceProperties']['GetElbEndpointDownloadScript'])
             getelb = ssm_sendcommand(ssm_instance, getelb_doc['Name'], {})
             if ssm_commandstatus(getelb['CommandId'], ssm_instance) is True:
                 logger.info('GetElbEndpointDownloadScript was downloaded successfully!')
                         
-            # Execute scripts to setup ACS
+            # Execute scripts to setup helm deployment
             helminit_doc = describe_document(event['ResourceProperties']['HelmInitRunScript'])
             helmingress_doc = describe_document(event['ResourceProperties']['HelmInstallIngressRunScript'])
-            helmacsinstall_doc = describe_document(event['ResourceProperties']['HelmInstallAcsRunScript'])
-            helmacsupgrade_doc = describe_document(event['ResourceProperties']['HelmUpgradeAcsRunScript'])
+            helminstall_doc = describe_document(event['ResourceProperties']['HelmInstallRunScript'])
+            helmupgrade_doc = describe_document(event['ResourceProperties']['HelmUpgradeRunScript'])
             helmelb_doc = describe_document(event['ResourceProperties']['GetElbEndpointRunScript'])
         
-            if helminit_doc['Status'] == 'Active' and helmingress_doc['Status'] == 'Active' and helmacsinstall_doc['Status'] == 'Active':
+            if helminit_doc['Status'] == 'Active' and helmingress_doc['Status'] == 'Active' and helminstall_doc['Status'] == 'Active':
         
                 # Deploy Tiller with Helm init 
                 helminit = ssm_sendcommand(ssm_instance, helminit_doc['Name'], {})
@@ -80,31 +80,31 @@ def handler(event, context):
                         logger.info('Nginx-ingress deployed successfully!')
         
                         if eventType == 'Create':
-                            # Install ACS helm chart
-                            helmacs = ssm_sendcommand(ssm_instance, helmacsinstall_doc['Name'], {})
-                            if ssm_commandstatus(helmacs['CommandId'], ssm_instance) is True:
-                                logger.info('ACS installation completed successfully!')
+                            # Install helm chart
+                            helmdeploy = ssm_sendcommand(ssm_instance, helminstall_doc['Name'], {})
+                            if ssm_commandstatus(helmdeploy['CommandId'], ssm_instance) is True:
+                                logger.info('Helm installation completed successfully!')
                             else:
-                                logger.error('ACS installation was unsuccessful')
+                                logger.error('Helm installation was unsuccessful')
                                 cfnresponse.send(event, context, cfnresponse.FAILED, {})
         
                         if eventType == 'Update':
-                            # Upgrade ACS helm chart
-                            helmacs = ssm_sendcommand(ssm_instance, helmacsupgrade_doc['Name'], {})
-                            if ssm_commandstatus(helmacs['CommandId'], ssm_instance) is True:
-                                logger.info('ACS upgrade completed successfully!')
+                            # Upgrade helm release
+                            helmdeploy = ssm_sendcommand(ssm_instance, helmupgrade_doc['Name'], {})
+                            if ssm_commandstatus(helmdeploy['CommandId'], ssm_instance) is True:
+                                logger.info('Helm upgrade completed successfully!')
                             else:
-                                logger.error('ACS upgrade was unsuccessful')
+                                logger.error('Helm upgrade was unsuccessful')
                                 cfnresponse.send(event, context, cfnresponse.FAILED, {})
         
-                        # Get ACS ELB to return as Stack Output
+                        # Get ELB to return as Stack Output
                         helmelb = ssm_sendcommand(ssm_instance, helmelb_doc['Name'], {})
                         if ssm_commandstatus(helmelb['CommandId'], ssm_instance) is True:
-                            logger.info('Got ACS ELB successfully!')
+                            logger.info('Got ELB successfully!')
                             helmelb_output = ssm_commandoutput(helmelb['CommandId'], ssm_instance)
                             data['elb'] = helmelb_output['StandardOutputContent'].rstrip('\n')
                         else:
-                            logger.error('ACS Get Elb command was unsuccessful')
+                            logger.error('Get Elb command was unsuccessful')
                             cfnresponse.send(event, context, cfnresponse.FAILED, {})
                     else:
                         logger.error('Nginx-ingress deployment was unsuccessful')
