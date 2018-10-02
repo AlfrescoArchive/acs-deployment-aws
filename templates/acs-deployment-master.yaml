@@ -370,11 +370,10 @@ Parameters:
       Description: The Admin password for Alfresco
       NoEcho: True
     RegistryCredentials:
-      AllowedPattern: ".+"
-      ConstraintDescription: The private registry credentials can not be empty
       Type: String
       Description: The private registry credentials base64
       NoEcho: True
+      Default: ""
     Route53DnsZone:
       AllowedPattern: ".+"
       ConstraintDescription: The hosted zone to create Route53 Record for ACS can not be empty

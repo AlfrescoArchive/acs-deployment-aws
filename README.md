@@ -110,7 +110,8 @@ we will provide some additional information.
 
 ```The ACS domain name``` : Choose the subdomain which will be used for the url e.g. **my-acs-eks.example.com**. For more information about how to create a hosted zone and its subdomains visit the AWS [documentation](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingNewSubdomain.html) 
 
-```Private Registry Credentials. Base64 encryption of dockerconfig json``` : 
+```Private Registry Credentials. Base64 encryption of dockerconfig json``` : \
+**Notice:** The credentials are only needed if the ACS image is pulled from quay.io which is currently not the case.
 1) Login to quay.io with ```docker login quay.io```.
 2) Validate that you can see the credentials with ```cat ~/.docker/config.json``` for quay.io.
 3) Get the encoded credentials with ```cat ~/.docker/config.json | base64```.
