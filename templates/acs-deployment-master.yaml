@@ -499,7 +499,7 @@ Resources:
           PrivateSubnet2ID: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
           SecurityGroup: !Ref NodeSecurityGroup
 
-    BastionAndEksClusterStack:
+    EKSStack:
       Type: AWS::CloudFormation::Stack
       DependsOn:
         - VPCStack
@@ -583,7 +583,7 @@ Resources:
       Type: AWS::CloudFormation::Stack
       DependsOn:
         - EFSStack
-        - BastionAndEksClusterStack
+        - EKSStack
         - RDSStack
         - S3Stack
       Properties:
@@ -599,8 +599,8 @@ Resources:
           EFSName: !GetAtt EFSStack.Outputs.EFSName
           S3BucketName: !GetAtt S3Stack.Outputs.S3BucketName
           S3BucketKMSAlias: !GetAtt S3Stack.Outputs.S3BucketKMSAlias
-          EKSName: !GetAtt BastionAndEksClusterStack.Outputs.EksClusterName
-          BastionAutoScalingGroup: !GetAtt BastionAndEksClusterStack.Outputs.BastionAutoScalingGroup
+          EKSName: !GetAtt EKSStack.Outputs.EksClusterName
+          BastionAutoScalingGroup: !GetAtt EKSStack.Outputs.BastionAutoScalingGroup
           VPCID: !GetAtt VPCStack.Outputs.VPCID
           NodeSecurityGroup: !Ref NodeSecurityGroup
           K8sNamespace: !Ref K8sNamespace
@@ -625,33 +625,33 @@ Outputs:
 
   # Bastion stack
   BastionSubstackName:
-    Value: !GetAtt BastionAndEksClusterStack.Outputs.SubstackName
+    Value: !GetAtt EKSStack.Outputs.SubstackName
   BastionSecurityGroup:
-    Value: !GetAtt BastionAndEksClusterStack.Outputs.BastionSecurityGroup
+    Value: !GetAtt EKSStack.Outputs.BastionSecurityGroup
   BastionLaunchConfiguration:
-    Value: !GetAtt BastionAndEksClusterStack.Outputs.BastionLaunchConfiguration
+    Value: !GetAtt EKSStack.Outputs.BastionLaunchConfiguration
   BastionAutoScalingGroup:
-    Value: !GetAtt BastionAndEksClusterStack.Outputs.BastionAutoScalingGroup
+    Value: !GetAtt EKSStack.Outputs.BastionAutoScalingGroup
   BastionEIP:
-    Value: !GetAtt BastionAndEksClusterStack.Outputs.BastionEIP
+    Value: !GetAtt EKSStack.Outputs.BastionEIP
   BastionInstanceProfile:
-    Value: !GetAtt BastionAndEksClusterStack.Outputs.BastionInstanceProfile
+    Value: !GetAtt EKSStack.Outputs.BastionInstanceProfile
   BastionInstanceRole:
-    Value: !GetAtt BastionAndEksClusterStack.Outputs.BastionInstanceRole
+    Value: !GetAtt EKSStack.Outputs.BastionInstanceRole
   EC2LogGroup:
     Value: !Ref EC2LogGroup
 
   # EKS Cluster
   ControlPlaneSecurityGroup:
-    Value: !GetAtt BastionAndEksClusterStack.Outputs.ControlPlaneSecurityGroup
+    Value: !GetAtt EKSStack.Outputs.ControlPlaneSecurityGroup
   EksClusterName:
-    Value: !GetAtt BastionAndEksClusterStack.Outputs.EksClusterName
+    Value: !GetAtt EKSStack.Outputs.EksClusterName
   EksEndpoint:
-    Value: !GetAtt BastionAndEksClusterStack.Outputs.EksEndpoint
+    Value: !GetAtt EKSStack.Outputs.EksEndpoint
   EksCertAuthority:
-    Value: !GetAtt BastionAndEksClusterStack.Outputs.EksCertAuthority
+    Value: !GetAtt EKSStack.Outputs.EksCertAuthority
   EksServiceRoleArn:
-    Value: !GetAtt BastionAndEksClusterStack.Outputs.EksServiceRoleArn
+    Value: !GetAtt EKSStack.Outputs.EksServiceRoleArn
   NodeInstanceRoleArn:
     Value: !GetAtt NodeInstanceRole.Arn
   NodeSecurityGroupId:
