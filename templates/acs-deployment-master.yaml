@@ -371,9 +371,9 @@ Parameters:
       NoEcho: True
     RegistryCredentials:
       Type: String
-      Description: The private registry credentials base64
+      Description: The private registry credentials base64.  Default value provided is an example in base64 encoded.
       NoEcho: True
-      Default: ""
+      Default: "ewoJImF1dGhzIjogewoJCSJodHRwczovL3ByaXZhdGVyZWdpc3RyeS5jb20iOiB7CgkJCSJhdXRoIjogImRHVnpkRUIwWlhOMExtTnZiVHB3WVhOemQyOXlaQW89IgoJCX0sCgl9LAoJIkh0dHBIZWFkZXJzIjogewoJCSJVc2VyLUFnZW50IjogIkRvY2tlci1DbGllbnQvMTguMDYuMS1jZSAoZGFyd2luKSIKCX0sCgkic3RhY2tPcmNoZXN0cmF0b3IiOiAia3ViZXJuZXRlcyIKfSUK"
     Route53DnsZone:
       AllowedPattern: ".+"
       ConstraintDescription: The hosted zone to create Route53 Record for ACS can not be empty

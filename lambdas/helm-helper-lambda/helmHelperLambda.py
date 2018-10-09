@@ -132,15 +132,13 @@ def handler(event, context):
             sgId = describe_sg(event['ResourceProperties']['VPCID'], event['ResourceProperties']['EKSName'])
             revoke_ingress(event['ResourceProperties']['NodeSecurityGroup'], sgId)
 
-            # Dirty hack to force SG delete.  It takes some time after revoking a rule from a dependent SG.
-            STATUS = sgId
-            for i in range(0,100):
-                while STATUS != sgId:
-                    time.sleep(1)
-                    delete_sg(sgId)
-                    STATUS = describe_sg(event['ResourceProperties']['VPCID'], event['ResourceProperties']['EKSName'])
+            if sgId:
+                logger.info('Deleting nginx-ingress SecurityGroup Id: {sgId}'.format(sgId=sgId))
+                # Guard against race condition.  Take a little nap before deleting sg.
+                time.sleep(15)
+                delete_sg(sgId)
+                logger.info('Deleted nginx-ingress SecurityGroup successfully')
 
-            logger.info('SG deleted successfully created by nginx-ingress')
             cfnresponse.send(event, context, cfnresponse.SUCCESS, {}, physicalResourceId)
   
     except Exception as err:
