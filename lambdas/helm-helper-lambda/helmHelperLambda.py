@@ -268,7 +268,7 @@ def list_interfaces(vpcId, sgId):
         return err
 
 def describe_interfaces(interfaceId):
-    '''A function to modify network interface Security Group Id to dis-associate ingress security group id'''
+    '''A function to describe network interfac Security Group Id'''
     try:
         response = ec2_client.describe_network_interface_attribute(
                     Attribute='groupSet',
