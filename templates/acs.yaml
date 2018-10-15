@@ -138,9 +138,9 @@ Parameters:
       NoEcho: True
     RegistryCredentials:
       Type: String
-      Description: The private registry credentials base64.  Default value provided is an example in base64 encoded.
+      Description: The private registry credentials with base64 encoded.
       NoEcho: True
-      Default: "ewoJImF1dGhzIjogewoJCSJodHRwczovL3ByaXZhdGVyZWdpc3RyeS5jb20iOiB7CgkJCSJhdXRoIjogImRHVnpkRUIwWlhOMExtTnZiVHB3WVhOemQyOXlaQW89IgoJCX0sCgl9LAoJIkh0dHBIZWFkZXJzIjogewoJCSJVc2VyLUFnZW50IjogIkRvY2tlci1DbGllbnQvMTguMDYuMS1jZSAoZGFyd2luKSIKCX0sCgkic3RhY2tPcmNoZXN0cmF0b3IiOiAia3ViZXJuZXRlcyIKfSUK"
+      Default: ""
     IngressReleaseName:
       Type: String
       Description: The helm chart release name of nginx-ingress
@@ -151,23 +151,28 @@ Parameters:
       Type: String
       Description: The hosted zone to create Route53 Record for ACS
 
+Conditions:
+  PrivateRegistry: !Not [!Equals [!Ref RegistryCredentials, ""]]
+  
 Resources:
   # SSM documents to run helm commands on the bastion
-  HelmInitDownloadScript:
+  # Download scripts directory
+  HelmDownloadScript:
     Type: "AWS::SSM::Document"
     Properties:
       Content:
         schemaVersion: "2.2"
-        description: Download helm init helper script
+        description: Download directory of helm helper scripts
         mainSteps:
           - action: aws:downloadContent
-            name: downloadHelmInit
+            name: downloadHelmScriptsDirectory
             inputs:
               sourceType: "S3"
-              sourceInfo: !Sub "{ \"path\": \"https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/scripts/helmInit.sh\" }"
-              destinationPath: "/tmp/helmInit.sh"
+              sourceInfo: !Sub "{ \"path\": \"https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/scripts\" }"
+              destinationPath: "/tmp"
       DocumentType: Command
-
+  
+  # Execute helm initialisation
   HelmInitRunScript:
     Type: "AWS::SSM::Document"
     Properties:
@@ -185,21 +190,7 @@ Resources:
               timeoutSeconds: 60
       DocumentType: Command
 
-  HelmInstallIngressDownloadScript:
-    Type: "AWS::SSM::Document"
-    Properties:
-      Content:
-        schemaVersion: "2.2"
-        description: Download helm nginx-ingress helper script
-        mainSteps:
-          - action: aws:downloadContent
-            name: downloadHelmIngress
-            inputs:
-              sourceType: "S3"
-              sourceInfo: !Sub "{ \"path\": \"https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/scripts/helmIngress.sh\" }"
-              destinationPath: "/tmp/helmIngress.sh"
-      DocumentType: Command
-
+  # Execute Helm nginx-ingress installation
   HelmInstallIngressRunScript:
     Type: "AWS::SSM::Document"
     Properties:
@@ -223,21 +214,7 @@ Resources:
               timeoutSeconds: 60
       DocumentType: Command
   
-  HelmInstallDownloadScript:
-    Type: "AWS::SSM::Document"
-    Properties:
-      Content:
-        schemaVersion: "2.2"
-        description: Download helm acs install helper script
-        mainSteps:
-          - action: aws:downloadContent
-            name: downloadHelmAcs
-            inputs:
-              sourceType: "S3"
-              sourceInfo: !Sub "{ \"path\": \"https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/scripts/helmAcs.sh\" }"
-              destinationPath: "/tmp/helmAcs.sh"
-      DocumentType: Command
-      
+  # Execute Helm ACS installation
   HelmInstallRunScript:
     Type: "AWS::SSM::Document"
     Properties:
@@ -246,42 +223,30 @@ Resources:
         description: Install Alfresco Content Services Helm chart
         mainSteps:
           - action: aws:runShellScript
-            name: helmInstall
+            name: helmAcsInstall
             inputs:
               workingDirectory: "/root"
               runCommand:
                 - "chmod u+x /tmp/helmAcs.sh"
-                - !Sub "/tmp/helmAcs.sh\
-                  \ --acs-release ${AcsReleaseName}\
-                  \ --efs-name ${EFSName}\
-                  \ --namespace ${K8sNamespace}\
-                  \ --alfresco-password ${AlfrescoPassword}\
-                  \ --rds-endpoint ${RDSEndpoint}\
-                  \ --database-password ${DatabasePassword}\
-                  \ --external-name ${AcsExternalName}\
-                  \ --s3bucket-name ${S3BucketName}\
-                  \ --s3bucket-kms-alias ${S3BucketKMSAlias}\
-                  \ --s3bucket-location ${AWS::Region}\
-                  \ --registry-secret ${RegistryCredentials}\
-                  \ --install"
-              timeoutSeconds: 60
+                - Fn::Join:
+                  - " "
+                  - - "/tmp/helmAcs.sh"
+                    - !Sub "--acs-release ${AcsReleaseName}"
+                    - !Sub "--efs-name ${EFSName}"
+                    - !Sub "--namespace ${K8sNamespace}"
+                    - !Sub "--alfresco-password ${AlfrescoPassword}"
+                    - !Sub "--rds-endpoint ${RDSEndpoint}"
+                    - !Sub "--database-password ${DatabasePassword}"
+                    - !Sub "--external-name ${AcsExternalName}"
+                    - !Sub "--s3bucket-name ${S3BucketName}"
+                    - !Sub "--s3bucket-kms-alias ${S3BucketKMSAlias}"
+                    - !Sub "--s3bucket-location ${AWS::Region}"
+                    - !If [PrivateRegistry, !Join ["", [--registry-secret, " ", !Ref RegistryCredentials]], !Ref "AWS::NoValue"]
+                    - "--install"
+              timeoutSeconds: 90
       DocumentType: Command
 
-  HelmUpgradeDownloadScript:
-    Type: "AWS::SSM::Document"
-    Properties:
-      Content:
-        schemaVersion: "2.2"
-        description: Download helm acs upgrade helper script
-        mainSteps:
-          - action: aws:downloadContent
-            name: downloadHelmAcs
-            inputs:
-              sourceType: "S3"
-              sourceInfo: !Sub "{ \"path\": \"https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/scripts/helmAcs.sh\" }"
-              destinationPath: "/tmp/helmAcs.sh"
-      DocumentType: Command
-
+  # Execute Helm ACS upgrade
   HelmUpgradeRunScript:
     Type: "AWS::SSM::Document"
     Properties:
@@ -290,7 +255,7 @@ Resources:
         description: Upgrade existing Alfresco Content Services Helm chart
         mainSteps:
           - action: aws:runShellScript
-            name: helmInstall
+            name: helmAcsUpgrade
             inputs:
               workingDirectory: "/root"
               runCommand:
@@ -306,21 +271,7 @@ Resources:
               timeoutSeconds: 60
       DocumentType: Command
   
-  GetElbEndpointDownloadScript:
-    Type: "AWS::SSM::Document"
-    Properties:
-      Content:
-        schemaVersion: "2.2"
-        description: Download helper script to obtain ELB adress of ingress controller
-        mainSteps:
-          - action: aws:downloadContent
-            name: downloadGetElb
-            inputs:
-              sourceType: "S3"
-              sourceInfo: !Sub "{ \"path\": \"https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/scripts/getElb.sh\" }"
-              destinationPath: "/tmp/getElb.sh"
-      DocumentType: Command
-
+  # Get ACS ELB Address
   GetElbEndpointRunScript:
     Type: "AWS::SSM::Document"
     Properties:
@@ -338,21 +289,7 @@ Resources:
               timeoutSeconds: 60
       DocumentType: Command
   
-  HelmDeleteIngressDownloadScript:
-    Type: "AWS::SSM::Document"
-    Properties:
-      Content:
-        schemaVersion: "2.2"
-        description: Download helper script to delete nginx-ingress Helm Chart
-        mainSteps:
-          - action: aws:downloadContent
-            name: downloadDeleteIngress
-            inputs:
-              sourceType: "S3"
-              sourceInfo: !Sub "{ \"path\": \"https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/scripts/deleteIngress.sh\" }"
-              destinationPath: "/tmp/deleteIngress.sh"
-      DocumentType: Command
-
+  # Execute Helm nginx-ingress deletion
   HelmDeleteIngressRunScript:
     Type: "AWS::SSM::Document"
     Properties:
@@ -405,6 +342,8 @@ Resources:
                   - ec2:DescribeSecurityGroups
                   - ec2:RevokeSecurityGroupIngress
                   - ec2:DeleteSecurityGroup
+                  - ec2:DescribeNetworkInterfaces
+                  - ec2:DescribeNetworkInterfaceAttribute
                 Resource: '*'
         - PolicyName: HelmHelperLambdaRoleSsmPolicy
           PolicyDocument:
@@ -436,7 +375,7 @@ Resources:
       Handler: helmHelperLambda.handler
       Role: !GetAtt HelmHelperLambdaRole.Arn
       Runtime: python2.7
-      Timeout: 90
+      Timeout: 120
       Description: "A custom resource to manage Helm charts used for deploying ACS"
 
   HelmHelperLambdaCustomResource:
@@ -447,17 +386,12 @@ Resources:
       VPCID: !Ref VPCID
       NodeSecurityGroup: !Ref NodeSecurityGroup
       BastionAutoScalingGroup: !Ref BastionAutoScalingGroup
-      HelmInitDownloadScript: !Ref HelmInitDownloadScript
-      HelmInstallIngressDownloadScript: !Ref HelmInstallIngressDownloadScript
-      HelmInstallDownloadScript: !Ref HelmInstallDownloadScript
-      HelmUpgradeDownloadScript: !Ref HelmUpgradeDownloadScript
-      GetElbEndpointDownloadScript: !Ref GetElbEndpointDownloadScript
+      HelmDownloadScript: !Ref HelmDownloadScript
       HelmInitRunScript: !Ref HelmInitRunScript
       HelmInstallIngressRunScript: !Ref HelmInstallIngressRunScript
       HelmInstallRunScript: !Ref HelmInstallRunScript
       HelmUpgradeRunScript: !Ref HelmUpgradeRunScript
       GetElbEndpointRunScript: !Ref GetElbEndpointRunScript
-      HelmDeleteIngressDownloadScript: !Ref HelmDeleteIngressDownloadScript
       HelmDeleteIngressRunScript: !Ref HelmDeleteIngressRunScript
 
   Route53DnsRecord:
