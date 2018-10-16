@@ -475,7 +475,7 @@ Resources:
         VpcId: !GetAtt VPCStack.Outputs.VPCID
         Tags:
           - Key: Name
-            Value: !Sub "${AWS::StackName}" 
+            Value: !Sub "${AWS::StackName}-WorkerNodes-SG"
           - Key: Component
             Value: ACS-NodeSG
           - Key: !Sub "kubernetes.io/cluster/${AWS::StackName}-cluster"
