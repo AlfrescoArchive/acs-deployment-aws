@@ -27,7 +27,7 @@ usage() {
   echo -e "--upgrade \t Upgrade an existing ACS Helm Chart"
 }
 
-if [ $# -lt 12 ]; then
+if [ $# -lt 11 ]; then
   usage
 else
   # extract options and their arguments into variables.
@@ -97,19 +97,36 @@ else
               ;;
       esac
   done
-
-echo "apiVersion: v1
-kind: Secret
-metadata:
-  name: quay-registry-secret
-  namespace: $DESIREDNAMESPACE
-type: kubernetes.io/dockerconfigjson
-data:
-  .dockerconfigjson: $REGISTRYCREDENTIALS" >> secret.yaml
-kubectl create -f secret.yaml
+  
+  cmd="import re; string='${REGISTRYCREDENTIALS}'; print True if len(string) % 4 == 0 and re.match('^[A-Za-z0-9+\/=]+\Z', string) else False"
+  isBase64(){
+    checkVar=$(python -c "${cmd}" )
+    echo $checkVar
+  }
+    
+  if [ ! -z ${REGISTRYCREDENTIALS} ]; then
+    if [[ $(isBase64) == "True" ]]; then
+      echo "Creating secrets file to access private repository"
+      echo "apiVersion: v1
+      kind: Secret
+      metadata:
+        name: quay-registry-secret
+        namespace: $DESIREDNAMESPACE
+      type: kubernetes.io/dockerconfigjson
+      data:
+        .dockerconfigjson: $REGISTRYCREDENTIALS" >> secret.yaml
+      kubectl create -f secret.yaml
+    else
+      echo "REGISTRYCREDENTIALS provided is not base64 encoded skipping..."
+      # Terminate the stack as it would fail anyways.
+      exit 1
+    fi
+  else
+    echo "REGISTRYCREDENTIALS value is empty skipping..."
+  fi
 
   ALFRESCO_PASSWORD=$(printf %s $ALFRESCO_PASSWORD | iconv -t utf16le | openssl md4| awk '{ print $2}')
-
+  
   if [ "$INSTALL" = "true" ]; then
     echo Installing Alfresco Content Services helm chart...
     helm install alfresco-incubator/alfresco-content-services --version 1.1.3 \
@@ -142,7 +159,7 @@ kubectl create -f secret.yaml
       --set repository.replicaCount=1 \
       --namespace=$DESIREDNAMESPACE
   fi
-
+  
   if [ "$UPGRADE" = "true" ]; then
     echo Upgrading Alfresco Content Services helm chart...
     helm upgrade $ACS_RELEASE alfresco-incubator/alfresco-content-services \
@@ -158,7 +175,7 @@ kubectl create -f secret.yaml
       --set database.password="$DATABASE_PASSWORD" \
       --namespace=$DESIREDNAMESPACE
   fi
-
+  
   STATUS=$(helm ls $ACS_RELEASE | grep $ACS_RELEASE | awk '{print $8}')
   while [ "$STATUS" != "DEPLOYED" ]; do
     echo alfresco content services is still deploying, sleeping for a second...

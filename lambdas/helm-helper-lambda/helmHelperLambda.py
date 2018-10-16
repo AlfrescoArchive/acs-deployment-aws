@@ -35,30 +35,10 @@ def handler(event, context):
             data = {}
 
             # First download all helper scripts
-            init_doc = describe_document(event['ResourceProperties']['HelmInitDownloadScript'])
+            init_doc = describe_document(event['ResourceProperties']['HelmDownloadScript'])
             init = ssm_sendcommand(ssm_instance, init_doc['Name'], {})
             if ssm_commandstatus(init['CommandId'], ssm_instance) is True:
-                logger.info('HelmInitDownloadScript was downloaded successfully!')
-                
-            installingress_doc = describe_document(event['ResourceProperties']['HelmInstallIngressDownloadScript'])
-            installingress = ssm_sendcommand(ssm_instance, installingress_doc['Name'], {})
-            if ssm_commandstatus(installingress['CommandId'], ssm_instance) is True:
-                logger.info('HelmInstallIngressDownloadScript was downloaded successfully!')
-
-            install_doc = describe_document(event['ResourceProperties']['HelmInstallDownloadScript'])
-            install = ssm_sendcommand(ssm_instance, install_doc['Name'], {})
-            if ssm_commandstatus(install['CommandId'], ssm_instance) is True:
-                logger.info('HelmInstallDownloadScript was downloaded successfully!')
-
-            upgrade_doc = describe_document(event['ResourceProperties']['HelmUpgradeDownloadScript'])
-            upgrade = ssm_sendcommand(ssm_instance, upgrade_doc['Name'], {})
-            if ssm_commandstatus(upgrade['CommandId'], ssm_instance) is True:
-                logger.info('HelmUpgradeDownloadScript was downloaded successfully!')
-
-            getelb_doc = describe_document(event['ResourceProperties']['GetElbEndpointDownloadScript'])
-            getelb = ssm_sendcommand(ssm_instance, getelb_doc['Name'], {})
-            if ssm_commandstatus(getelb['CommandId'], ssm_instance) is True:
-                logger.info('GetElbEndpointDownloadScript was downloaded successfully!')
+                logger.info('HelmDownloadScript directory was downloaded successfully!')
                         
             # Execute scripts to setup helm deployment
             helminit_doc = describe_document(event['ResourceProperties']['HelmInitRunScript'])
@@ -117,30 +97,38 @@ def handler(event, context):
         if eventType == 'Delete':
             logger.info('Events received: {event}'.format(event=event))
 
-            deleteingress_doc = describe_document(event['ResourceProperties']['HelmDeleteIngressDownloadScript'])
-            deleteingress = ssm_sendcommand(ssm_instance, deleteingress_doc['Name'], {})
-            if ssm_commandstatus(deleteingress['CommandId'], ssm_instance) is True:
-                logger.info('HelmDeleteIngressDownloadScript was downloaded successfully!')
-
-            # Delete nginx-ingress ELB as it is not fully managed by CFN
-            helmdel_doc = describe_document(event['ResourceProperties']['HelmDeleteIngressRunScript'])
-            helmdel = ssm_sendcommand(ssm_instance, helmdel_doc['Name'], {})
-            if ssm_commandstatus(helmdel['CommandId'], ssm_instance) is True:
-                logger.info('Nginx-ingress chart purged successfully!')
-        
-            # Revoke elb SecurityGroup rule from node sg and then delete elb SecurityGroup created by nginx-ingess
             sgId = describe_sg(event['ResourceProperties']['VPCID'], event['ResourceProperties']['EKSName'])
-            revoke_ingress(event['ResourceProperties']['NodeSecurityGroup'], sgId)
+            # Only delete ingress if exists.
+            # If stack creation was unable to create ingress at the first place this code will not run
 
-            # Dirty hack to force SG delete.  It takes some time after revoking a rule from a dependent SG.
-            STATUS = sgId
-            for i in range(0,100):
-                while STATUS != sgId:
-                    time.sleep(1)
-                    delete_sg(sgId)
-                    STATUS = describe_sg(event['ResourceProperties']['VPCID'], event['ResourceProperties']['EKSName'])
+            if sgId is not None:
+                # Delete nginx-ingress ELB as it is not fully managed by CFN
+                helmdel_doc = describe_document(event['ResourceProperties']['HelmDeleteIngressRunScript'])
+                helmdel = ssm_sendcommand(ssm_instance, helmdel_doc['Name'], {})
+                if ssm_commandstatus(helmdel['CommandId'], ssm_instance) is True:
+                    logger.info('Nginx-ingress chart purged successfully!')
+                
+                # Revoke elb SecurityGroup rule from node sg and then delete elb SecurityGroup created by nginx-ingess
+                revoke_ingress(event['ResourceProperties']['NodeSecurityGroup'], sgId)
 
-            logger.info('SG deleted successfully created by nginx-ingress')
+                # Wait for nginx-ingress security group id to disassociate from ingress ELB network interface(s)
+                netInt = list_interfaces(event['ResourceProperties']['VPCID'], sgId)
+                
+                for int in netInt:
+                    while True:
+                        if describe_interfaces(int) != None:
+                            if describe_interfaces(int) == sgId:
+                                logger.info('NetworkInterfaceId "{int}" is still associated with ingress security group "{sgId}", waiting...'.format(int=int, sgId=sgId))
+                                time.sleep(5)
+                        else:
+                            logger.info('NetworkInterfaceId "{int}" does not exists anymore'.format(int=int))
+                            break
+
+                if delete_sg_status(sgId) is True:
+                    logger.info('Deleted nginx-ingress SecurityGroup Id: "{sgId}" successfully'.format(sgId=sgId))
+            else:
+                logger.info('No ingress security group was found.  Exiting..')
+
             cfnresponse.send(event, context, cfnresponse.SUCCESS, {}, physicalResourceId)
   
     except Exception as err:
@@ -205,7 +193,6 @@ def ssm_commandoutput(command_id, instance_id):
 def ssm_commandstatus(command_id, instance_id):
     '''A function to return ssm command status'''
     try:
-  
         STATUS = ""
         for i in range(0,100):
             while STATUS != "Success":
@@ -236,8 +223,7 @@ def describe_sg(vpcId, eksName):
                 )
         return response['SecurityGroups'][0]['GroupId']
     except Exception as err:
-        logger.error('Describe security group error - "{type}": "{message}"'.format(type=type(err), message=str(err)))
-        return err
+        return None
 
 def revoke_ingress(sgId, revoke_id):
     '''A function to revoke an ingress rule in a provided Security Group'''
@@ -257,10 +243,59 @@ def revoke_ingress(sgId, revoke_id):
         logger.error('Revoke ingress error - "{type}": "{message}"'.format(type=type(err), message=str(err)))
         return err
 
+def list_interfaces(vpcId, sgId):
+    '''A function to return network interface ids associated with a VPC'''
+    try:
+        response = ec2_client.describe_network_interfaces(
+                        Filters=[
+                            {
+                                'Name': 'vpc-id',
+                                'Values': [vpcId]
+                            },
+                            {
+                                'Name': 'group-id',
+                                'Values': [sgId]
+                            }
+                        ]
+                )
+        interfaceIds = []
+        for item in response['NetworkInterfaces']:
+            interfaceIds.append(item['NetworkInterfaceId'])
+        return interfaceIds
+
+    except Exception as err:
+        logger.error('Describe network interface Id error - "{type}": "{message}"'.format(type=type(err), message=str(err)))
+        return err
+
+def describe_interfaces(interfaceId):
+    '''A function to describe network interfac Security Group Id'''
+    try:
+        response = ec2_client.describe_network_interface_attribute(
+                    Attribute='groupSet',
+                    DryRun=False,
+                    NetworkInterfaceId=interfaceId
+                )
+        return response['Groups'][0]['GroupId']
+    except Exception as err:
+        return None
+
 def delete_sg(sgId):
     '''A function to delete Security Group of K8s Cluster created by nginx-ingress'''
     try:
         response = ec2_client.delete_security_group(GroupId=sgId)
+        return True
     except Exception as err:
-        logger.error('Delete security group error - "{type}": "{message}"'.format(type=type(err), message=str(err)))
-        return err
+        return False
+
+def delete_sg_status(sgId):
+    '''A function to delete Security Group of K8s Cluster created by nginx-ingress'''
+    try:
+        STATUS = ""
+        for i in range(0,100):
+            while STATUS is False:
+              	time.sleep(5)
+                STATUS = delete_sg(sgId)
+        return True
+        
+    except Exception as err:
+        return False
