@@ -118,8 +118,8 @@ else
       kubectl create -f secret.yaml
     else
       echo "REGISTRYCREDENTIALS provided is not base64 encoded skipping..."
-      # shall we consider to terminate the stack or just leave it as a warning?
-      # exit 1
+      # Terminate the stack as it would fail anyways.
+      exit 1
     fi
   else
     echo "REGISTRYCREDENTIALS value is empty skipping..."
