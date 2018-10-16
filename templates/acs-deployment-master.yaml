@@ -371,7 +371,7 @@ Parameters:
       NoEcho: True
     RegistryCredentials:
       Type: String
-      Description: The private registry credentials base64
+      Description: The private registry credentials in base64 format.
       NoEcho: True
       Default: ""
     Route53DnsZone:

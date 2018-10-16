@@ -62,7 +62,12 @@ else
     done
   fi
   
+  # Triple check it's an ELB address
   ELBADDRESS=$(kubectl get services $INGRESS_RELEASE-nginx-ingress-controller --namespace=$DESIREDNAMESPACE -o jsonpath={.status.loadBalancer.ingress[0].hostname})
-  echo $ELBADDRESS
-
+  if [[ "$ELBADDRESS" =~ ".elb.amazonaws.com" ]]; then
+    echo $ELBADDRESS
+  else
+    echo "Something is wrong with the nginx-ingress.  Exiting..."
+    exit 1
+  fi
 fi
