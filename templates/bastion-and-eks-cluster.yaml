@@ -754,7 +754,7 @@ Resources:
     CreationPolicy:
       ResourceSignal:
         Count: !Ref DesiredNumberOfNodes
-        Timeout: PT15M
+        Timeout: PT30M
 
   NodeLaunchConfig:
     DependsOn: BastionAutoScalingGroup
