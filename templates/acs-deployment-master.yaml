@@ -65,6 +65,7 @@ Metadata:
             - AlfrescoPassword
             - RegistryCredentials
             - Route53DnsZone
+            - YourKitAgentOps
 
       ParameterLabels:
         AvailabilityZones:
@@ -147,6 +148,8 @@ Metadata:
           default: Destination Replication Bucket
         ReplicationBucketKMSEncryptionKey:
           default: Destination Bucket KMS Encryption Key
+        YourKitAgentOps:
+          default: The YourKit agent startup options
 
 Parameters:
     AvailabilityZones:
@@ -398,6 +401,10 @@ Parameters:
       Description: "The KMS encryption key for the destination bucket"
       Type: "String"
       Default: ""
+    YourKitAgentOps:
+      Type: String
+      Description: The YourKit agent startup options
+      Default: "delay=200000,onexit=snapshot,periodicperf=60"
 
 Conditions:
   isUseCrossRegionReplication: !Equals [!Ref UseCrossRegionReplication, "true"]
@@ -614,6 +621,7 @@ Resources:
           IngressReleaseName: !Ref IngressReleaseName
           AcsReleaseName: !Ref AcsReleaseName
           Route53DnsZone: !Ref Route53DnsZone
+          YourKitAgentOps: !Ref YourKitAgentOps
 
 Outputs:
   # VPC stack

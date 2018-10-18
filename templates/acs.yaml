@@ -34,6 +34,7 @@ Metadata:
             - DatabasePassword
             - RegistryCredentials
             - Route53DnsZone
+            - YourKitAgentOps
 
       ParameterLabels:
         TemplateBucketName:
@@ -78,6 +79,8 @@ Metadata:
           default: The helm chart release name of alfresco content services
         Route53DnsZone:
           default: The hosted zone to create Route53 Record for ACS
+        YourKitAgentOps:
+          default: The YourKit agent startup options
           
 Parameters:
     TemplateBucketName:
@@ -150,6 +153,9 @@ Parameters:
     Route53DnsZone:
       Type: String
       Description: The hosted zone to create Route53 Record for ACS
+    YourKitAgentOps:
+      Type: String
+      Description: The YourKit agent startup options
 
 Conditions:
   PrivateRegistry: !Not [!Equals [!Ref RegistryCredentials, ""]]
@@ -242,6 +248,7 @@ Resources:
                     - !Sub "--s3bucket-kms-alias ${S3BucketKMSAlias}"
                     - !Sub "--s3bucket-location ${AWS::Region}"
                     - !If [PrivateRegistry, !Join ["", [--registry-secret, " ", !Ref RegistryCredentials]], !Ref "AWS::NoValue"]
+                    - !Sub "--yourkit-opts ${YourKitAgentOps}"
                     - "--install"
               timeoutSeconds: 90
       DocumentType: Command

@@ -66,5 +66,9 @@
   {
     "ParameterKey": "RegistryCredentials",
     "ParameterValue": "@@RegistryCredentialsValue@@"
+  },
+  {
+    "ParameterKey": "YourKitAgentOps",
+    "ParameterValue": "@@YourKitAgentOpsValue@@"
   }
 ]

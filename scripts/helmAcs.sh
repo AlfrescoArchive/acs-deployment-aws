@@ -23,6 +23,7 @@ usage() {
   echo -e "--database-password \t Database password"
   echo -e "--external-name \t External host name of ACS"
   echo -e "--registry-secret \t Base64 dockerconfig.json string to private registry"
+  echo -e "--yourkit-opts \t Yourkit startup options"
   echo -e "--install \t Install a new ACS Helm chart"
   echo -e "--upgrade \t Upgrade an existing ACS Helm Chart"
 }
@@ -79,6 +80,10 @@ else
               ;;
           --registry-secret)
               REGISTRYCREDENTIALS="$2";
+              shift 2
+              ;;
+          --yourkit-opts)
+              YOURKIT_OPTS="$2";
               shift 2
               ;;
           --install)
@@ -143,6 +148,7 @@ else
       --set postgresql.enabled=false \
       --set database.external=true \
       --set repository.environment.JAVA_OPTS=" -Dopencmis.server.override=true -Dopencmis.server.value=https://$EXTERNAL_NAME -Dalfresco.restApi.basicAuthScheme=true -Dsolr.base.url=/solr -Dsolr.secureComms=none -Dindex.subsystem.name=solr6 -Dalfresco.cluster.enabled=true -Ddeployment.method=HELM_CHART -Xms2000M -Xmx2000M" \
+      --set repository.environment.CATALINA_OPTS="-agentpath:/usr/local/YourKit-JavaProfiler-2018.04/bin/linux-x86-64/libyjpagent.so=sessionname=$$HOSTNAME,dir=/tmp/Alfresco/yourkit,$YOURKIT_OPTS" \
       --set database.driver="org.mariadb.jdbc.Driver" \
       --set database.url="'jdbc:mariadb:aurora//$RDS_ENDPOINT:3306/alfresco?useUnicode=yes&characterEncoding=UTF-8'" \
       --set database.user="alfresco" \
