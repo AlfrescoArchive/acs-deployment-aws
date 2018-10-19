@@ -297,7 +297,7 @@ Resources:
               runCommand:
                 - "chmod u+x /tmp/helmFluentd.sh"
                 - !Sub "/tmp/helmFluentd.sh\
-                  \ --stackname ${AWS::StackName}
+                  \ --stackname alfresco\
                   \ --namespace ${K8sNamespace}\
                   \ --instance-role ${NodeInstanceRoleArn}\
                   \ --region ${AWS::Region}\

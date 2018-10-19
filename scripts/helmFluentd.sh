@@ -15,7 +15,7 @@ usage() {
   echo " "
   echo "options:"
   echo -e "--help \t Show options for this script"
-  echo -e "--stackname \t CFN stack name"
+  echo -e "--stackname \t CFN stack name (alfresco by default)"
   echo -e "--namespace \t Namespace to install"
   echo -e "--instance-role \t workernode IAM role"
   echo -e "--region \t region where is deployed"
