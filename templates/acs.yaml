@@ -428,6 +428,7 @@ Resources:
       HelmUpgradeRunScript: !Ref HelmUpgradeRunScript
       GetElbEndpointRunScript: !Ref GetElbEndpointRunScript
       HelmDeleteIngressRunScript: !Ref HelmDeleteIngressRunScript
+      HelmInstallFluentdRunScript: !Ref HelmInstallFluentdRunScript
 
   Route53DnsRecord:
     Type: AWS::Route53::RecordSetGroup
