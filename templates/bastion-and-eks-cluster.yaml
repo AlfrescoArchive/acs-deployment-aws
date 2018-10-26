@@ -206,7 +206,7 @@ Parameters:
     EKSClusterName:
       Type: String
       Description: The name of the eks cluster
-      Default: !Sub "${AWS::StackName}-cluster"
+      Default: "eks-cluster"
     K8sNamespace:
       Type: String
       Description: The namespace in EKS to deploy Helm charts
