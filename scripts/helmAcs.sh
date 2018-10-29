@@ -154,9 +154,9 @@ else
       --set s3connector.secrets.encryption=kms \
       --set s3connector.secrets.awsKmsKeyId="$S3BUCKET_KMS_ALIAS" \
       --set repository.image.repository="alfresco/alfresco-content-repository-aws" \
-      --set repository.image.tag="0.1.3-repo-6.0.0.3" \
+      --set repository.image.tag="6.1.0-EA3" \
       --set registryPullSecrets=quay-registry-secret \
-      --set repository.replicaCount=1 \
+      --set repository.replicaCount=2 \
       --namespace=$DESIREDNAMESPACE
   fi
   
