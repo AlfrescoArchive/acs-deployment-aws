@@ -129,7 +129,7 @@ else
   
   if [ "$INSTALL" = "true" ]; then
     echo Installing Alfresco Content Services helm chart...
-    helm install alfresco-incubator/alfresco-content-services --version 1.1.3 \
+    helm install alfresco-incubator/alfresco-content-services --version 1.1.5 \
       --name $ACS_RELEASE \
       --set externalProtocol="https" \
       --set externalHost="$EXTERNAL_NAME" \
@@ -156,7 +156,7 @@ else
       --set repository.image.repository="alfresco/alfresco-content-repository-aws" \
       --set repository.image.tag="6.1.0-EA3" \
       --set registryPullSecrets=quay-registry-secret \
-      --set repository.replicaCount=1 \
+      --set repository.replicaCount=2 \
       --namespace=$DESIREDNAMESPACE
   fi
   
