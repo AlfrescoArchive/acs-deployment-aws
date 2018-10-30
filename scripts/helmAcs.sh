@@ -129,7 +129,7 @@ else
   
   if [ "$INSTALL" = "true" ]; then
     echo Installing Alfresco Content Services helm chart...
-    helm install alfresco-incubator/alfresco-content-services --version 1.1.5 \
+    helm install alfresco-incubator/alfresco-content-services --version 1.1.4 \
       --name $ACS_RELEASE \
       --set externalProtocol="https" \
       --set externalHost="$EXTERNAL_NAME" \
