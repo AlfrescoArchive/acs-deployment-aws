@@ -15,7 +15,7 @@ usage() {
   echo " "
   echo "options:"
   echo -e "--help \t Show options for this script"
-  echo -e "--stackname \t CFN stack name (alfresco by default)"
+  echo -e "--stackname \t CFN stack name"
   echo -e "--namespace \t Namespace to install"
   echo -e "--instance-role \t workernode IAM role"
   echo -e "--region \t region where is deployed"
@@ -81,7 +81,7 @@ else
 EOF
 
     helm install incubator/fluentd-cloudwatch \
-      --name $STACKNAME-fluentd-cloudwatch \
+      --name $STACKNAME-fluentd \
       --namespace=$DESIREDNAMESPACE \
       --set awsRole=$INSTANCE_ROLE \
       --set awsRegion=$REGION \
@@ -90,15 +90,15 @@ EOF
       -f /tmp/extraVars.yaml
   fi
 
-  STATUS=$(helm ls $STACKNAME-fluentd-cloudwatch | grep fluentd-cloudwatch | awk '{print $8}')
+  STATUS=$(helm ls $STACKNAME-fluentd | grep fluentd | awk '{print $8}')
   while [ "$STATUS" != "DEPLOYED" ]; do
     echo fluentd cloudwatch is still deploying, sleeping for a second...
     sleep 1
-    STATUS=$(helm ls $STACKNAME-fluentd-cloudwatch | grep fluentd-cloudwatch | awk '{print $8}')
+    STATUS=$(helm ls $STACKNAME-fluentd | grep fluentd | awk '{print $8}')
   done
   echo fluentd cloudwatch deployed successfully
   # Below logic is for AWS Systems Manager return code for the script
-  STATUS=$(helm ls $STACKNAME-fluentd-cloudwatch | grep fluentd-cloudwatch | awk '{print $8}')
+  STATUS=$(helm ls $STACKNAME-fluentd | grep fluentd | awk '{print $8}')
   if [ "$STATUS" = "DEPLOYED" ]; then
     exit 0
   else
