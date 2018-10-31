@@ -107,14 +107,16 @@ else
   if [ ! -z ${REGISTRYCREDENTIALS} ]; then
     if [[ $(isBase64) == "True" ]]; then
       echo "Creating secrets file to access private repository"
-      echo "apiVersion: v1
-      kind: Secret
-      metadata:
-        name: quay-registry-secret
-        namespace: $DESIREDNAMESPACE
-      type: kubernetes.io/dockerconfigjson
-      data:
-        .dockerconfigjson: $REGISTRYCREDENTIALS" >> secret.yaml
+      cat <<EOF > secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: quay-registry-secret
+  namespace: $DESIREDNAMESPACE
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: $REGISTRYCREDENTIALS
+EOF
       kubectl create -f secret.yaml
     else
       echo "REGISTRYCREDENTIALS provided is not base64 encoded skipping..."
