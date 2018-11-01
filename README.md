@@ -15,6 +15,7 @@ Currently, this setup will only work in AWS US East (N.Virginia) and West (Orego
 ### Prerequisites
 * You need a hosted zone e.g. example.com. See [Creating a Public Hosted Zone](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html)
 * An SSL certificate for the Elastic Load Balancer and the domains in the hosted zone [Creating SSL Cert](https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/ssl-server-cert.html)
+* For some of the images from the Helm installation access to [Alfresco's repository in quay.io](https://quay.io/repository/alfresco) is required.
 
 ### Permissions
 Ensure that the IAM role or IAM user that creates the stack allows the following permissions:
@@ -111,9 +112,9 @@ we will provide some additional information.
 ```The ACS domain name``` : Choose the subdomain which will be used for the url e.g. **my-acs-eks.example.com**. For more information about how to create a hosted zone and its subdomains visit the AWS documentation on [Creating a Subdomain](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingNewSubdomain.html).
 
 ```Private Registry Credentials. Base64 encryption of dockerconfig json``` : \
-**Notice:** The credentials are only needed if the ACS image is pulled from quay.io which is currently not the case.
+**Notice:** Make sure you have access to [Alfresco's repository in quay.io](https://quay.io/repository/alfresco).
 1) Login to quay.io with ```docker login quay.io```.
-2) Validate that you can see the credentials with ```cat ~/.docker/config.json``` for Quay.io.
+2) Validate that you can see the credentials with ```cat ~/.docker/config.json``` for quay.io.
 3) Get the encoded credentials with ```cat ~/.docker/config.json | base64```.
 4) Copy them into the textbox.
 

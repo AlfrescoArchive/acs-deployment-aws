@@ -107,14 +107,16 @@ else
   if [ ! -z ${REGISTRYCREDENTIALS} ]; then
     if [[ $(isBase64) == "True" ]]; then
       echo "Creating secrets file to access private repository"
-      echo "apiVersion: v1
-      kind: Secret
-      metadata:
-        name: quay-registry-secret
-        namespace: $DESIREDNAMESPACE
-      type: kubernetes.io/dockerconfigjson
-      data:
-        .dockerconfigjson: $REGISTRYCREDENTIALS" >> secret.yaml
+      cat <<EOF > secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: quay-registry-secret
+  namespace: $DESIREDNAMESPACE
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: $REGISTRYCREDENTIALS
+EOF
       kubectl create -f secret.yaml
     else
       echo "REGISTRYCREDENTIALS provided is not base64 encoded skipping..."
@@ -129,7 +131,7 @@ else
   
   if [ "$INSTALL" = "true" ]; then
     echo Installing Alfresco Content Services helm chart...
-    helm install alfresco-incubator/alfresco-content-services --version 1.1.3 \
+    helm install alfresco-incubator/alfresco-content-services --version 1.1.5 \
       --name $ACS_RELEASE \
       --set externalProtocol="https" \
       --set externalHost="$EXTERNAL_NAME" \
@@ -154,9 +156,9 @@ else
       --set s3connector.secrets.encryption=kms \
       --set s3connector.secrets.awsKmsKeyId="$S3BUCKET_KMS_ALIAS" \
       --set repository.image.repository="alfresco/alfresco-content-repository-aws" \
-      --set repository.image.tag="0.1.3-repo-6.0.0.3" \
+      --set repository.image.tag="6.1.0-EA3" \
       --set registryPullSecrets=quay-registry-secret \
-      --set repository.replicaCount=1 \
+      --set repository.replicaCount=2 \
       --namespace=$DESIREDNAMESPACE
   fi
   
