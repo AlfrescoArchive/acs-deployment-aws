@@ -138,7 +138,7 @@ Metadata:
         AcsReleaseName:
           default: The helm chart release name of alfresco content services
         Route53DnsZone:
-          default: The hosted zone to create Route53 Record for ACS
+          default: The hosted zone to create Route53 Record for ACS (add a . (dot) at the end of the DNS zone)
         UseCrossRegionReplication:
           default: Enable Cross Region Replication for This Bucket
         ReplicationBucketRegion:
@@ -378,7 +378,7 @@ Parameters:
       AllowedPattern: ".+"
       ConstraintDescription: The hosted zone to create Route53 Record for ACS can not be empty
       Type: String
-      Description: The hosted zone to create Route53 Record for ACS
+      Description: The hosted zone to create Route53 Record for ACS (add a . (dot) at the end of the DNS zone)
     UseCrossRegionReplication:
       Description: "Set to true if you want to add an S3 Bucket for replication"
       Type: String

@@ -79,7 +79,7 @@ Metadata:
         AcsReleaseName:
           default: The helm chart release name of alfresco content services
         Route53DnsZone:
-          default: The hosted zone to create Route53 Record for ACS
+          default: The hosted zone to create Route53 Record for ACS (add a . (dot) at the end of the DNS zone)
         NodeInstanceRoleArn:
           default: ARN for the worker nodes instance role (with logging policy)
         EC2LogGroup:
@@ -155,7 +155,7 @@ Parameters:
       Description: The helm chart release name of alfresco content services
     Route53DnsZone:
       Type: String
-      Description: The hosted zone to create Route53 Record for ACS
+      Description: The hosted zone to create Route53 Record for ACS (add a . (dot) at the end of the DNS zone)
     NodeInstanceRoleArn:
       Type: String
       Description: ARN for the worker nodes instance role (with logging policy)
