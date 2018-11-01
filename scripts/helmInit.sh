@@ -23,6 +23,7 @@ fi
 echo Tiller created successfully
 helm repo add alfresco-incubator http://kubernetes-charts.alfresco.com/incubator
 helm repo add alfresco-stable http://kubernetes-charts.alfresco.com/stable
+helm repo add incubator https://kubernetes-charts-incubator.storage.googleapis.com/
 # Below logic is for AWS Systems Manager return code of the script
 TILLER=$(kubectl get pods -l name=tiller --namespace kube-system -o jsonpath={.items..phase})
 if [ "$TILLER" = "Running" ]; then

@@ -34,6 +34,8 @@ Metadata:
             - DatabasePassword
             - RegistryCredentials
             - Route53DnsZone
+            - NodeInstanceRoleArn
+            - EC2LogGroup
 
       ParameterLabels:
         TemplateBucketName:
@@ -77,8 +79,12 @@ Metadata:
         AcsReleaseName:
           default: The helm chart release name of alfresco content services
         Route53DnsZone:
-          default: The hosted zone to create Route53 Record for ACS
-          
+          default: The hosted zone to create Route53 Record for ACS (add a . (dot) at the end of the DNS zone)
+        NodeInstanceRoleArn:
+          default: ARN for the worker nodes instance role (with logging policy)
+        EC2LogGroup:
+          default: Log group name to ship all ACS logs with Fluentd
+
 Parameters:
     TemplateBucketName:
       AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
@@ -149,11 +155,17 @@ Parameters:
       Description: The helm chart release name of alfresco content services
     Route53DnsZone:
       Type: String
-      Description: The hosted zone to create Route53 Record for ACS
+      Description: The hosted zone to create Route53 Record for ACS (add a . (dot) at the end of the DNS zone)
+    NodeInstanceRoleArn:
+      Type: String
+      Description: ARN for the worker nodes instance role (with logging policy)
+    EC2LogGroup:
+      Type: String
+      Description: Log group name to ship all ACS logs with Fluentd
 
 Conditions:
   PrivateRegistry: !Not [!Equals [!Ref RegistryCredentials, ""]]
-  
+
 Resources:
   # SSM documents to run helm commands on the bastion
   # Download scripts directory
@@ -171,7 +183,7 @@ Resources:
               sourceInfo: !Sub "{ \"path\": \"https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/scripts\" }"
               destinationPath: "/tmp"
       DocumentType: Command
-  
+
   # Execute helm initialisation
   HelmInitRunScript:
     Type: "AWS::SSM::Document"
@@ -184,7 +196,7 @@ Resources:
             name: helmInit
             inputs:
               workingDirectory: "/root"
-              runCommand: 
+              runCommand:
                 - "chmod u+x /tmp/helmInit.sh"
                 - "/tmp/helmInit.sh"
               timeoutSeconds: 60
@@ -213,7 +225,7 @@ Resources:
                   \ --external-name ${AcsExternalName}"
               timeoutSeconds: 60
       DocumentType: Command
-  
+
   # Execute Helm ACS installation
   HelmInstallRunScript:
     Type: "AWS::SSM::Document"
@@ -270,7 +282,30 @@ Resources:
                   \ --upgrade"
               timeoutSeconds: 60
       DocumentType: Command
-  
+
+  HelmInstallFluentdRunScript:
+    Type: "AWS::SSM::Document"
+    Properties:
+      Content:
+        schemaVersion: "2.2"
+        description: Install Fluentd K8s CloudWatchLogs Helm chart
+        mainSteps:
+          - action: aws:runShellScript
+            name: helmInstallFluentd
+            inputs:
+              workingDirectory: "/root"
+              runCommand:
+                - "chmod u+x /tmp/helmFluentd.sh"
+                - !Sub "/tmp/helmFluentd.sh\
+                  \ --stackname alfresco\
+                  \ --namespace ${K8sNamespace}\
+                  \ --instance-role ${NodeInstanceRoleArn}\
+                  \ --region ${AWS::Region}\
+                  \ --loggroup ${EC2LogGroup}\
+                  \ --install"
+              timeoutSeconds: 60
+      DocumentType: Command
+
   # Get ACS ELB Address
   GetElbEndpointRunScript:
     Type: "AWS::SSM::Document"
@@ -288,7 +323,7 @@ Resources:
                 - !Sub "/tmp/getElb.sh --ingress-release ${IngressReleaseName} --namespace ${K8sNamespace}"
               timeoutSeconds: 60
       DocumentType: Command
-  
+
   # Execute Helm nginx-ingress deletion
   HelmDeleteIngressRunScript:
     Type: "AWS::SSM::Document"
@@ -393,6 +428,7 @@ Resources:
       HelmUpgradeRunScript: !Ref HelmUpgradeRunScript
       GetElbEndpointRunScript: !Ref GetElbEndpointRunScript
       HelmDeleteIngressRunScript: !Ref HelmDeleteIngressRunScript
+      HelmInstallFluentdRunScript: !Ref HelmInstallFluentdRunScript
 
   Route53DnsRecord:
     Type: AWS::Route53::RecordSetGroup
