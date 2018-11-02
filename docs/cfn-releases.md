@@ -2,7 +2,7 @@
 
 |CFN Template|Helm Chart|ACS AWS Image|
 |:---:|:---:|:---:|
-|1.0.0-EA|1.1.3|6.0.0.3|
+|1.0.0-EA2|1.1.5|6.1.0-EA3|
 
 ## Release process
 

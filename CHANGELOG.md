@@ -1,3 +1,8 @@
+# 1.0.0-EA2
+
+## Features
+* Includes the <a href='docs/transform-services.md'>Transform Service</a> that performs transformations for Alfresco Content Services remotely in scalable containers.
+
 # 1.0.0-EA
 
 ## Features
