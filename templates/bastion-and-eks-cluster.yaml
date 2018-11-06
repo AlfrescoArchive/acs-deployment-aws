@@ -44,6 +44,8 @@ Metadata:
             - NodesMetricsEnabled
             - EksExternalUserArn
             - K8sNamespace
+            - IndexEBSVolumeSize
+            - IndexEBSIops
 
       ParameterLabels:
         TemplateBucketName:
@@ -100,6 +102,10 @@ Metadata:
           default: The AWS IAM user arn who will be authorised to connect the cluster externally
         K8sNamespace:
           default: The namespace in EKS to deploy Helm charts
+        IndexEBSVolumeSize:
+          default: Size in GB for the Index EBS volume
+        IndexEBSIops:
+          default: IOPS for the Index EBS volume (300 to 20000)
 
 Parameters:
     TemplateBucketName:
@@ -203,6 +209,14 @@ Parameters:
     K8sNamespace:
       Type: String
       Description: The namespace in EKS to deploy Helm charts
+    IndexEBSVolumeSize:
+      Type: String
+      Description: Size in GB for the Index EBS volume
+      Default: 100
+    IndexEBSIops:
+      Type: String
+      Description: IOPS for the Index EBS volume attached (300 to 20000)
+      Default: 300
 
 Mappings:
   BastionAmiRegionMap:
@@ -755,6 +769,21 @@ Resources:
       ResourceSignal:
         Count: !Ref DesiredNumberOfNodes
         Timeout: PT30M
+
+  SolrVolume1:
+   Type: AWS::EC2::Volume
+   Properties:
+     AutoEnableIO: false
+     AvailabilityZone: !Select [ 0, !Ref AvailabilityZones ]
+     Encrypted: false
+     Iops: !Ref IndexEBSIops
+     Size: !Ref IndexEBSVolumeSize
+     VolumeType: io1
+     Tags:
+       - Key: Name
+         Value: !Sub "${AWS::StackName}"
+       - Key: Component
+         Value: SolrVolume1
 
   NodeLaunchConfig:
     DependsOn: BastionAutoScalingGroup

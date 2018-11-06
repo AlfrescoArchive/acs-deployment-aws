@@ -97,13 +97,13 @@ else
               ;;
       esac
   done
-  
+
   cmd="import re; string='${REGISTRYCREDENTIALS}'; print True if len(string) % 4 == 0 and re.match('^[A-Za-z0-9+\/=]+\Z', string) else False"
   isBase64(){
     checkVar=$(python -c "${cmd}" )
     echo $checkVar
   }
-    
+
   if [ ! -z ${REGISTRYCREDENTIALS} ]; then
     if [[ $(isBase64) == "True" ]]; then
       echo "Creating secrets file to access private repository"
@@ -149,16 +149,19 @@ EOF
      exit 1
   fi
 
-  MASTERNODE=$(kubectl get nodes | awk '{print $1}' | awk 'FNR == 3 {print}')  
+  MASTERNODE=$(kubectl get nodes | awk '{print $1}' | awk 'FNR == 3 {print}')
 
   kubectl taint nodes $MASTERNODE SolrMasterOnly=true:NoSchedule
   kubectl label nodes $MASTERNODE SolrMasterOnly=true
 
-  #aws ebs create volume...
-  #SOLR_EBS_VOLUME=volMagic
+  # variable region has to be figured out with:
+  AZ=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
+  REGION=${AZ::-1}
+  # Find the volume created from CFN
+  SOLR_EBS_VOLUME=$(aws ec2 describe-volumes --region $REGION --filters "Name=tag:Component,Values=SolrVolume1" --query "Volumes[?State=='available'].{Created:CreateTime,Volume:VolumeId}" --output text|tail -1|awk '{ print $2 }')
 
   ALFRESCO_PASSWORD=$(printf %s $ALFRESCO_PASSWORD | iconv -t utf16le | openssl md4| awk '{ print $2}')
-  
+
   if [ "$INSTALL" = "true" ]; then
     echo Installing Alfresco Content Services helm chart...
 
@@ -181,9 +184,9 @@ alfresco-search:
       memory: \"2500Mi\"
   environment:
     SOLR_JAVA_MEM: \"-Xms2000M -Xmx2000M\"
-  #persistence:
-  #  EbsPvConfiguration:
-  #    volumeID: \"$SOLR_EBS_VOLUME\"
+  persistence:
+   EbsPvConfiguration:
+     volumeID: \"$SOLR_EBS_VOLUME\"
   affinity: |
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
@@ -199,7 +202,7 @@ alfresco-search:
     value: \"true\"
     effect: \"NoSchedule\"
   PvNodeAffinity:
-    required:    
+    required:
       nodeSelectorTerms:
       - matchExpressions:
         - key: \"SolrMasterOnly\"
@@ -229,11 +232,11 @@ s3connector:
     encryption: kms
     awsKmsKeyId: \"$S3BUCKET_KMS_ALIAS\"
 registryPullSecrets: quay-registry-secret" >> values.yaml
-    
+
     helm install alfresco-incubator/alfresco-content-services --version 1.1.5-SEARCH-1227 --name $ACS_RELEASE -f values.yaml --namespace=$DESIREDNAMESPACE
 
   fi
-  
+
   if [ "$UPGRADE" = "true" ]; then
     echo Upgrading Alfresco Content Services helm chart...
     helm upgrade $ACS_RELEASE alfresco-incubator/alfresco-content-services \
@@ -249,7 +252,7 @@ registryPullSecrets: quay-registry-secret" >> values.yaml
       --set database.password="$DATABASE_PASSWORD" \
       --namespace=$DESIREDNAMESPACE
   fi
-  
+
   STATUS=$(helm ls $ACS_RELEASE | grep $ACS_RELEASE | awk '{print $8}')
   while [ "$STATUS" != "DEPLOYED" ]; do
     echo alfresco content services is still deploying, sleeping for a second...

@@ -34,6 +34,8 @@ Metadata:
             - NodesMetricsEnabled
             - EksExternalUserArn
             - K8sNamespace
+            - IndexEBSVolumeSize
+            - IndexEBSIops
         - Label:
             default: S3 Cross Replication Bucket for storing ACS content store
           Parameters:
@@ -147,6 +149,10 @@ Metadata:
           default: Destination Replication Bucket
         ReplicationBucketKMSEncryptionKey:
           default: Destination Bucket KMS Encryption Key
+        IndexEBSVolumeSize:
+          default: Size in GB for the Index EBS volume
+        IndexEBSIops:
+          default: IOPS for the Index EBS volume (300 to 20000)
 
 Parameters:
     AvailabilityZones:
@@ -383,7 +389,7 @@ Parameters:
       Description: "Set to true if you want to add an S3 Bucket for replication"
       Type: String
       Default: false
-      AllowedValues: 
+      AllowedValues:
         - "true"
         - "false"
     ReplicationBucketRegion:
@@ -398,6 +404,14 @@ Parameters:
       Description: "The KMS encryption key for the destination bucket"
       Type: "String"
       Default: ""
+    IndexEBSVolumeSize:
+      Type: String
+      Description: Size in GB for the Index EBS volume
+      Default: 100
+    IndexEBSIops:
+      Type: String
+      Description: IOPS for the Index EBS volume (300 to 20000)
+      Default: 300
 
 Conditions:
   isUseCrossRegionReplication: !Equals [!Ref UseCrossRegionReplication, "true"]
@@ -424,7 +438,7 @@ Resources:
 
     EC2LogGroup:
       Type: AWS::Logs::LogGroup
-    
+
     NodeInstanceRole:
       Type: AWS::IAM::Role
       Properties:
@@ -452,6 +466,15 @@ Resources:
                     - logs:CreateLogGroup
                   Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${EC2LogGroup}:*"
                   Effect: Allow
+          - PolicyName: ebs-volume-policy
+            PolicyDocument:
+              Version: 2012-10-17
+              Statement:
+                - Action:
+                    - ec2:AttachVolume
+                    - ec2:DetachVolume
+                  Resource: !Sub "arn:aws:ec2:*:*:volume/*"
+                  Effect: Allow
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
           Statement:
@@ -467,7 +490,7 @@ Resources:
           - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
           - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
           - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
-          
+
     NodeSecurityGroup:
       Type: AWS::EC2::SecurityGroup
       Properties:
@@ -489,9 +512,9 @@ Resources:
       Properties:
         Tags:
           - Key: Name
-            Value: !Sub "${AWS::StackName}" 
+            Value: !Sub "${AWS::StackName}"
           - Key: Component
-            Value: ACS-EFS 
+            Value: ACS-EFS
         TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/templates/efs.yaml"
         Parameters:
           PrivateSubnet1ID: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
@@ -508,9 +531,10 @@ Resources:
           - Key: Name
             Value: !Sub "${AWS::StackName}"
           - Key: Component
-            Value: ACS-Bastion 
+            Value: ACS-Bastion
         TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/templates/bastion-and-eks-cluster.yaml"
         Parameters:
+          AvailabilityZones: !Join [",", !Ref AvailabilityZones]
           # Bastion stack params
           KeyPairName: !Ref KeyPairName
           PublicSubnet1ID: !GetAtt VPCStack.Outputs.PublicSubnet1ID
@@ -564,7 +588,7 @@ Resources:
       Properties:
         Tags:
           - Key: Name
-            Value: !Sub "${AWS::StackName}" 
+            Value: !Sub "${AWS::StackName}"
           - Key: Component
             Value: ACS-S3
         TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/templates/s3-bucket.yaml"
@@ -577,7 +601,7 @@ Resources:
           ReplicationBucketKMSEncryptionKey: !Ref ReplicationBucketKMSEncryptionKey
           NodeInstanceRole: !Ref NodeInstanceRole
           NodeInstanceRoleArn: !GetAtt NodeInstanceRole.Arn
-    
+
     ACSStack:
       Type: AWS::CloudFormation::Stack
       DependsOn:
@@ -590,9 +614,10 @@ Resources:
           - Key: Name
             Value: !Sub "${AWS::StackName}"
           - Key: Component
-            Value: ACS-Main 
+            Value: ACS-Main
         TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/templates/acs.yaml"
         Parameters:
+          AvailabilityZones: !Join [",", !Ref AvailabilityZones]
           TemplateBucketName: !Ref TemplateBucketName
           TemplateBucketKeyPrefix: !Ref TemplateBucketKeyPrefix
           EFSName: !GetAtt EFSStack.Outputs.EFSName
@@ -617,9 +642,9 @@ Resources:
 
 Outputs:
   # VPC stack
-  VPCID: 
+  VPCID:
     Value: !GetAtt VPCStack.Outputs.VPCID
-  RemoteAccessCIDR: 
+  RemoteAccessCIDR:
     Value: !Ref RemoteAccessCIDR
 
   # Bastion stack
@@ -655,6 +680,8 @@ Outputs:
     Value: !GetAtt NodeInstanceRole.Arn
   NodeSecurityGroupId:
     Value: !Ref NodeSecurityGroup
+  AvailabilityZones:
+    Value: !Join [",", !Ref AvailabilityZones]
 
   # EFS Stack
   EFSSubstackName:
@@ -663,7 +690,7 @@ Outputs:
     Value: !GetAtt EFSStack.Outputs.EFSName
   EFSMountTargets:
     Value: !GetAtt EFSStack.Outputs.MountTargets
-  
+
   # S3 Stack
   S3SubstackName:
     Value: !GetAtt S3Stack.Outputs.SubstackName
@@ -688,7 +715,7 @@ Outputs:
   # ACS Stack
   AcsElbEndpoint:
     Value: !GetAtt ACSStack.Outputs.AcsElbEndpoint
-  AcsBaseDnsName: 
+  AcsBaseDnsName:
     Value: !Ref AcsExternalName
   AcsDnsEndpoint:
     Value: !GetAtt ACSStack.Outputs.AcsDnsEndpoint
