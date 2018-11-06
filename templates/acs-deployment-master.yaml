@@ -64,6 +64,7 @@ Metadata:
             - AcsReleaseName
             - AlfrescoPassword
             - RegistryCredentials
+            - RepoPods
             - Route53DnsZone
 
       ParameterLabels:
@@ -137,6 +138,8 @@ Metadata:
           default: The helm chart release name of nginx-ingress
         AcsReleaseName:
           default: The helm chart release name of alfresco content services
+        RepoPods:
+          default: The number of repository pods in the cluster
         Route53DnsZone:
           default: The hosted zone to create Route53 Record for ACS
         UseCrossRegionReplication:
@@ -374,6 +377,10 @@ Parameters:
       Description: The private registry credentials in base64 format.
       NoEcho: True
       Default: ""
+    RepoPods:
+      Type: String
+      Description: The number of repository pods in the cluster
+      Default: "2"
     Route53DnsZone:
       AllowedPattern: ".+"
       ConstraintDescription: The hosted zone to create Route53 Record for ACS can not be empty

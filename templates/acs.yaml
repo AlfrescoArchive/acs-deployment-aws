@@ -33,6 +33,7 @@ Metadata:
             - RDSEndpoint
             - DatabasePassword
             - RegistryCredentials
+            - RepoPods
             - Route53DnsZone
 
       ParameterLabels:
@@ -76,6 +77,8 @@ Metadata:
           default: The helm chart release name of nginx-ingress
         AcsReleaseName:
           default: The helm chart release name of alfresco content services
+        RepoPods:
+          default: The number of repository pods in the cluster
         Route53DnsZone:
           default: The hosted zone to create Route53 Record for ACS
           
@@ -147,6 +150,9 @@ Parameters:
     AcsReleaseName:
       Type: String
       Description: The helm chart release name of alfresco content services
+    RepoPods:
+      Type: String
+      Description: The number of repository pods in the cluster
     Route53DnsZone:
       Type: String
       Description: The hosted zone to create Route53 Record for ACS
@@ -238,6 +244,7 @@ Resources:
                     - !Sub "--rds-endpoint ${RDSEndpoint}"
                     - !Sub "--database-password ${DatabasePassword}"
                     - !Sub "--external-name ${AcsExternalName}"
+                    - !Sub "--repo-pods ${RepoPods}"
                     - !Sub "--s3bucket-name ${S3BucketName}"
                     - !Sub "--s3bucket-kms-alias ${S3BucketKMSAlias}"
                     - !Sub "--s3bucket-location ${AWS::Region}"
@@ -267,6 +274,7 @@ Resources:
                   \ --alfresco-password ${AlfrescoPassword}\
                   \ --database-password ${DatabasePassword}\
                   \ --external-name ${AcsExternalName}\
+                  \ --repo-pods ${RepoPods}\
                   \ --upgrade"
               timeoutSeconds: 60
       DocumentType: Command
