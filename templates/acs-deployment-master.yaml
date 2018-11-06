@@ -620,6 +620,7 @@ Resources:
           RegistryCredentials: !Ref RegistryCredentials
           IngressReleaseName: !Ref IngressReleaseName
           AcsReleaseName: !Ref AcsReleaseName
+          RepoPods: !Ref RepoPods
           Route53DnsZone: !Ref Route53DnsZone
 
 Outputs:
