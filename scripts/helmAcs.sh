@@ -127,39 +127,111 @@ EOF
     echo "REGISTRYCREDENTIALS value is empty skipping..."
   fi
 
+  WAIT_INTERVAL=1
+  COUNTER=0
+  TIMEOUT=300
+  t0=`date +%s`
+
+  echo "Waiting for nodes to be ready"
+  until [ $(kubectl get nodes | grep Ready -c) -eq 2 ] || [ "$COUNTER" -eq "$TIMEOUT" ]; do
+     printf '.'
+     sleep $WAIT_INTERVAL
+     COUNTER=$(($COUNTER+$WAIT_INTERVAL))
+  done
+
+  if (("$COUNTER" < "$TIMEOUT")) ; then
+     t1=`date +%s`
+     delta=$((($t1 - $t0)/60))
+     echo "All 2 nodes ready in $delta minutes"
+  else
+     echo "Waited $COUNTER seconds"
+     echo "Not all nodes are ready."
+     exit 1
+  fi
+
+  MASTERNODE=$(kubectl get nodes | awk '{print $1}' | awk 'FNR == 3 {print}')  
+
+  kubectl taint nodes $MASTERNODE SolrMasterOnly=true:NoSchedule
+  kubectl label nodes $MASTERNODE SolrMasterOnly=true
+
+  #aws ebs create volume...
+  #SOLR_EBS_VOLUME=volMagic
+
   ALFRESCO_PASSWORD=$(printf %s $ALFRESCO_PASSWORD | iconv -t utf16le | openssl md4| awk '{ print $2}')
   
   if [ "$INSTALL" = "true" ]; then
     echo Installing Alfresco Content Services helm chart...
-    helm install alfresco-incubator/alfresco-content-services --version 1.1.5 \
-      --name $ACS_RELEASE \
-      --set externalProtocol="https" \
-      --set externalHost="$EXTERNAL_NAME" \
-      --set externalPort="443" \
-      --set repository.adminPassword="$ALFRESCO_PASSWORD" \
-      --set alfresco-infrastructure.persistence.efs.enabled=true \
-      --set alfresco-infrastructure.persistence.efs.dns="$EFS_NAME" \
-      --set alfresco-search.resources.requests.memory="2500Mi",alfresco-search.resources.limits.memory="2500Mi" \
-      --set alfresco-search.environment.SOLR_JAVA_MEM="-Xms2000M -Xmx2000M" \
-      --set persistence.solr.data.subPath="$DESIREDNAMESPACE/alfresco-content-services/solr-data" \
-      --set postgresql.enabled=false \
-      --set database.external=true \
-      --set repository.environment.JAVA_OPTS=" -Dopencmis.server.override=true -Dopencmis.server.value=https://$EXTERNAL_NAME -Dalfresco.restApi.basicAuthScheme=true -Dsolr.base.url=/solr -Dsolr.secureComms=none -Dindex.subsystem.name=solr6 -Dalfresco.cluster.enabled=true -Ddeployment.method=HELM_CHART -Xms2000M -Xmx2000M" \
-      --set database.driver="org.mariadb.jdbc.Driver" \
-      --set database.url="'jdbc:mariadb:aurora//$RDS_ENDPOINT:3306/alfresco?useUnicode=yes&characterEncoding=UTF-8'" \
-      --set database.user="alfresco" \
-      --set database.password="$DATABASE_PASSWORD" \
-      --set persistence.repository.enabled=false \
-      --set s3connector.enabled=true \
-      --set s3connector.config.bucketName="$S3BUCKET_NAME" \
-      --set s3connector.config.bucketLocation="$S3BUCKET_LOCATION" \
-      --set s3connector.secrets.encryption=kms \
-      --set s3connector.secrets.awsKmsKeyId="$S3BUCKET_KMS_ALIAS" \
-      --set repository.image.repository="alfresco/alfresco-content-repository-aws" \
-      --set repository.image.tag="6.1.0-EA3" \
-      --set registryPullSecrets=quay-registry-secret \
-      --set repository.replicaCount=2 \
-      --namespace=$DESIREDNAMESPACE
+
+echo "externalProtocol: https
+externalHost: \"$EXTERNAL_NAME\"
+externalPort: \"443\"
+repository:
+  adminPassword: \"$ALFRESCO_PASSWORD\"
+  image:
+    repository: \"alfresco/alfresco-content-repository-aws\"
+    tag: \"0.1.3-repo-6.0.0.3\"
+  replicaCount: 1
+  environment:
+    JAVA_OPTS: \" -Dopencmis.server.override=true -Dopencmis.server.value=https://$EXTERNAL_NAME -Dalfresco.restApi.basicAuthScheme=true -Dsolr.base.url=/solr -Dsolr.secureComms=none -Dindex.subsystem.name=solr6 -Dalfresco.cluster.enabled=true -Ddeployment.method=HELM_CHART -Xms2000M -Xmx2000M\"
+alfresco-search:
+  resources:
+    requests:
+      memory: \"2500Mi\"
+    limits:
+      memory: \"2500Mi\"
+  environment:
+    SOLR_JAVA_MEM: \"-Xms2000M -Xmx2000M\"
+  #persistence:
+  #  EbsPvConfiguration:
+  #    volumeID: \"$SOLR_EBS_VOLUME\"
+  affinity: |
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+            - key: \"SolrMasterOnly\"
+              operator: In
+              values:
+              - \"true\"
+  tolerations:
+  - key: \"SolrMasterOnly\"
+    operator: \"Equal\"
+    value: \"true\"
+    effect: \"NoSchedule\"
+  PvNodeAffinity:
+    required:    
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: \"SolrMasterOnly\"
+          operator: In
+          values:
+          - \"true\"
+persistence:
+  solr:
+    data:
+      subPath: \"$DESIREDNAMESPACE/alfresco-content-services/solr-data\"
+  repository:
+    enabled: false
+postgresql:
+  enabled: false
+database:
+  external: true
+  driver: \"org.mariadb.jdbc.Driver\"
+  url: \"'jdbc:mariadb:aurora//$RDS_ENDPOINT:3306/alfresco?useUnicode=yes&characterEncoding=UTF-8'\"
+  user: \"alfresco\"
+  password: \"$DATABASE_PASSWORD\"
+s3connector:
+  enabled: true
+  config:
+    bucketName: \"$S3BUCKET_NAME\"
+    bucketLocation: \"$S3BUCKET_LOCATION\"
+  secrets:
+    encryption: kms
+    awsKmsKeyId: \"$S3BUCKET_KMS_ALIAS\"
+registryPullSecrets: quay-registry-secret" >> values.yaml
+    
+    helm install alfresco-incubator/alfresco-content-services --version 1.1.5-SEARCH-1227 --name $ACS_RELEASE -f values.yaml --namespace=$DESIREDNAMESPACE
+
   fi
   
   if [ "$UPGRADE" = "true" ]; then

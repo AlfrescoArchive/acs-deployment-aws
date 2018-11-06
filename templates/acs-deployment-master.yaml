@@ -278,7 +278,7 @@ Parameters:
       Type: String
       MinLength: 1
       Description: "The desired number of EKS Worker Nodes to run"
-      Default: 1
+      Default: 2
     MaxNumberOfNodes:
       Type: String
       MinLength: 1
@@ -288,7 +288,7 @@ Parameters:
       Type: String
       MinLength: 1
       Description: "The minimum number of EKS Worker Nodes to run"
-      Default: 1
+      Default: 2
     NodesMetricsEnabled:
       Description: Enables all CloudWatch metrics for the nodes auto scaling group
       Type: String
