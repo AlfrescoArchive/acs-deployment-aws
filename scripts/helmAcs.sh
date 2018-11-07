@@ -27,9 +27,10 @@ usage() {
   echo -e "--upgrade \t Upgrade an existing ACS Helm Chart"
   echo -e "--solrVolume1ID \t EBS volume 1 ID for SOLR"
   echo -e "--solrVolume1AZ \t EBS volume 1 AZ for SOLR"
+  echo -e "--repo-pods \t Repo Replica number"
 }
 
-if [ $# -lt 13 ]; then
+if [ $# -lt 14 ]; then
   usage
 else
   # extract options and their arguments into variables.
@@ -89,6 +90,10 @@ else
               ;;
           --solrVolume1AZ)
               SOLRVOLUME1AZ="$2";
+              shift 2
+              ;;
+          --repo-pods)
+              REPO_PODS="$2";
               shift 2
               ;;
           --install)
@@ -183,7 +188,7 @@ repository:
   image:
     repository: \"alfresco/alfresco-content-repository-aws\"
     tag: \"6.1.0-EA3\"
-  replicaCount: 2
+  replicaCount: $REPO_PODS
   environment:
     JAVA_OPTS: \" -Dopencmis.server.override=true -Dopencmis.server.value=https://$EXTERNAL_NAME -Dalfresco.restApi.basicAuthScheme=true -Dsolr.base.url=/solr -Dsolr.secureComms=none -Dindex.subsystem.name=solr6 -Dalfresco.cluster.enabled=true -Ddeployment.method=HELM_CHART -Xms2000M -Xmx2000M\"
 alfresco-search:
