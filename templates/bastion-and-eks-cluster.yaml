@@ -108,6 +108,9 @@ Metadata:
           default: IOPS for the Index EBS volume (300 to 20000)
 
 Parameters:
+    AvailabilityZones:
+      Description: "List of Availability Zones to use for the subnets in the VPC. Please choose two or more zones."
+      Type: "List<AWS::EC2::AvailabilityZone::Name>"
     TemplateBucketName:
       AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
       ConstraintDescription: "Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
