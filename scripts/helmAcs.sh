@@ -174,7 +174,6 @@ EOF
       --set externalHost="$EXTERNAL_NAME" \
       --set externalPort="443" \
       --set repository.adminPassword="$ALFRESCO_PASSWORD" \
-      --set repository.replicaCount="$REPO_PODS" \
       --set alfresco-infrastructure.persistence.efs.enabled=true \
       --set alfresco-infrastructure.persistence.efs.dns="$EFS_NAME" \
       --set alfresco-search.resources.requests.memory="2500Mi",alfresco-search.resources.limits.memory="2500Mi" \
