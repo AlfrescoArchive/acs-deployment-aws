@@ -27,7 +27,7 @@ usage() {
   echo -e "--upgrade \t Upgrade an existing ACS Helm Chart"
 }
 
-if [ $# -lt 11 ]; then
+if [ $# -lt 12 ]; then
   usage
 else
   # extract options and their arguments into variables.
@@ -79,6 +79,10 @@ else
               ;;
           --registry-secret)
               REGISTRYCREDENTIALS="$2";
+              shift 2
+              ;;
+          --repo-pods)
+              REPO_PODS="$2";
               shift 2
               ;;
           --install)
@@ -158,7 +162,7 @@ EOF
       --set repository.image.repository="alfresco/alfresco-content-repository-aws" \
       --set repository.image.tag="6.1.0-EA3" \
       --set registryPullSecrets=quay-registry-secret \
-      --set repository.replicaCount=2 \
+      --set repository.replicaCount="$REPO_PODS" \
       --namespace=$DESIREDNAMESPACE
   fi
   
