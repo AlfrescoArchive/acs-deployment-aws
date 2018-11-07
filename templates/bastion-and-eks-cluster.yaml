@@ -754,7 +754,7 @@ Resources:
         Value: 'owned'
         PropagateAtLaunch: 'true'
       - Key: KubernetesCluster
-        Value: !Sub "${EKSClusterName}-eks"
+        Value: !Sub "${EKSClusterName}"
         PropagateAtLaunch: true
     UpdatePolicy:
       AutoScalingRollingUpdate:
