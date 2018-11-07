@@ -286,7 +286,6 @@ Resources:
               - Action:
                   - ec2:AssociateAddress
                   - ec2:DescribeAddresses
-                  - ec2:DescribeVolumes
                 Resource: "*"
                 Effect: Allow
         - PolicyName: eks-cluster-policy

@@ -169,12 +169,6 @@ EOF
   kubectl taint nodes $SOLRNODE SolrMasterOnly=true:NoSchedule
   kubectl label nodes $SOLRNODE SolrMasterOnly=true
 
-#   # variable region has to be figured out with:
-#   AZ=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
-#   REGION=${AZ::-1}
-#   # Find the volume created from CFN
-#   SOLR_EBS_VOLUME=$(aws ec2 describe-volumes --region $REGION --filters "Name=tag:Component,Values=SolrVolume1" --query "Volumes[?State=='available'].{Created:CreateTime,Volume:VolumeId}" --output text|tail -1|awk '{ print $2 }')
-
   ALFRESCO_PASSWORD=$(printf %s $ALFRESCO_PASSWORD | iconv -t utf16le | openssl md4| awk '{ print $2}')
 
   if [ "$INSTALL" = "true" ]; then
