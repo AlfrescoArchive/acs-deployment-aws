@@ -13,7 +13,6 @@ Metadata:
         - Label:
             default: Bastion Stack Configuration
           Parameters:
-            - AvailabilityZones
             - NumberOfAZs
             - VPCID
             - VPCCIDR
@@ -43,17 +42,14 @@ Metadata:
             - DesiredNumberOfNodes
             - NodesMetricsEnabled
             - EksExternalUserArn
+            - EKSClusterName
             - K8sNamespace
-            - IndexEBSVolumeSize
-            - IndexEBSIops
 
       ParameterLabels:
         TemplateBucketName:
           default: The name of the S3 bucket that holds the templates
         TemplateBucketKeyPrefix:
           default: The Key prefix for the templates in the S3 template bucket
-        AvailabilityZones:
-          default: The AZ's to deploy to
         NumberOfAZs:
           default: The number of AZ's to deploy into
         VPCID:
@@ -100,17 +96,12 @@ Metadata:
           default: Enables all CloudWatch metrics for the nodes auto scaling group
         EksExternalUserArn:
           default: The AWS IAM user arn who will be authorised to connect the cluster externally
+        EKSClusterName:
+          default: The EKS cluster name
         K8sNamespace:
           default: The namespace in EKS to deploy Helm charts
-        IndexEBSVolumeSize:
-          default: Size in GB for the Index EBS volume
-        IndexEBSIops:
-          default: IOPS for the Index EBS volume (300 to 20000)
 
 Parameters:
-    AvailabilityZones:
-      Description: "List of Availability Zones to use for the subnets in the VPC. Please choose two or more zones."
-      Type: "List<AWS::EC2::AvailabilityZone::Name>"
     TemplateBucketName:
       AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
       ConstraintDescription: "Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
@@ -209,17 +200,12 @@ Parameters:
     EksExternalUserArn:
       Type: String
       Description: The AWS IAM user arn who will be authorised to connect the cluster externally
+    EKSClusterName:
+      Type: String
+      Description: The name of the eks cluster
     K8sNamespace:
       Type: String
       Description: The namespace in EKS to deploy Helm charts
-    IndexEBSVolumeSize:
-      Type: String
-      Description: Size in GB for the Index EBS volume
-      Default: 100
-    IndexEBSIops:
-      Type: String
-      Description: IOPS for the Index EBS volume attached (300 to 20000)
-      Default: 300
 
 Mappings:
   BastionAmiRegionMap:
@@ -492,27 +478,27 @@ Resources:
               content: !Sub |
                 #!/bin/bash
                 echo "Checking whether cluster exists..."
-                aws eks describe-cluster --region ${AWS::Region} --name ${AWS::StackName}-cluster &> /dev/null
+                aws eks describe-cluster --region ${AWS::Region} --name ${EKSClusterName} &> /dev/null
                 if [ $? -ne 0 ]; then
                   echo Cluster does not exist, creating...
                   aws eks create-cluster --region ${AWS::Region} \
-                  --name ${AWS::StackName}-cluster \
+                  --name ${EKSClusterName} \
                   --role-arn ${EKSServiceRole.Arn} \
                   --resources-vpc-config subnetIds=${PrivateSubnet1ID},${PrivateSubnet2ID},${PublicSubnet1ID},${PublicSubnet2ID},securityGroupIds=${ControlPlaneSecurityGroup}
                   if [ $? -ne 0 ]; then
                     exit 1
                   fi
                   sleep 5
-                  STATUS=$(aws eks describe-cluster --region ${AWS::Region} --name ${AWS::StackName}-cluster --query cluster.status --output text)
+                  STATUS=$(aws eks describe-cluster --region ${AWS::Region} --name ${EKSClusterName} --query cluster.status --output text)
                   while [ \"$STATUS\" = \"CREATING\" ]; do
                     echo Cluster is still creating, sleeping for 30 seconds...
                     sleep 30
-                    STATUS=$(aws eks describe-cluster --region ${AWS::Region} --name ${AWS::StackName}-cluster --query cluster.status --output text)
+                    STATUS=$(aws eks describe-cluster --region ${AWS::Region} --name ${EKSClusterName} --query cluster.status --output text)
                   done
                 fi
                 echo Updating kubeconfig file...
-                ENDPOINT=$(aws eks describe-cluster --region ${AWS::Region}  --name ${AWS::StackName}-cluster --query cluster.endpoint --output text)
-                CERT_DATA=$(aws eks describe-cluster --region ${AWS::Region}  --name ${AWS::StackName}-cluster --query cluster.certificateAuthority.data --output text)
+                ENDPOINT=$(aws eks describe-cluster --region ${AWS::Region}  --name ${EKSClusterName} --query cluster.endpoint --output text)
+                CERT_DATA=$(aws eks describe-cluster --region ${AWS::Region}  --name ${EKSClusterName} --query cluster.certificateAuthority.data --output text)
                 sed -i s,ENDPOINT,$ENDPOINT,g /home/ec2-user/.kube/config
                 sed -i s,CERTIFICATE_DATA,$CERT_DATA,g /home/ec2-user/.kube/config
                 export KUBECONFIG=/home/ec2-user/.kube/config
@@ -601,7 +587,7 @@ Resources:
                       args:
                         - token
                         - -i
-                        - ${AWS::StackName}-cluster
+                        - ${EKSClusterName}
               mode: "000666"
               owner: ec2-user
               group: ec2-user
@@ -760,11 +746,14 @@ Resources:
         - !Ref PrivateSubnet2ID
       Tags:
       - Key: Name
-        Value: !Sub "${AWS::StackName}-cluster-worker-node"
+        Value: !Sub "${EKSClusterName}-worker-node"
         PropagateAtLaunch: 'true'
-      - Key: !Sub 'kubernetes.io/cluster/${AWS::StackName}-cluster'
+      - Key: !Sub 'kubernetes.io/cluster/${EKSClusterName}'
         Value: 'owned'
         PropagateAtLaunch: 'true'
+      - Key: KubernetesCluster
+        Value: !Sub "${EKSClusterName}"
+        PropagateAtLaunch: true
     UpdatePolicy:
       AutoScalingRollingUpdate:
         MinInstancesInService: !Ref MinNumberOfNodes
@@ -773,21 +762,6 @@ Resources:
       ResourceSignal:
         Count: !Ref DesiredNumberOfNodes
         Timeout: PT30M
-
-  SolrVolume1:
-   Type: AWS::EC2::Volume
-   Properties:
-     AutoEnableIO: false
-     AvailabilityZone: !Select [ 0, !Ref AvailabilityZones ]
-     Encrypted: false
-     Iops: !Ref IndexEBSIops
-     Size: !Ref IndexEBSVolumeSize
-     VolumeType: io1
-     Tags:
-       - Key: Name
-         Value: !Sub "${AWS::StackName}"
-       - Key: Component
-         Value: SolrVolume1
 
   NodeLaunchConfig:
     DependsOn: BastionAutoScalingGroup
@@ -958,12 +932,12 @@ Resources:
             mkdir -p $MODEL_DIRECTORY_PATH
             curl -o $MODEL_FILE_PATH https://s3-us-west-2.amazonaws.com/amazon-eks/1.10.3/2018-06-05/eks-2017-11-01.normal.json
             aws configure add-model --service-model file://$MODEL_FILE_PATH --service-name eks
-            aws eks describe-cluster --region=${AWS::Region} --name=${AWS::StackName}-cluster --query 'cluster.{certificateAuthorityData:certificateAuthority.data,endpoint:endpoint}' > /tmp/describe_cluster_result.json
+            aws eks describe-cluster --region=${AWS::Region} --name=${EKSClusterName} --query 'cluster.{certificateAuthorityData:certificateAuthority.data,endpoint:endpoint}' > /tmp/describe_cluster_result.json
             cat /tmp/describe_cluster_result.json | grep certificateAuthorityData | awk '{print $2}' | sed 's/[,\"]//g' | base64 -d >  $CA_CERTIFICATE_FILE_PATH
             MASTER_ENDPOINT=$(cat /tmp/describe_cluster_result.json | grep endpoint | awk '{print $2}' | sed 's/[,\"]//g')
             INTERNAL_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
             sed -i s,MASTER_ENDPOINT,$MASTER_ENDPOINT,g /var/lib/kubelet/kubeconfig
-            sed -i s,CLUSTER_NAME,${AWS::StackName}-cluster,g /var/lib/kubelet/kubeconfig
+            sed -i s,CLUSTER_NAME,${EKSClusterName},g /var/lib/kubelet/kubeconfig
             sed -i s,REGION,${AWS::Region},g /etc/systemd/system/kubelet.service
             sed -i s,MAX_PODS,58,g /etc/systemd/system/kubelet.service
             sed -i s,MASTER_ENDPOINT,$MASTER_ENDPOINT,g /etc/systemd/system/kubelet.service
@@ -1013,7 +987,7 @@ Resources:
                   - eks:DescribeCluster
                   - eks:DeleteCluster
                 Resource:
-                  - !Sub "arn:aws:eks:${AWS::Region}:${AWS::AccountId}:cluster/${AWS::StackName}-cluster"
+                  - !Sub "arn:aws:eks:${AWS::Region}:${AWS::AccountId}:cluster/${EKSClusterName}"
         - PolicyName: s3GetObjectPolicy
           PolicyDocument:
             Version: 2012-10-17
@@ -1042,7 +1016,7 @@ Resources:
     DependsOn: BastionAutoScalingGroup
     Properties:
       ServiceToken: !GetAtt EksHelperLambda.Arn
-      EKSName: !Join ["-", [ !Ref "AWS::StackName", "cluster"]]
+      EKSName: !Ref EKSClusterName
 
 Outputs:
   SubstackName:
@@ -1071,7 +1045,7 @@ Outputs:
     Value: !Ref ControlPlaneSecurityGroup
   EksClusterName:
     Description: EKS Cluster name
-    Value: !Join ["-", [ !Ref "AWS::StackName", "cluster"]]
+    Value: !Ref EKSClusterName
   EksEndpoint:
     Description: EKS Cluster endpoint
     Value: !GetAtt EksHelperLambdaCustomResource.endpoint

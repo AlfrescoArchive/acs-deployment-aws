@@ -25,9 +25,11 @@ usage() {
   echo -e "--registry-secret \t Base64 dockerconfig.json string to private registry"
   echo -e "--install \t Install a new ACS Helm chart"
   echo -e "--upgrade \t Upgrade an existing ACS Helm Chart"
+  echo -e "--solrVolume1ID \t EBS volume 1 ID for SOLR"
+  echo -e "--solrVolume1AZ \t EBS volume 1 AZ for SOLR"
 }
 
-if [ $# -lt 11 ]; then
+if [ $# -lt 13 ]; then
   usage
 else
   # extract options and their arguments into variables.
@@ -79,6 +81,14 @@ else
               ;;
           --registry-secret)
               REGISTRYCREDENTIALS="$2";
+              shift 2
+              ;;
+          --solrVolume1ID)
+              SOLRVOLUME1ID="$2";
+              shift 2
+              ;;
+          --solrVolume1AZ)
+              SOLRVOLUME1AZ="$2";
               shift 2
               ;;
           --install)
@@ -149,16 +159,16 @@ EOF
      exit 1
   fi
 
-  MASTERNODE=$(kubectl get nodes | awk '{print $1}' | awk 'FNR == 3 {print}')
+  SOLRNODE=$(kubectl get nodes --selector failure-domain.beta.kubernetes.io/zone=$SOLRVOLUME1AZ | grep -v ^NAME | awk '{print $1}')
 
-  kubectl taint nodes $MASTERNODE SolrMasterOnly=true:NoSchedule
-  kubectl label nodes $MASTERNODE SolrMasterOnly=true
+  kubectl taint nodes $SOLRNODE SolrMasterOnly=true:NoSchedule
+  kubectl label nodes $SOLRNODE SolrMasterOnly=true
 
-  # variable region has to be figured out with:
-  AZ=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
-  REGION=${AZ::-1}
-  # Find the volume created from CFN
-  SOLR_EBS_VOLUME=$(aws ec2 describe-volumes --region $REGION --filters "Name=tag:Component,Values=SolrVolume1" --query "Volumes[?State=='available'].{Created:CreateTime,Volume:VolumeId}" --output text|tail -1|awk '{ print $2 }')
+#   # variable region has to be figured out with:
+#   AZ=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
+#   REGION=${AZ::-1}
+#   # Find the volume created from CFN
+#   SOLR_EBS_VOLUME=$(aws ec2 describe-volumes --region $REGION --filters "Name=tag:Component,Values=SolrVolume1" --query "Volumes[?State=='available'].{Created:CreateTime,Volume:VolumeId}" --output text|tail -1|awk '{ print $2 }')
 
   ALFRESCO_PASSWORD=$(printf %s $ALFRESCO_PASSWORD | iconv -t utf16le | openssl md4| awk '{ print $2}')
 
@@ -186,7 +196,7 @@ alfresco-search:
     SOLR_JAVA_MEM: \"-Xms2000M -Xmx2000M\"
   persistence:
    EbsPvConfiguration:
-     volumeID: \"$SOLR_EBS_VOLUME\"
+     volumeID: \"$SOLRVOLUME1ID\"
   affinity: |
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
