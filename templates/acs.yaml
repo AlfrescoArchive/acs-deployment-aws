@@ -90,7 +90,7 @@ Metadata:
           default: Size in GB for the Index EBS volume
         IndexEBSIops:
           default: IOPS for the Index EBS volume (300 to 20000)
-          
+
 Parameters:
     AvailabilityZones:
       Description: "List of Availability Zones to use for the subnets in the VPC. Please choose two or more zones."
@@ -179,7 +179,7 @@ Parameters:
 
 Conditions:
   PrivateRegistry: !Not [!Equals [!Ref RegistryCredentials, ""]]
-  
+
 Resources:
 
   SolrVolume1:
@@ -211,7 +211,7 @@ Resources:
               sourceInfo: !Sub "{ \"path\": \"https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/scripts\" }"
               destinationPath: "/tmp"
       DocumentType: Command
-  
+
   # Execute helm initialisation
   HelmInitRunScript:
     Type: "AWS::SSM::Document"
@@ -224,7 +224,7 @@ Resources:
             name: helmInit
             inputs:
               workingDirectory: "/root"
-              runCommand: 
+              runCommand:
                 - "chmod u+x /tmp/helmInit.sh"
                 - "/tmp/helmInit.sh"
               timeoutSeconds: 60
@@ -253,7 +253,7 @@ Resources:
                   \ --external-name ${AcsExternalName}"
               timeoutSeconds: 60
       DocumentType: Command
-  
+
   # Execute Helm ACS installation
   HelmInstallRunScript:
     Type: "AWS::SSM::Document"
@@ -282,8 +282,6 @@ Resources:
                     - !Sub "--s3bucket-name ${S3BucketName}"
                     - !Sub "--s3bucket-kms-alias ${S3BucketKMSAlias}"
                     - !Sub "--s3bucket-location ${AWS::Region}"
-                    - !Sub "--solrVolume1ID ${!Ref SolrVolume1}"
-                    - !Sub "--solrVolume1AZ ${!Select [ 0, !Ref AvailabilityZones ]}"
                     - !If [PrivateRegistry, !Join ["", [--registry-secret, " ", !Ref RegistryCredentials]], !Ref "AWS::NoValue"]
                     - "--install"
               timeoutSeconds: 90
@@ -313,7 +311,7 @@ Resources:
                   \ --upgrade"
               timeoutSeconds: 60
       DocumentType: Command
-  
+
   # Get ACS ELB Address
   GetElbEndpointRunScript:
     Type: "AWS::SSM::Document"
@@ -331,7 +329,7 @@ Resources:
                 - !Sub "/tmp/getElb.sh --ingress-release ${IngressReleaseName} --namespace ${K8sNamespace}"
               timeoutSeconds: 60
       DocumentType: Command
-  
+
   # Execute Helm nginx-ingress deletion
   HelmDeleteIngressRunScript:
     Type: "AWS::SSM::Document"

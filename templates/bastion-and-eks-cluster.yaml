@@ -298,6 +298,7 @@ Resources:
                   - eks:*
                   - sts:*
                   - iam:PassRole
+                  - ec2:DescribeTags 
                 Resource: "*"
                 Effect: Allow
       Path: /

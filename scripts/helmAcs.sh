@@ -25,12 +25,10 @@ usage() {
   echo -e "--registry-secret \t Base64 dockerconfig.json string to private registry"
   echo -e "--install \t Install a new ACS Helm chart"
   echo -e "--upgrade \t Upgrade an existing ACS Helm Chart"
-  echo -e "--solrVolume1ID \t EBS volume 1 ID for SOLR"
-  echo -e "--solrVolume1AZ \t EBS volume 1 AZ for SOLR"
   echo -e "--repo-pods \t Repo Replica number"
 }
 
-if [ $# -lt 14 ]; then
+if [ $# -lt 12 ]; then
   usage
 else
   # extract options and their arguments into variables.
@@ -82,14 +80,6 @@ else
               ;;
           --registry-secret)
               REGISTRYCREDENTIALS="$2";
-              shift 2
-              ;;
-          --solrVolume1ID)
-              SOLRVOLUME1ID="$2";
-              shift 2
-              ;;
-          --solrVolume1AZ)
-              SOLRVOLUME1AZ="$2";
               shift 2
               ;;
           --repo-pods)
@@ -164,7 +154,20 @@ EOF
      exit 1
   fi
 
-  SOLRNODE=$(kubectl get nodes --selector failure-domain.beta.kubernetes.io/zone=$SOLRVOLUME1AZ | grep -v ^NAME | awk '{print $1}')
+  # We get Bastion AZ and Region to get a valid right region and query for volumes
+  INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+  BASTION_AZ=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
+  REGION=${BASTION_AZ%?}
+  # We use this tag below to find the proper EKS cluster name and figure out the unique volume
+  TAG_NAME="KubernetesCluster"
+  TAG_VALUE=$(aws ec2 describe-tags --filters "Name=resource-id,Values=$INSTANCE_ID" "Name=key,Values=$TAG_NAME" --region $REGION --output=text | cut -f5)
+  # EKSname is not unique if we have multiple ACS deployments in the same cluster
+  # it must be somethign unique per Alfresco deployment, not per EKS cluster.
+  SOLR_VOLUME1_NAME_TAG="$TAG_VALUE-SolrVolume1"
+  SOLR_VOLUME1_AZ_ID=$(aws ec2 describe-volumes --region $REGION --filters "Name=tag:Name,Values=$SOLR_VOLUME1_NAME_TAG" --query "Volumes[?State=='available'].{Volume:VolumeId,AvailabilityZone:AvailabilityZone}" --output text)
+  SOLR_VOLUME1_AZ=$(echo $SOLR_VOLUME1_AZ_ID|awk '{ print $1 }')
+  SOLR_VOLUME1_ID=$(echo $SOLR_VOLUME1_AZ_ID|awk '{ print $2 }')
+  SOLRNODE=$(kubectl get nodes --selector failure-domain.beta.kubernetes.io/zone=$SOLR_VOLUME1_AZ | grep -v ^NAME | awk '{print $1}')
 
   kubectl taint nodes $SOLRNODE SolrMasterOnly=true:NoSchedule
   kubectl label nodes $SOLRNODE SolrMasterOnly=true
@@ -195,7 +198,7 @@ alfresco-search:
     SOLR_JAVA_MEM: \"-Xms2000M -Xmx2000M\"
   persistence:
    EbsPvConfiguration:
-     volumeID: \"$SOLRVOLUME1ID\"
+     volumeID: \"$SOLR_VOLUME1_ID\"
   affinity: |
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:

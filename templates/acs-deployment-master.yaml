@@ -525,7 +525,7 @@ Resources:
           - Key: Name
             Value: !Sub "${AWS::StackName}"
           - Key: Component
-            Value: ACS-EFS 
+            Value: ACS-EFS
           - Key: KubernetesCluster
             Value: !Sub "${AWS::StackName}-eks"
         TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/templates/efs.yaml"
@@ -544,7 +544,7 @@ Resources:
           - Key: Name
             Value: !Sub "${AWS::StackName}"
           - Key: Component
-            Value: ACS-Bastion 
+            Value: ACS-Bastion
           - Key: KubernetesCluster
             Value: !Sub "${AWS::StackName}-eks"
         TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/templates/bastion-and-eks-cluster.yaml"
@@ -633,7 +633,7 @@ Resources:
           - Key: Name
             Value: !Sub "${AWS::StackName}"
           - Key: Component
-            Value: ACS-Main 
+            Value: ACS-Main
           - Key: KubernetesCluster
             Value: !Sub "${AWS::StackName}-eks"
         TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/templates/acs.yaml"
