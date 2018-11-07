@@ -174,6 +174,10 @@ EOF
       --set externalHost="$EXTERNAL_NAME" \
       --set externalPort="443" \
       --set repository.adminPassword="$ALFRESCO_PASSWORD" \
+      --set repository.image.repository="alfresco/alfresco-content-repository-aws" \
+      --set repository.image.tag="6.1.0-EA3" \
+      --set registryPullSecrets=quay-registry-secret \
+      --set repository.replicaCount="$REPO_PODS" \
       --set alfresco-infrastructure.persistence.efs.enabled=true \
       --set alfresco-infrastructure.persistence.efs.dns="$EFS_NAME" \
       --set alfresco-search.resources.requests.memory="2500Mi",alfresco-search.resources.limits.memory="2500Mi" \
