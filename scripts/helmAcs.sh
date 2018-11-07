@@ -27,7 +27,7 @@ usage() {
   echo -e "--upgrade \t Upgrade an existing ACS Helm Chart"
 }
 
-if [ $# -lt 11 ]; then
+if [ $# -lt 12 ]; then
   usage
 else
   # extract options and their arguments into variables.
