@@ -688,15 +688,25 @@ Resources:
       FromPort: 5801
       ToPort: 5810
 
-  NodeSecurityALLNODETRAFFICCluster:
+  NodeSecurityAcsPortCluster:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       Description: Allow node to communicate with each other share cluster
       GroupId: !Ref NodeSecurityGroup
       SourceSecurityGroupId: !Ref NodeSecurityGroup
       IpProtocol: tcp
-      FromPort: 0
-      ToPort: 65535
+      FromPort: 8080
+      ToPort: 8080
+
+  NodeSecuritySolrPortCluster:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow node to communicate with each other share cluster
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 8983
+      ToPort: 8983
 
   NodeSecurityGroupFromBastion:
     Type: AWS::EC2::SecurityGroupIngress
