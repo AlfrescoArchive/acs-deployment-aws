@@ -181,6 +181,8 @@ echo "externalProtocol: https
 externalHost: \"$EXTERNAL_NAME\"
 externalPort: \"443\"
 repository:
+  livenessProbe:
+    initialDelaySeconds: 420
   adminPassword: \"$ALFRESCO_PASSWORD\"
   image:
     repository: \"alfresco/alfresco-content-repository-aws\"
@@ -243,6 +245,18 @@ s3connector:
   secrets:
     encryption: kms
     awsKmsKeyId: \"$S3BUCKET_KMS_ALIAS\"
+pdfrenderer:
+  livenessProbe:
+    initialDelaySeconds: 300
+libreoffice:
+  livenessProbe:
+    initialDelaySeconds: 300
+imagemagick:
+  livenessProbe:
+    initialDelaySeconds: 300
+share:
+  livenessProbe:
+    initialDelaySeconds: 420
 registryPullSecrets: quay-registry-secret" >> values.yaml
 
     helm install alfresco-incubator/alfresco-content-services --version 1.1.5-SEARCH-1227 --name $ACS_RELEASE -f values.yaml --namespace=$DESIREDNAMESPACE
