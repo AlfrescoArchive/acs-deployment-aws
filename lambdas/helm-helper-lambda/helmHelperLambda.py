@@ -23,7 +23,6 @@ def handler(event, context):
   
     try:
         eventType = event['RequestType']
-        physicalResourceId = str(uuid.uuid1()) if eventType == 'Create' or eventType == 'Update' or eventType == 'Delete' else event['PhysicalResourceId']
   
         # Get EC2 instances to run SSM commands document
         ssm_instance = ec2_instanceId(event['ResourceProperties']['BastionAutoScalingGroup'])
@@ -92,7 +91,7 @@ def handler(event, context):
                 else:
                     logger.error('Tiller deployment was unsuccessful')
                     cfnresponse.send(event, context, cfnresponse.FAILED, {})
-            cfnresponse.send(event, context, cfnresponse.SUCCESS, data, physicalResourceId)
+            cfnresponse.send(event, context, cfnresponse.SUCCESS, data)
         
         if eventType == 'Delete':
             logger.info('Events received: {event}'.format(event=event))
@@ -129,7 +128,7 @@ def handler(event, context):
             else:
                 logger.info('No ingress security group was found.  Exiting..')
 
-            cfnresponse.send(event, context, cfnresponse.SUCCESS, {}, physicalResourceId)
+            cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
   
     except Exception as err:
         logger.error('Helm Helper lambda Error: "{type}": "{message}"'.format(type=type(err), message=str(err)))
