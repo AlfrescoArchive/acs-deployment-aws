@@ -181,10 +181,10 @@ echo "externalProtocol: https
 externalHost: \"$EXTERNAL_NAME\"
 externalPort: \"443\"
 alfresco-infrastructure:
-  persistence: \"$EFS_NAME\"
+  persistence: 
     efs:
       enabled: true
-      dns: 
+      dns: \"$EFS_NAME\"
 repository:
   livenessProbe:
     initialDelaySeconds: 420
