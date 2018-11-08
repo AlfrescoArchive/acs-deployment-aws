@@ -204,8 +204,9 @@ alfresco-search:
   environment:
     SOLR_JAVA_MEM: \"-Xms2000M -Xmx2000M\"
   persistence:
-   EbsPvConfiguration:
-     volumeID: \"$SOLR_VOLUME1_ID\"
+    VolumeSizeRequest: \"100Gi\"
+    EbsPvConfiguration:
+      volumeID: \"$SOLR_VOLUME1_ID\"
   affinity: |
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
@@ -264,7 +265,7 @@ share:
     initialDelaySeconds: 420
 registryPullSecrets: quay-registry-secret" >> values.yaml
 
-    helm install alfresco-incubator/alfresco-content-services --version 1.1.5-SEARCH-1227 --name $ACS_RELEASE -f values.yaml --namespace=$DESIREDNAMESPACE
+    helm install alfresco-incubator/alfresco-content-services --version 1.1.5-SEARCH-1227 -f values.yaml --name $ACS_RELEASE --namespace=$DESIREDNAMESPACE
 
   fi
 
