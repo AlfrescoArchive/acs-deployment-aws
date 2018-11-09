@@ -424,6 +424,7 @@ Conditions:
   isUseCrossRegionReplication: !Equals [!Ref UseCrossRegionReplication, "true"]
 
 Resources:
+
     VPCStack:
       Type: AWS::CloudFormation::Stack
       Properties:
@@ -576,6 +577,19 @@ Resources:
           EksExternalUserArn: !Ref EksExternalUserArn
           EKSClusterName: !Sub "${AWS::StackName}-eks"
           K8sNamespace: !Ref K8sNamespace
+
+    SolrVolume1:
+      Type: AWS::EC2::Volume
+      Properties:
+        AutoEnableIO: false
+        AvailabilityZone: !Select [ 0, !Join [",", !Ref AvailabilityZones] ]
+        Encrypted: false
+        Iops: !Ref IndexEBSIops
+        Size: !Ref IndexEBSVolumeSize
+        VolumeType: io1
+        Tags:
+          - Key: Name
+            Value: !Sub "${AWS::StackName}-eks-SolrVolume1"
 
     RDSStack:
       Type: AWS::CloudFormation::Stack

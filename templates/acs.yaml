@@ -13,7 +13,6 @@ Metadata:
         - Label:
             default: ACS Stack Configuration
           Parameters:
-            - AvailabilityZones
             - TemplateBucketName
             - TemplateBucketKeyPrefix
             - EKSName
@@ -36,16 +35,12 @@ Metadata:
             - RegistryCredentials
             - RepoPods
             - Route53DnsZone
-            - IndexEBSVolumeSize
-            - IndexEBSIops
 
       ParameterLabels:
         TemplateBucketName:
           default: The name of the S3 bucket that holds the templates
         TemplateBucketKeyPrefix:
           default: The Key prefix for the templates in the S3 template bucket
-        AvailabilityZones:
-          default: The AZ's to deploy to
         EKSName:
           default: The EKS name
         EFSName:
@@ -86,15 +81,8 @@ Metadata:
           default: The number of repository pods in the cluster
         Route53DnsZone:
           default: The hosted zone to create Route53 Record for ACS
-        IndexEBSVolumeSize:
-          default: Size in GB for the Index EBS volume
-        IndexEBSIops:
-          default: IOPS for the Index EBS volume (300 to 20000)
 
 Parameters:
-    AvailabilityZones:
-      Description: "List of Availability Zones to use for the subnets in the VPC. Please choose two or more zones."
-      Type: "List<AWS::EC2::AvailabilityZone::Name>"
     TemplateBucketName:
       AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
       ConstraintDescription: "Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
@@ -168,32 +156,11 @@ Parameters:
     Route53DnsZone:
       Type: String
       Description: The hosted zone to create Route53 Record for ACS
-    IndexEBSVolumeSize:
-      Type: String
-      Description: Size in GB for the Index EBS volume
-      Default: 100
-    IndexEBSIops:
-      Type: String
-      Description: IOPS for the Index EBS volume attached (300 to 20000)
-      Default: 300
 
 Conditions:
   PrivateRegistry: !Not [!Equals [!Ref RegistryCredentials, ""]]
 
 Resources:
-
-  SolrVolume1:
-   Type: AWS::EC2::Volume
-   Properties:
-     AutoEnableIO: false
-     AvailabilityZone: !Select [ 0, !Ref AvailabilityZones ]
-     Encrypted: false
-     Iops: !Ref IndexEBSIops
-     Size: !Ref IndexEBSVolumeSize
-     VolumeType: io1
-     Tags:
-       - Key: Name
-         Value: !Sub "${EKSName}-SolrVolume1"
 
   # SSM documents to run helm commands on the bastion
   # Download scripts directory
