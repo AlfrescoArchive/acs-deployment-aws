@@ -268,14 +268,21 @@ Resources:
               workingDirectory: "/root"
               runCommand:
                 - "chmod u+x /tmp/helmAcs.sh"
-                - !Sub "/tmp/helmAcs.sh\
-                  \ --acs-release ${AcsReleaseName}\
-                  \ --efs-name ${EFSName}\
-                  \ --namespace ${K8sNamespace}\
-                  \ --alfresco-password ${AlfrescoPassword}\
-                  \ --database-password ${DatabasePassword}\
-                  \ --external-name ${AcsExternalName}\
-                  \ --upgrade"
+                - Fn::Join:
+                  - " "
+                  - - "/tmp/helmAcs.sh"
+                    - !Sub "--acs-release ${AcsReleaseName}"
+                    - !Sub "--efs-name ${EFSName}"
+                    - !Sub "--namespace ${K8sNamespace}"
+                    - !Sub "--alfresco-password ${AlfrescoPassword}"
+                    - !Sub "--rds-endpoint ${RDSEndpoint}"
+                    - !Sub "--database-password ${DatabasePassword}"
+                    - !Sub "--external-name ${AcsExternalName}"
+                    - !Sub "--repo-pods ${RepoPods}"
+                    - !Sub "--s3bucket-name ${S3BucketName}"
+                    - !Sub "--s3bucket-kms-alias ${S3BucketKMSAlias}"
+                    - !Sub "--s3bucket-location ${AWS::Region}"
+                    - "--upgrade"
               timeoutSeconds: 60
       DocumentType: Command
 
