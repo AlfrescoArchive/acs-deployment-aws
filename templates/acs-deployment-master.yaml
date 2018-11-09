@@ -582,7 +582,7 @@ Resources:
       Type: AWS::EC2::Volume
       Properties:
         AutoEnableIO: false
-        AvailabilityZone: !Select [ 0, !Join [",", !Ref AvailabilityZones] ]
+        AvailabilityZone: !Select [ 0, !Ref AvailabilityZones ]
         Encrypted: false
         Iops: !Ref IndexEBSIops
         Size: !Ref IndexEBSVolumeSize
