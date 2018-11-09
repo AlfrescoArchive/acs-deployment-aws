@@ -178,7 +178,24 @@ EOF
       --set alfresco-infrastructure.persistence.efs.dns="$EFS_NAME" \
       --set alfresco-search.resources.requests.memory="2500Mi",alfresco-search.resources.limits.memory="2500Mi" \
       --set alfresco-search.environment.SOLR_JAVA_MEM="-Xms2000M -Xmx2000M" \
+      --set persistence.solr.data.subPath="$DESIREDNAMESPACE/alfresco-content-services/solr-data" \
+      --set postgresql.enabled=false \
+      --set database.external=true \
+      --set repository.environment.JAVA_OPTS=" -Dopencmis.server.override=true -Dopencmis.server.value=https://$EXTERNAL_NAME -Dalfresco.restApi.basicAuthScheme=true -Dsolr.base.url=/solr -Dsolr.secureComms=none -Dindex.subsystem.name=solr6 -Dalfresco.cluster.enabled=true -Ddeployment.method=HELM_CHART -Xms2000M -Xmx2000M" \
+      --set database.driver="org.mariadb.jdbc.Driver" \
+      --set database.url="'jdbc:mariadb:aurora//$RDS_ENDPOINT:3306/alfresco?useUnicode=yes&characterEncoding=UTF-8'" \
+      --set database.user="alfresco" \
       --set database.password="$DATABASE_PASSWORD" \
+      --set persistence.repository.enabled=false \
+      --set s3connector.enabled=true \
+      --set s3connector.config.bucketName="$S3BUCKET_NAME" \
+      --set s3connector.config.bucketLocation="$S3BUCKET_LOCATION" \
+      --set s3connector.secrets.encryption=kms \
+      --set s3connector.secrets.awsKmsKeyId="$S3BUCKET_KMS_ALIAS" \
+      --set repository.image.repository="alfresco/alfresco-content-repository-aws" \
+      --set repository.image.tag="6.1.0-EA3" \
+      --set registryPullSecrets=quay-registry-secret \
+      --set repository.replicaCount="$REPO_PODS" \
       --namespace=$DESIREDNAMESPACE
   fi
   
