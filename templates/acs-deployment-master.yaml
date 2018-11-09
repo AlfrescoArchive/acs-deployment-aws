@@ -540,6 +540,7 @@ Resources:
       DependsOn:
         - VPCStack
         - NodeInstanceRole
+        - SolrVolume1
       Properties:
         Tags:
           - Key: Name
