@@ -365,13 +365,13 @@ Parameters:
       ConstraintDescription: The helm chart release name of nginx-ingress can not be empty
       Type: String
       Description: The helm chart release name of nginx-ingress
-      Default: "alfresco"
+      Default: "ingress"
     AcsReleaseName:
       AllowedPattern: ".+"
       ConstraintDescription: The helm chart release name of alfresco content services can not be empty
       Type: String
       Description: The helm chart release name of alfresco content services
-      Default: "enterprise"
+      Default: "acs"
     AlfrescoPassword:
       AllowedPattern: ".+"
       ConstraintDescription: The Admin password for Alfresco can not be empty
