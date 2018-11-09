@@ -688,10 +688,30 @@ Resources:
       FromPort: 5801
       ToPort: 5810
 
+  NodeSecurityKubeDNSTcpCluster:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow node to communicate with each other kubeDns
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 53
+      ToPort: 53
+
+  NodeSecurityKubeDNSUdpCluster:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow node to communicate with each other kubeDns
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: udp
+      FromPort: 53
+      ToPort: 53
+
   NodeSecurityAcsPortCluster:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      Description: Allow node to communicate with each other share cluster
+      Description: Allow node to communicate with each other solr repo
       GroupId: !Ref NodeSecurityGroup
       SourceSecurityGroupId: !Ref NodeSecurityGroup
       IpProtocol: tcp
@@ -701,7 +721,7 @@ Resources:
   NodeSecuritySolrPortCluster:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      Description: Allow node to communicate with each other share cluster
+      Description: Allow node to communicate with each other repo solr
       GroupId: !Ref NodeSecurityGroup
       SourceSecurityGroupId: !Ref NodeSecurityGroup
       IpProtocol: tcp
