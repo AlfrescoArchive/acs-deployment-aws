@@ -652,7 +652,6 @@ Resources:
             Value: !Sub "${AWS::StackName}-eks"
         TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/templates/acs.yaml"
         Parameters:
-          AvailabilityZones: !Join [",", !Ref AvailabilityZones]
           TemplateBucketName: !Ref TemplateBucketName
           TemplateBucketKeyPrefix: !Ref TemplateBucketKeyPrefix
           EFSName: !GetAtt EFSStack.Outputs.EFSName
