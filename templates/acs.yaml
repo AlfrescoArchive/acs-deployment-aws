@@ -81,7 +81,7 @@ Metadata:
           default: The number of repository pods in the cluster
         Route53DnsZone:
           default: The hosted zone to create Route53 Record for ACS
-          
+
 Parameters:
     TemplateBucketName:
       AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
@@ -159,8 +159,9 @@ Parameters:
 
 Conditions:
   PrivateRegistry: !Not [!Equals [!Ref RegistryCredentials, ""]]
-  
+
 Resources:
+
   # SSM documents to run helm commands on the bastion
   # Download scripts directory
   HelmDownloadScript:
@@ -177,7 +178,7 @@ Resources:
               sourceInfo: !Sub "{ \"path\": \"https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/scripts\" }"
               destinationPath: "/tmp"
       DocumentType: Command
-  
+
   # Execute helm initialisation
   HelmInitRunScript:
     Type: "AWS::SSM::Document"
@@ -190,7 +191,7 @@ Resources:
             name: helmInit
             inputs:
               workingDirectory: "/root"
-              runCommand: 
+              runCommand:
                 - "chmod u+x /tmp/helmInit.sh"
                 - "/tmp/helmInit.sh"
               timeoutSeconds: 60
@@ -219,7 +220,7 @@ Resources:
                   \ --external-name ${AcsExternalName}"
               timeoutSeconds: 60
       DocumentType: Command
-  
+
   # Execute Helm ACS installation
   HelmInstallRunScript:
     Type: "AWS::SSM::Document"
@@ -284,7 +285,7 @@ Resources:
                     - "--upgrade"
               timeoutSeconds: 60
       DocumentType: Command
-  
+
   # Get ACS ELB Address
   GetElbEndpointRunScript:
     Type: "AWS::SSM::Document"
@@ -302,7 +303,7 @@ Resources:
                 - !Sub "/tmp/getElb.sh --ingress-release ${IngressReleaseName} --namespace ${K8sNamespace}"
               timeoutSeconds: 60
       DocumentType: Command
-  
+
   # Execute Helm nginx-ingress deletion
   HelmDeleteIngressRunScript:
     Type: "AWS::SSM::Document"

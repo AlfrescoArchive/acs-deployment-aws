@@ -13,7 +13,6 @@ Metadata:
         - Label:
             default: Bastion Stack Configuration
           Parameters:
-            - AvailabilityZones
             - NumberOfAZs
             - VPCID
             - VPCCIDR
@@ -51,8 +50,6 @@ Metadata:
           default: The name of the S3 bucket that holds the templates
         TemplateBucketKeyPrefix:
           default: The Key prefix for the templates in the S3 template bucket
-        AvailabilityZones:
-          default: The AZ's to deploy to
         NumberOfAZs:
           default: The number of AZ's to deploy into
         VPCID:
@@ -289,6 +286,7 @@ Resources:
               - Action:
                   - ec2:AssociateAddress
                   - ec2:DescribeAddresses
+                  - ec2:DescribeVolumes
                 Resource: "*"
                 Effect: Allow
         - PolicyName: eks-cluster-policy
@@ -301,6 +299,7 @@ Resources:
                   - eks:*
                   - sts:*
                   - iam:PassRole
+                  - ec2:DescribeTags 
                 Resource: "*"
                 Effect: Allow
       Path: /
@@ -688,6 +687,46 @@ Resources:
       IpProtocol: tcp
       FromPort: 5801
       ToPort: 5810
+
+  NodeSecurityKubeDNSTcpCluster:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow node to communicate with each other kubeDns
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 53
+      ToPort: 53
+
+  NodeSecurityKubeDNSUdpCluster:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow node to communicate with each other kubeDns
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: udp
+      FromPort: 53
+      ToPort: 53
+
+  NodeSecurityAcsPortCluster:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow node to communicate with each other solr repo
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 8080
+      ToPort: 8080
+
+  NodeSecuritySolrPortCluster:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow node to communicate with each other repo solr
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 8983
+      ToPort: 8983
 
   NodeSecurityGroupFromBastion:
     Type: AWS::EC2::SecurityGroupIngress

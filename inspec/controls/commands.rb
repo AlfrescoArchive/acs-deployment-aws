@@ -21,7 +21,4 @@ describe command('kubectl get nodes') do
   context "when verifying if the node is ready" do
     its('stdout') { should match /internal\s*Ready/ }
   end
-  context "when verifying if only one node is deployed" do
-    its('stdout') { should_not match /.*\n.*\n.*\n/ }
-  end
 end
