@@ -337,7 +337,7 @@ Parameters:
       ConstraintDescription: The K8s namespace can not be empty
       Type: String
       Description: The namespace in EKS to deploy Helm charts
-      Default: "acs-deployment"
+      Default: "acs"
     ElbCertArn:
       AllowedPattern: ".+"
       ConstraintDescription: The Elastic Load Balancer Cert Arn can not be empty

@@ -81,6 +81,8 @@ else
 
   echo Installing nginx-ingress helm chart...
 cat <<EOF > ingressvalues.yaml
+rbac:
+  create: true
 controller:
   config:
     force-ssl-redirect: "true"
