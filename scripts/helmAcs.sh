@@ -140,7 +140,7 @@ EOF
   TAG_NAME="KubernetesCluster"
   TAG_VALUE=$(aws ec2 describe-tags --filters "Name=resource-id,Values=$INSTANCE_ID" "Name=key,Values=$TAG_NAME" --region $REGION --output=text | cut -f5)
   # EKSname is not unique if we have multiple ACS deployments in the same cluster
-  # it must be somethign unique per Alfresco deployment, not per EKS cluster.
+  # It must be a name unique per Alfresco deployment, not per EKS cluster.
   SOLR_VOLUME1_NAME_TAG="$TAG_VALUE-SolrVolume1"
   SOLR_VOLUME1_ID=$(aws ec2 describe-volumes --region $REGION --filters "Name=tag:Name,Values=$SOLR_VOLUME1_NAME_TAG" --query "Volumes[?State=='available'].{Volume:VolumeId}" --output text)
 
@@ -235,7 +235,7 @@ imagemagick:
 share:
   livenessProbe:
     initialDelaySeconds: 420
-registryPullSecrets: quay-registry-secret" >> acs_install_values.yaml
+registryPullSecrets: quay-registry-secret" > acs_install_values.yaml
 
     helm install alfresco-incubator/alfresco-content-services --version 1.1.5 -f acs_install_values.yaml --name $ACS_RELEASE --namespace=$DESIREDNAMESPACE
 
@@ -331,7 +331,7 @@ imagemagick:
 share:
   livenessProbe:
     initialDelaySeconds: 420
-registryPullSecrets: quay-registry-secret" >> acs_upgrade_values.yaml
+registryPullSecrets: quay-registry-secret" > acs_upgrade_values.yaml
 
     helm upgrade $ACS_RELEASE alfresco-incubator/alfresco-content-services --install -f upgrade_values.yaml --namespace=$DESIREDNAMESPACE
   fi
