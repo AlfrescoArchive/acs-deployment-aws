@@ -333,7 +333,7 @@ share:
     initialDelaySeconds: 420
 registryPullSecrets: quay-registry-secret" > acs_upgrade_values.yaml
 
-    helm upgrade $ACS_RELEASE alfresco-incubator/alfresco-content-services --install -f upgrade_values.yaml --namespace=$DESIREDNAMESPACE
+    helm upgrade $ACS_RELEASE alfresco-incubator/alfresco-content-services --install -f acs_upgrade_values.yaml --namespace=$DESIREDNAMESPACE
   fi
 
   STATUS=$(helm ls $ACS_RELEASE | grep $ACS_RELEASE | awk '{print $8}')
