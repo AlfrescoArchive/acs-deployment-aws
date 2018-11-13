@@ -9,16 +9,28 @@ Bastion = attribute('BastionSubstackName', default: '', description: 'K8s Bastio
 S3BucketName = attribute('S3BucketName', default: '', description: 'K8s S3BucketName')
 
 # check if alfresco DNS is not available anymore
-describe command("acs-deployment-aws/inspec/controls/endpoints.sh https://#{AcsBaseDnsName} 1") do
-  its('stdout') { should match /.*DNS is not available - exit.*/ }
-  its('exit_status') { should eq 1 }
+describe command("curl -v https://#{AcsBaseDnsName} --connect-timeout 5") do
+  its('exit_status') { should eq 7 }
 end
 
 # Check if bastion is deleted
-describe command("aws ec2 describe-instances --filters 'Name=tag:Name,Values=#{Bastion}' --query 'Reservations[].Instances[].State.Name' --output text") do
-  its('exit_status') { should eq 0 }
-  its('stdout') { should eq "terminated\n" }
-  its('stderr') { should eq "" }
+
+describe "Check if bastion instance still exists" do
+
+  let(:checkinstance) { command("aws ec2 describe-instances --filters 'Name=tag:Name,Values=#{Bastion}' --query 'Reservations[].Instances[].State.Name' --output text") }
+
+    it "should return exist status 0" do
+      expect(checkinstance.exit_status).to eq 0
+    end
+
+    it "its stdout should either be nothing or terminated" do
+      expect(checkinstance.stdout).to eq("terminated\n").or eq("")
+    end
+
+    it "its stderr return nothing" do
+      expect(checkinstance.stderr).to eq("")
+    end
+
 end
 
 # Check if Bucket is deleted
