@@ -243,97 +243,25 @@ registryPullSecrets: quay-registry-secret" > acs_install_values.yaml
 
   if [ "$UPGRADE" = "true" ]; then
     echo Upgrading Alfresco Content Services helm chart...
-
-
-echo "externalProtocol: https
-externalHost: \"$EXTERNAL_NAME\"
-externalPort: \"443\"
-alfresco-infrastructure:
-  persistence: 
-    efs:
-      enabled: true
-      dns: \"$EFS_NAME\"
-repository:
-  livenessProbe:
-    initialDelaySeconds: 420
-  adminPassword: \"$ALFRESCO_PASSWORD\"
-  image:
-    repository: \"alfresco/alfresco-content-repository-aws\"
-    tag: \"6.1.0-EA3\"
-  replicaCount: $REPO_PODS
-  environment:
-    JAVA_OPTS: \" -Dopencmis.server.override=true -Dopencmis.server.value=https://$EXTERNAL_NAME -Dalfresco.restApi.basicAuthScheme=true -Dsolr.base.url=/solr -Dsolr.secureComms=none -Dindex.subsystem.name=solr6 -Dalfresco.cluster.enabled=true -Ddeployment.method=HELM_CHART -Xms2000M -Xmx2000M\"
-alfresco-search:
-  resources:
-    requests:
-      memory: \"2500Mi\"
-    limits:
-      memory: \"2500Mi\"
-  environment:
-    SOLR_JAVA_MEM: \"-Xms2000M -Xmx2000M\"
-  persistence:
-    VolumeSizeRequest: \"100Gi\"
-    EbsPvConfiguration:
-      volumeID: \"$SOLR_VOLUME1_ID\"
-  affinity: |
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-          - matchExpressions:
-            - key: \"SolrMasterOnly\"
-              operator: In
-              values:
-              - \"true\"
-  tolerations:
-  - key: \"SolrMasterOnly\"
-    operator: \"Equal\"
-    value: \"true\"
-    effect: \"NoSchedule\"
-  PvNodeAffinity:
-    required:
-      nodeSelectorTerms:
-      - matchExpressions:
-        - key: \"SolrMasterOnly\"
-          operator: In
-          values:
-          - \"true\"
-persistence:
-  solr:
-    data:
-      subPath: \"$DESIREDNAMESPACE/alfresco-content-services/solr-data\"
-  repository:
-    enabled: false
-postgresql:
-  enabled: false
-database:
-  external: true
-  driver: \"org.mariadb.jdbc.Driver\"
-  url: \"'jdbc:mariadb:aurora//$RDS_ENDPOINT:3306/alfresco?useUnicode=yes&characterEncoding=UTF-8'\"
-  user: \"alfresco\"
-  password: \"$DATABASE_PASSWORD\"
-s3connector:
-  enabled: true
-  config:
-    bucketName: \"$S3BUCKET_NAME\"
-    bucketLocation: \"$S3BUCKET_LOCATION\"
-  secrets:
-    encryption: kms
-    awsKmsKeyId: \"$S3BUCKET_KMS_ALIAS\"
-pdfrenderer:
-  livenessProbe:
-    initialDelaySeconds: 300
-libreoffice:
-  livenessProbe:
-    initialDelaySeconds: 300
-imagemagick:
-  livenessProbe:
-    initialDelaySeconds: 300
-share:
-  livenessProbe:
-    initialDelaySeconds: 420
-registryPullSecrets: quay-registry-secret" > acs_upgrade_values.yaml
-
-    helm upgrade $ACS_RELEASE alfresco-incubator/alfresco-content-services --install -f acs_upgrade_values.yaml --namespace=$DESIREDNAMESPACE
+    helm upgrade $ACS_RELEASE alfresco-incubator/alfresco-content-services \
+      --install \
+      --reuse-values \
+      --set externalHost="$EXTERNAL_NAME" \
+      --set repository.adminPassword="$ALFRESCO_PASSWORD" \
+      --set alfresco-infrastructure.persistence.efs.dns="$EFS_NAME" \
+      --set persistence.solr.data.subPath="$DESIREDNAMESPACE/alfresco-content-services/solr-data" \
+      --set postgresql.enabled=false \
+      --set database.external=true \
+      --set database.url="'jdbc:mariadb:aurora//$RDS_ENDPOINT:3306/alfresco?useUnicode=yes&characterEncoding=UTF-8'" \
+      --set database.password="$DATABASE_PASSWORD" \
+      --set s3connector.config.bucketName="$S3BUCKET_NAME" \
+      --set s3connector.config.bucketLocation="$S3BUCKET_LOCATION" \
+      --set s3connector.secrets.encryption=kms \
+      --set s3connector.secrets.awsKmsKeyId="$S3BUCKET_KMS_ALIAS" \
+      --set repository.environment.JAVA_OPTS=" -Dopencmis.server.override=true -Dopencmis.server.value=https://$EXTERNAL_NAME -Dalfresco.restApi.basicAuthScheme=true -Dsolr.base.url=/solr -Dsolr.secureComms=none -Dindex.subsystem.name=solr6 -Dalfresco.cluster.enabled=true -Ddeployment.method=HELM_CHART -Xms2000M -Xmx2000M" \
+      --set repository.image.tag="6.1.0-EA3" \
+      --set repository.replicaCount="$REPO_PODS" \
+      --namespace=$DESIREDNAMESPACE
   fi
 
   STATUS=$(helm ls $ACS_RELEASE | grep $ACS_RELEASE | awk '{print $8}')
