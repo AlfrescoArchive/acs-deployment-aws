@@ -237,7 +237,7 @@ share:
     initialDelaySeconds: 420
 registryPullSecrets: quay-registry-secret" > acs_install_values.yaml
 
-    helm install alfresco-incubator/alfresco-content-services --version 1.1.5 -f acs_install_values.yaml --name $ACS_RELEASE --namespace=$DESIREDNAMESPACE
+    helm install alfresco-incubator/alfresco-content-services --version 1.1.6 -f acs_install_values.yaml --name $ACS_RELEASE --namespace=$DESIREDNAMESPACE
 
   fi
 
