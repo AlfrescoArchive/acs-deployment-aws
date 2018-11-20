@@ -170,11 +170,11 @@ repository:
 alfresco-search:
   resources:
     requests:
-      memory: \"2500Mi\"
+      memory: \"12500Mi\"
     limits:
-      memory: \"2500Mi\"
+      memory: \"12500Mi\"
   environment:
-    SOLR_JAVA_MEM: \"-Xms2000M -Xmx2000M\"
+    SOLR_JAVA_MEM: \"-XX:MaxRAMPercentage=85\"
   persistence:
     VolumeSizeRequest: \"100Gi\"
     EbsPvConfiguration:
