@@ -170,11 +170,11 @@ repository:
 alfresco-search:
   resources:
     requests:
-      memory: \"2500Mi\"
+      memory: \"12500Mi\"
     limits:
-      memory: \"2500Mi\"
+      memory: \"12500Mi\"
   environment:
-    SOLR_JAVA_MEM: \"-Xms2000M -Xmx2000M\"
+    SOLR_JAVA_MEM: \"-XX:MaxRAMPercentage=85\"
   persistence:
     VolumeSizeRequest: \"100Gi\"
     EbsPvConfiguration:
@@ -237,7 +237,7 @@ share:
     initialDelaySeconds: 420
 registryPullSecrets: quay-registry-secret" > acs_install_values.yaml
 
-    helm install alfresco-incubator/alfresco-content-services --version 1.1.5 -f acs_install_values.yaml --name $ACS_RELEASE --namespace=$DESIREDNAMESPACE
+    helm install alfresco-incubator/alfresco-content-services --version 1.1.6 -f acs_install_values.yaml --name $ACS_RELEASE --namespace=$DESIREDNAMESPACE
 
   fi
 
