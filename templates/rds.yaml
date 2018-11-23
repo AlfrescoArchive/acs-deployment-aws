@@ -97,7 +97,7 @@ Parameters:
   RDSCreateSnapshotWhenDeleted:
     Description: Creates a snapshot when the stack gets deleted
     Type: String
-    Default: true
+    Default: "true"
     AllowedValues:
       - "true"
       - "false"
