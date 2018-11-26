@@ -8,8 +8,7 @@ This project contains the code for the AWS-based Alfresco Content Services (Ente
 
 ## Limitations
 
-Currently, this setup will only work in AWS US East (N.Virginia) and West (Oregon) regions due to current EKS support. For an overview of which regions EKS is currently available, see [Regional Product Services](https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/).
-
+Currently, this setup will only work in AWS US East (N.Virginia) and West (Oregon) regions.
 
 ## How to deploy ACS Cluster on AWS
 ### Prerequisites
