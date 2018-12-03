@@ -109,7 +109,7 @@ we will provide some additional information.
 
 ```The ACS SSL Certificate arn to use with ELB``` : Take the SSL certificate arn for your domains in the hosted zone. For more information about how to create SSL certificates, see the AWS documentation on the [AWS Certificate Manager](https://docs.aws.amazon.com/acm/latest/userguide/acm-overview.html).
 
-```The ACS domain name``` : Choose the subdomain which will be used for the url e.g. **my-acs-eks.example.com**. For more information about how to create a hosted zone and its subdomains, visit the AWS documentation on [Creating a Subdomain](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingNewSubdomain.html).
+```The ACS domain name``` : Choose the domain name which will be used as entry url, e.g. **my-acs-eks.example.com**. The domain name consists of <subdomain-name>.<hosted-zone-name>. For more information about how to create a hosted zone and its subdomains, visit the AWS documentation on [Creating a Subdomain](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingNewSubdomain.html).
 
 ```Private Registry Credentials. Base64 encryption of dockerconfig json``` : \
 **Note:** Make sure you have your Quay.io credentials as described in the [Prerequisites](#prerequisites). Also, if you're using Docker for Mac, go to **Preferences...** > **General** to ensure your "Securely store docker logins in macOS keychain" preference is OFF before running the next step.
