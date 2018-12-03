@@ -12,9 +12,9 @@ Currently, this setup will only work in AWS US East (N.Virginia) and West (Orego
 
 ## How to deploy ACS Cluster on AWS
 ### Prerequisites
-* You need a hosted zone e.g. example.com. See [Creating a Public Hosted Zone](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html)
-* An SSL certificate for the Elastic Load Balancer and the domains in the hosted zone [Creating SSL Cert](https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/ssl-server-cert.html)
-* For some of the images from the Helm installation access to [Alfresco's repository in quay.io](https://quay.io/repository/alfresco) is required.
+* You need a hosted zone e.g. example.com. See the AWS documentation on [Creating a Public Hosted Zone](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html).
+* An SSL certificate for the Elastic Load Balancer and the domains in the hosted zone. See the AWS documentation on [Creating SSL Certificates](https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/ssl-server-cert.html).
+* Protected Docker images from Quay.io are used during the Helm deployment. You need access to a secret with credentials to be able to pull those images. Alfresco customers can request their credentials by logging a ticket at https://support.alfresco.com.
 
 ### Permissions
 Ensure that the IAM role or IAM user that creates the stack allows the following permissions:
@@ -57,7 +57,7 @@ The master template (`templates/acs-deployment-master.yaml`) requires a few supp
 
 **Note:** With S3 in AWS Console you can create the `<key_prefix>` when creating a folder.
 
-To simplify the upload, we created a helper script named **uploadHelper.sh**, which only works with Mac or Linux. For Windows, upload those files manually. Initiate the upload by following the instructions below:
+To simplify the upload, we created a helper script named **uploadHelper.sh**. Initiate the upload by following the instructions below:
 1) Open a terminal and change directory to the cloned repository.
 2) ```chmod +x uploadHelper.sh```
 3) ```./uploadHelper.sh <bucket_name> <key_prefix>```. This will upload the files to S3.
@@ -73,6 +73,7 @@ s3://<bucket_name> e.g. my-s3-bucket
           |       |-- scripts
           |       |      |-- deleteIngress.sh
           |       |      +-- getElb.sh
+          |       |      +-- hardening_bootstrap.sh
           |       |      +-- helmAcs.sh
           |       |      +-- helmIngress.sh
           |       |      +-- helmInit.sh
@@ -108,16 +109,16 @@ we will provide some additional information.
 
 ```The ACS SSL Certificate arn to use with ELB``` : Take the SSL certificate arn for your domains in the hosted zone. For more information about how to create SSL certificates, see the AWS documentation on the [AWS Certificate Manager](https://docs.aws.amazon.com/acm/latest/userguide/acm-overview.html).
 
-```The ACS domain name``` : Choose the subdomain which will be used for the url e.g. **my-acs-eks.example.com**. For more information about how to create a hosted zone and its subdomains visit the AWS documentation on [Creating a Subdomain](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingNewSubdomain.html).
+```The ACS domain name``` : Choose the subdomain which will be used for the url e.g. **my-acs-eks.example.com**. For more information about how to create a hosted zone and its subdomains, visit the AWS documentation on [Creating a Subdomain](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingNewSubdomain.html).
 
 ```Private Registry Credentials. Base64 encryption of dockerconfig json``` : \
-**Notice:** Make sure you have access to [Alfresco's repository in quay.io](https://quay.io/repository/alfresco).
+**Note:** Make sure you have your Quay.io credentials as described in the [Prerequisites](#prerequisites). Also, if you're using Docker for Mac, go to **Preferences...** > **General** to ensure your "Securely store docker logins in macOS keychain" preference is OFF before running the next step.
 1) Login to quay.io with ```docker login quay.io```.
 2) Validate that you can see the credentials with ```cat ~/.docker/config.json``` for quay.io.
 3) Get the encoded credentials with ```cat ~/.docker/config.json | base64```.
 4) Copy them into the textbox.
 
-```The hosted zone to create Route53 Record for ACS``` : Enter your hosted zone e.g. **example.com.**. For more information about how to create a hosted zone, see the AWS documentation on [Creating a Public Hosted Zone](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html).
+```The hosted zone to create Route53 Record for ACS``` : Enter your hosted zone e.g. **example.com**. For more information about how to create a hosted zone, see the AWS documentation on [Creating a Public Hosted Zone](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html).
 
 After the CFN stack creation has finished, you can find the Alfresco URL in the output from the master template.
 
