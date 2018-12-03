@@ -97,6 +97,8 @@ s3://<bucket_name> e.g. my-s3-bucket
 * Fill out the parameters. In many cases you can use the default parameters. For some parameter sections
 we will provide some additional information.
 
+See the AWS documentation on [Amazon EC2 Key Pairs](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) for details on how to create a key pair name.
+
 **S3 Cross Replication Bucket for storing ACS content store**
 
 ```Enable Cross Region Replication for This Bucket``` : Cross Region Replication replicates your data into another bucket. See [Cross-Region Replication](https://docs.aws.amazon.com/AmazonS3/latest/dev/crr.html) for more information.
@@ -158,6 +160,8 @@ aws cloudformation create-stack \
                ParameterKey=ElbCertArn,ParameterValue=arn:aws:acm:us-east-1:<AccountId>:certificate/<elbCertId> \
                ParameterKey=RegistryCredentials,ParameterValue=<docker-registry-credentials>
 ```
+
+See the AWS documentation on [Amazon EC2 Key Pairs](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) for details on how to create a key pair name.
 
 ### Deleting ACS EKS with AWS Cli
 Open a terminal and enter:
