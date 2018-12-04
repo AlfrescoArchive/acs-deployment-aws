@@ -239,7 +239,7 @@ Parameters:
     RDSCreateSnapshotWhenDeleted:
       Description: Creates a snapshot when the stack gets deleted
       Type: String
-      Default: true
+      Default: "true"
       AllowedValues:
       - "true"
       - "false"
@@ -257,17 +257,17 @@ Parameters:
       Type: String
       MinLength: 1
       Description: "The desired number of Bastion instance to run"
-      Default: 1
+      Default: "1"
     MaxNumberOfBastionNodes:
       Type: String
       MinLength: 1
       Description: "The maximum number of Bastion instances to run"
-      Default: 1
+      Default: "1"
     MinNumberOfBastionNodes:
       Type: String
       MinLength: 1
       Description: "The minimum number of Bastion instances to run"
-      Default: 1
+      Default: "1"
     NodeInstanceType:
       Type: "String"
       Default: "m5.xlarge"
@@ -287,21 +287,21 @@ Parameters:
       Type: String
       MinLength: 1
       Description: "The desired number of EKS Worker Nodes to run"
-      Default: 2
+      Default: "2"
     MaxNumberOfNodes:
       Type: String
       MinLength: 1
       Description: "The maximum number of EKS Worker Nodes to run"
-      Default: 3
+      Default: "3"
     MinNumberOfNodes:
       Type: String
       MinLength: 1
       Description: "The minimum number of EKS Worker Nodes to run"
-      Default: 2
+      Default: "2"
     NodesMetricsEnabled:
       Description: Enables all CloudWatch metrics for the nodes auto scaling group
       Type: String
-      Default: false
+      Default: "false"
       AllowedValues:
       - "true"
       - "false"
@@ -395,7 +395,7 @@ Parameters:
     UseCrossRegionReplication:
       Description: "Set to true if you want to add an S3 Bucket for replication"
       Type: String
-      Default: false
+      Default: "false"
       AllowedValues:
         - "true"
         - "false"
@@ -414,11 +414,11 @@ Parameters:
     IndexEBSVolumeSize:
       Type: String
       Description: Size in GB for the Index EBS volume
-      Default: 100
+      Default: "100"
     IndexEBSIops:
       Type: String
       Description: IOPS for the Index EBS volume (300 to 20000)
-      Default: 300
+      Default: "300"
 
 Conditions:
   isUseCrossRegionReplication: !Equals [!Ref UseCrossRegionReplication, "true"]
@@ -443,7 +443,7 @@ Resources:
           PrivateSubnet2ACIDR: !Ref PrivateSubnet2CIDR
           PublicSubnet1CIDR: !Ref PublicSubnet1CIDR
           PublicSubnet2CIDR: !Ref PublicSubnet2CIDR
-          CreatePrivateSubnets: true
+          CreatePrivateSubnets: "true"
           VPCCIDR: !Ref VPCCIDR
 
     EC2LogGroup:
@@ -483,7 +483,7 @@ Resources:
                 - Action:
                     - ec2:AttachVolume
                     - ec2:DetachVolume
-                  Resource: !Sub "arn:aws:ec2:*:*:volume/*"
+                  Resource: "arn:aws:ec2:*:*:volume/*"
                   Effect: Allow
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
@@ -518,9 +518,6 @@ Resources:
 
     EFSStack:
       Type: AWS::CloudFormation::Stack
-      DependsOn:
-        - VPCStack
-        - NodeSecurityGroup
       Properties:
         Tags:
           - Key: Name
@@ -538,8 +535,6 @@ Resources:
     EKSStack:
       Type: AWS::CloudFormation::Stack
       DependsOn:
-        - VPCStack
-        - NodeInstanceRole
         - SolrVolume1
       Properties:
         Tags:
@@ -577,7 +572,6 @@ Resources:
           NodesMetricsEnabled: !Ref NodesMetricsEnabled
           EksExternalUserArn: !Ref EksExternalUserArn
           EKSClusterName: !Sub "${AWS::StackName}-eks"
-          K8sNamespace: !Ref K8sNamespace
 
     SolrVolume1:
       Type: AWS::EC2::Volume
@@ -594,8 +588,6 @@ Resources:
 
     RDSStack:
       Type: AWS::CloudFormation::Stack
-      DependsOn:
-        - VPCStack
       Properties:
         Tags:
           - Key: Name
@@ -610,13 +602,15 @@ Resources:
           PrivateSubnet2: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
           NodeSecurityGroup: !Ref NodeSecurityGroup
           VPCID: !GetAtt VPCStack.Outputs.VPCID
+          RDSInstanceType: !Ref RDSInstanceType
+          RDSAllocatedStorage: !Ref RDSAllocatedStorage
+          RDSDBName: !Ref RDSDBName
+          RDSUsername: !Ref RDSUsername
           RDSPassword: !Ref RDSPassword
           RDSCreateSnapshotWhenDeleted: !Ref RDSCreateSnapshotWhenDeleted
 
     S3Stack:
       Type: AWS::CloudFormation::Stack
-      DependsOn:
-        - NodeInstanceRole
       Properties:
         Tags:
           - Key: Name
@@ -638,11 +632,6 @@ Resources:
 
     ACSStack:
       Type: AWS::CloudFormation::Stack
-      DependsOn:
-        - EFSStack
-        - EKSStack
-        - RDSStack
-        - S3Stack
       Properties:
         Tags:
           - Key: Name

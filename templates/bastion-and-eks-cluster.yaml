@@ -13,9 +13,7 @@ Metadata:
         - Label:
             default: Bastion Stack Configuration
           Parameters:
-            - NumberOfAZs
             - VPCID
-            - VPCCIDR
             - PrivateSubnet1ID
             - PrivateSubnet2ID
             - PublicSubnet1ID
@@ -43,19 +41,14 @@ Metadata:
             - NodesMetricsEnabled
             - EksExternalUserArn
             - EKSClusterName
-            - K8sNamespace
 
       ParameterLabels:
         TemplateBucketName:
           default: The name of the S3 bucket that holds the templates
         TemplateBucketKeyPrefix:
           default: The Key prefix for the templates in the S3 template bucket
-        NumberOfAZs:
-          default: The number of AZ's to deploy into
         VPCID:
           default: The ID of the VPC to deploy the Bastion and EKS Cluster into
-        VPCCIDR:
-          default: The CIDR block for the VPC to create
         PrivateSubnet1ID:
           default: The ID of the first private subnet to deploy EKS Workers into
         PrivateSubnet2ID:
@@ -98,8 +91,6 @@ Metadata:
           default: The AWS IAM user arn who will be authorised to connect the cluster externally
         EKSClusterName:
           default: The EKS cluster name
-        K8sNamespace:
-          default: The namespace in EKS to deploy Helm charts
 
 Parameters:
     TemplateBucketName:
@@ -161,7 +152,7 @@ Parameters:
       Type: "String"
       MinLength: 1
       Description: "The minimum number of Bastion instances to run"
-      Default: 1
+      Default: "1"
     NodeInstanceRole:
       Type: "String"
       Description: "The AWS IAM Role to be applied to the EKS Worker Nodes"
@@ -203,9 +194,6 @@ Parameters:
     EKSClusterName:
       Type: String
       Description: The name of the eks cluster
-    K8sNamespace:
-      Type: String
-      Description: The namespace in EKS to deploy Helm charts
 
 Mappings:
   BastionAmiRegionMap:
@@ -231,7 +219,7 @@ Resources:
       FilterPattern: ON FROM USER PWD
       MetricTransformations:
         - MetricName: SSHCommandCount
-          MetricValue: 1
+          MetricValue: "1"
           MetricNamespace: !Join
             - /
             - - AWSQuickStart
@@ -541,7 +529,7 @@ Resources:
               owner: root
               group: root
             '/tmp/helm-rbac-config.yaml':
-              content: !Sub |
+              content: |
                 apiVersion: v1
                 kind: ServiceAccount
                 metadata:
@@ -652,8 +640,8 @@ Resources:
       VpcId: !Ref VPCID
       SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: '22'
-          ToPort: '22'
+          FromPort: 22
+          ToPort: 22
           CidrIp: !Ref RemoteAccessCIDR
 
   # Cluster resources
@@ -788,10 +776,10 @@ Resources:
       Tags:
       - Key: Name
         Value: !Sub "${EKSClusterName}-worker-node"
-        PropagateAtLaunch: 'true'
+        PropagateAtLaunch: true
       - Key: !Sub 'kubernetes.io/cluster/${EKSClusterName}'
         Value: 'owned'
-        PropagateAtLaunch: 'true'
+        PropagateAtLaunch: true
       - Key: KubernetesCluster
         Value: !Sub "${EKSClusterName}"
         PropagateAtLaunch: true
@@ -1093,7 +1081,5 @@ Outputs:
   EksCertAuthority:
     Description: EKS Cluster endpoint certificate authority
     Value: !GetAtt EksHelperLambdaCustomResource.certificateAuthority
-  EksServiceRoleArn:
-    Value: !GetAtt EKSServiceRole.Arn
   EksServiceRoleArn:
     Value: !GetAtt EKSServiceRole.Arn
