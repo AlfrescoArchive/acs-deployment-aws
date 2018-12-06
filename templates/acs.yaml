@@ -35,6 +35,8 @@ Metadata:
             - RegistryCredentials
             - RepoPods
             - Route53DnsZone
+            - NodeInstanceRoleArn
+            - EC2LogGroup
 
       ParameterLabels:
         TemplateBucketName:
@@ -80,7 +82,11 @@ Metadata:
         RepoPods:
           default: The number of repository pods in the cluster
         Route53DnsZone:
-          default: The hosted zone to create Route53 Record for ACS
+          default: The hosted zone to create Route53 Record for ACS (including the . (dot) at the end)
+        NodeInstanceRoleArn:
+          default: ARN for the worker nodes instance role (with logging policy)
+        EC2LogGroup:
+          default: Log group name to ship all ACS logs with Fluentd
 
 Parameters:
     TemplateBucketName:
@@ -155,7 +161,13 @@ Parameters:
       Description: The number of repository pods in the cluster
     Route53DnsZone:
       Type: String
-      Description: The hosted zone to create Route53 Record for ACS
+      Description: The hosted zone to create Route53 Record for ACS (including the . (dot) at the end)
+    NodeInstanceRoleArn:
+      Type: String
+      Description: ARN for the worker nodes instance role (with logging policy)
+    EC2LogGroup:
+      Type: String
+      Description: Log group name to ship all ACS logs with Fluentd
 
 Conditions:
   PrivateRegistry: !Not [!Equals [!Ref RegistryCredentials, ""]]
@@ -286,6 +298,29 @@ Resources:
               timeoutSeconds: 60
       DocumentType: Command
 
+  HelmInstallFluentdRunScript:
+    Type: "AWS::SSM::Document"
+    Properties:
+      Content:
+        schemaVersion: "2.2"
+        description: Install Fluentd K8s CloudWatchLogs Helm chart
+        mainSteps:
+          - action: aws:runShellScript
+            name: helmInstallFluentd
+            inputs:
+              workingDirectory: "/root"
+              runCommand:
+                - "chmod u+x /tmp/helmFluentd.sh"
+                - !Sub "/tmp/helmFluentd.sh\
+                  \ --stackname alfresco\
+                  \ --namespace ${K8sNamespace}\
+                  \ --instance-role ${NodeInstanceRoleArn}\
+                  \ --region ${AWS::Region}\
+                  \ --loggroup ${EC2LogGroup}\
+                  \ --install"
+              timeoutSeconds: 60
+      DocumentType: Command
+
   # Get ACS ELB Address
   GetElbEndpointRunScript:
     Type: "AWS::SSM::Document"
@@ -408,6 +443,7 @@ Resources:
       HelmUpgradeRunScript: !Ref HelmUpgradeRunScript
       GetElbEndpointRunScript: !Ref GetElbEndpointRunScript
       HelmDeleteIngressRunScript: !Ref HelmDeleteIngressRunScript
+      HelmInstallFluentdRunScript: !Ref HelmInstallFluentdRunScript
 
   Route53DnsRecord:
     Type: AWS::Route53::RecordSetGroup

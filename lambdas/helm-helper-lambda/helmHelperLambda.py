@@ -20,14 +20,14 @@ ec2_client = boto3.client('ec2')
 
 def handler(event, context):
     '''Main handler function for Helm deployment'''
-  
+
     try:
         eventType = event['RequestType']
         physicalResourceId = str(uuid.uuid1()) if eventType == 'Create' else event['PhysicalResourceId']
-  
+
         # Get EC2 instances to run SSM commands document
         ssm_instance = ec2_instanceId(event['ResourceProperties']['BastionAutoScalingGroup'])
-        
+
         if eventType == 'Create' or eventType == 'Update':
             logger.info('Events received: {event}'.format(event=event))
 
@@ -39,35 +39,42 @@ def handler(event, context):
             init = ssm_sendcommand(ssm_instance, init_doc['Name'], {})
             if ssm_commandstatus(init['CommandId'], ssm_instance) is True:
                 logger.info('HelmDownloadScript directory was downloaded successfully!')
-                        
+
             # Execute scripts to setup helm deployment
             helminit_doc = describe_document(event['ResourceProperties']['HelmInitRunScript'])
             helmingress_doc = describe_document(event['ResourceProperties']['HelmInstallIngressRunScript'])
             helminstall_doc = describe_document(event['ResourceProperties']['HelmInstallRunScript'])
             helmupgrade_doc = describe_document(event['ResourceProperties']['HelmUpgradeRunScript'])
             helmelb_doc = describe_document(event['ResourceProperties']['GetElbEndpointRunScript'])
-        
+            helmfluentd_doc = describe_document(event['ResourceProperties']['HelmInstallFluentdRunScript'])
+
             if helminit_doc['Status'] == 'Active' and helmingress_doc['Status'] == 'Active' and helminstall_doc['Status'] == 'Active':
-        
-                # Deploy Tiller with Helm init 
+
+                # Deploy Tiller with Helm init
                 helminit = ssm_sendcommand(ssm_instance, helminit_doc['Name'], {})
                 if ssm_commandstatus(helminit['CommandId'], ssm_instance) is True:
                     logger.info('Tiller was deployed successfully!')
-        
+
                     # Deploy nginx-ingress helm chart
                     helmingress = ssm_sendcommand(ssm_instance, helmingress_doc['Name'], {})
                     if ssm_commandstatus(helmingress['CommandId'], ssm_instance) is True:
                         logger.info('Nginx-ingress deployed successfully!')
-        
+
                         if eventType == 'Create':
                             # Install helm chart
                             helmdeploy = ssm_sendcommand(ssm_instance, helminstall_doc['Name'], {})
+                            helmdeployfluentd = ssm_sendcommand(ssm_instance, helmfluentd_doc['Name'], {})
                             if ssm_commandstatus(helmdeploy['CommandId'], ssm_instance) is True:
                                 logger.info('Helm installation completed successfully!')
                             else:
                                 logger.error('Helm installation was unsuccessful')
                                 cfnresponse.send(event, context, cfnresponse.FAILED, {})
-        
+                            if ssm_commandstatus(helmdeployfluentd['CommandId'], ssm_instance) is True:
+                                logger.info('Helm Fluentd installation completed successfully!')
+                            else:
+                                logger.error('Helm Fluentd installation was unsuccessful')
+                                cfnresponse.send(event, context, cfnresponse.FAILED, {})
+
                         if eventType == 'Update':
                             # Upgrade helm release
                             helmdeploy = ssm_sendcommand(ssm_instance, helmupgrade_doc['Name'], {})
@@ -76,7 +83,7 @@ def handler(event, context):
                             else:
                                 logger.error('Helm upgrade was unsuccessful')
                                 cfnresponse.send(event, context, cfnresponse.FAILED, {})
-        
+
                         # Get ELB to return as Stack Output
                         helmelb = ssm_sendcommand(ssm_instance, helmelb_doc['Name'], {})
                         if ssm_commandstatus(helmelb['CommandId'], ssm_instance) is True:
@@ -93,7 +100,7 @@ def handler(event, context):
                     logger.error('Tiller deployment was unsuccessful')
                     cfnresponse.send(event, context, cfnresponse.FAILED, {})
             cfnresponse.send(event, context, cfnresponse.SUCCESS, data, physicalResourceId)
-        
+
         if eventType == 'Delete':
             logger.info('Events received: {event}'.format(event=event))
 
@@ -107,13 +114,13 @@ def handler(event, context):
                 helmdel = ssm_sendcommand(ssm_instance, helmdel_doc['Name'], {})
                 if ssm_commandstatus(helmdel['CommandId'], ssm_instance) is True:
                     logger.info('Nginx-ingress chart purged successfully!')
-                
+
                 # Revoke elb SecurityGroup rule from node sg and then delete elb SecurityGroup created by nginx-ingess
                 revoke_ingress(event['ResourceProperties']['NodeSecurityGroup'], sgId)
 
                 # Wait for nginx-ingress security group id to disassociate from ingress ELB network interface(s)
                 netInt = list_interfaces(event['ResourceProperties']['VPCID'], sgId)
-                
+
                 for int in netInt:
                     while True:
                         if describe_interfaces(int) != None:
@@ -130,7 +137,7 @@ def handler(event, context):
                 logger.info('No ingress security group was found.  Exiting..')
 
             cfnresponse.send(event, context, cfnresponse.SUCCESS, {}, physicalResourceId)
-  
+
     except Exception as err:
         logger.error('Helm Helper lambda Error: "{type}": "{message}"'.format(type=type(err), message=str(err)))
         cfnresponse.send(event, context, cfnresponse.FAILED, {})
@@ -147,7 +154,7 @@ def describe_document(doc_name):
 def ec2_instanceId(autoscaling):
     '''A function to return SSM managed EC2 instances'''
     try:
-        response = ec2_client.describe_instances( 
+        response = ec2_client.describe_instances(
                         Filters=[
                             {
                                 'Name': 'tag:aws:autoscaling:groupName',
@@ -227,7 +234,7 @@ def describe_sg(vpcId, eksName):
 
 def revoke_ingress(sgId, revoke_id):
     '''A function to revoke an ingress rule in a provided Security Group'''
-    try:        
+    try:
         response = ec2_client.revoke_security_group_ingress(
                     GroupId=sgId,
                     IpPermissions=[
@@ -296,6 +303,6 @@ def delete_sg_status(sgId):
               	time.sleep(5)
                 STATUS = delete_sg(sgId)
         return True
-        
+
     except Exception as err:
         return False

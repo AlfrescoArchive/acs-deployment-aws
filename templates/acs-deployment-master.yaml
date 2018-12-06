@@ -143,7 +143,7 @@ Metadata:
         RepoPods:
           default: The number of repository pods in the cluster
         Route53DnsZone:
-          default: The hosted zone to create Route53 Record for ACS
+          default: The hosted zone to create Route53 Record for ACS (including the . (dot) at the end)
         UseCrossRegionReplication:
           default: Enable Cross Region Replication for This Bucket
         ReplicationBucketRegion:
@@ -391,7 +391,7 @@ Parameters:
       AllowedPattern: ".+"
       ConstraintDescription: The hosted zone to create Route53 Record for ACS can not be empty
       Type: String
-      Description: The hosted zone to create Route53 Record for ACS
+      Description: The hosted zone to create Route53 Record for ACS (including the . (dot) at the end)
     UseCrossRegionReplication:
       Description: "Set to true if you want to add an S3 Bucket for replication"
       Type: String
@@ -664,6 +664,8 @@ Resources:
           AcsReleaseName: !Ref AcsReleaseName
           RepoPods: !Ref RepoPods
           Route53DnsZone: !Ref Route53DnsZone
+          NodeInstanceRoleArn: !GetAtt NodeInstanceRole.Arn
+          EC2LogGroup: !Ref EC2LogGroup
 
 Outputs:
   # VPC stack

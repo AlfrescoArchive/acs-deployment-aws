@@ -30,7 +30,7 @@ iam:PassRole
 
 kms:Decrypt
 kms:Encrypt
-                  
+
 logs:CreateLogStream
 logs:GetLogEvents
 logs:PutLogEvents
@@ -39,15 +39,15 @@ logs:DescribeLogStreams
 logs:PutRetentionPolicy
 logs:PutMetricFilter
 logs:CreateLogGroup
-     
+
 s3:GetObject
 s3:GetReplicationConfiguration
 s3:ListBucket
 s3:GetObjectVersionForReplication
-s3:GetObjectVersionAcl 
+s3:GetObjectVersionAcl
 s3:PutObject
 s3:ReplicateObject
-                  
+
 sts:AssumeRole
 ```
 
@@ -98,7 +98,7 @@ we will provide some additional information.
 
 **S3 Cross Replication Bucket for storing ACS content store**
 
-```Enable Cross Region Replication for This Bucket``` : Cross Region Replication replicates your data into another bucket. See [Cross-Region Replication](https://docs.aws.amazon.com/AmazonS3/latest/dev/crr.html) for more information.
+```Enable Cross Region Replication for This Bucket``` : Cross Region Replication replicates your data into another bucket. This is optional. See [Cross-Region Replication](https://docs.aws.amazon.com/AmazonS3/latest/dev/crr.html) for more information.
 
 **ACS Stack Configuration**
 
@@ -106,9 +106,11 @@ we will provide some additional information.
 
 ```The Key prefix for the templates in the S3 template bucket``` : Take the `key_prefix` from the upload step.
 
-```The ACS SSL Certificate arn to use with ELB``` : Take the SSL certificate arn for your domains in the hosted zone. For more information about how to create SSL certificates, see the AWS documentation on the [AWS Certificate Manager](https://docs.aws.amazon.com/acm/latest/userguide/acm-overview.html).
+```The ACS SSL Certificate arn to use with ELB``` : Take the SSL certificate arn for your domains in the hosted zone, e.g. `arn:aws:acm:us-east-1:1234567890:certificate/a08b75c0-311d-4999-9995-39fefgh519i9`. For more information about how to create SSL certificates, see the AWS documentation on the [AWS Certificate Manager](https://docs.aws.amazon.com/acm/latest/userguide/acm-overview.html).
 
 ```The ACS domain name``` : Choose the subdomain which will be used for the url e.g. **my-acs-eks.example.com**. For more information about how to create a hosted zone and its subdomains visit the AWS documentation on [Creating a Subdomain](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingNewSubdomain.html).
+
+```Route53 Dns Zone``` : Choose the Route53 DNS Zone which will be used to create  e.g. **example.com.** (note the dot at the end). For more information about how to create a hosted zone and its subdomains visit the AWS documentation on [Creating a Subdomain](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingNewSubdomain.html).
 
 ```Private Registry Credentials. Base64 encryption of dockerconfig json``` : \
 **Notice:** Make sure you have access to [Alfresco's repository in quay.io](https://quay.io/repository/alfresco).
