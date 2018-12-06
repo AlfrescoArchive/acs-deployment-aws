@@ -80,21 +80,29 @@ else
   fi
 
   echo Installing nginx-ingress helm chart...
-  helm upgrade $INGRESS_RELEASE stable/nginx-ingress \
-    --install \
-    --version $INGRESS_VERSION \
-    --set controller.scope.enabled=true \
-    --set controller.scope.namespace=$DESIREDNAMESPACE \
-    --set rbac.create=true \
-    --set controller.config."force-ssl-redirect"=\"true\" \
-    --set controller.service.targetPorts.https=80 \
-    --set controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-backend-protocol"="http" \
-    --set controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-ssl-ports"="https" \
-    --set controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-ssl-cert"=$AWS_CERT_ARN \
-    --set controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-ssl-negotiation-policy"=$AWS_CERT_POLICY \
-    --set controller.service.annotations."external-dns\.alpha\.kubernetes\.io/hostname"="$EXTERNAL_NAME" \
-    --set controller.publishService.enabled=true \
-    --namespace $DESIREDNAMESPACE
+cat <<EOF > ingressvalues.yaml
+rbac:
+  create: true
+controller:
+  config:
+    force-ssl-redirect: "true"
+  scope:
+    enabled: true
+    namespace: $DESIREDNAMESPACE
+  publishService:
+    enabled: true
+  service:
+    targetPorts:
+      https: 80
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "$AWS_CERT_ARN"
+      service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "http"
+      service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "https"
+      external-dns.alpha.kubernetes.io/hostname: "$EXTERNAL_NAME"
+      service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy: "$AWS_CERT_POLICY"
+EOF
+
+  helm upgrade $INGRESS_RELEASE stable/nginx-ingress -f ingressvalues.yaml --install --version $INGRESS_VERSION --namespace $DESIREDNAMESPACE
 
   STATUS=$(helm ls $INGRESS_RELEASE | grep $INGRESS_RELEASE | awk '{print $8}')
   while [ "$STATUS" != "DEPLOYED" ]; do

@@ -33,6 +33,7 @@ Metadata:
             - RDSEndpoint
             - DatabasePassword
             - RegistryCredentials
+            - RepoPods
             - Route53DnsZone
             - NodeInstanceRoleArn
             - EC2LogGroup
@@ -78,8 +79,10 @@ Metadata:
           default: The helm chart release name of nginx-ingress
         AcsReleaseName:
           default: The helm chart release name of alfresco content services
+        RepoPods:
+          default: The number of repository pods in the cluster
         Route53DnsZone:
-          default: The hosted zone to create Route53 Record for ACS (add a . (dot) at the end of the DNS zone)
+          default: The hosted zone to create Route53 Record for ACS (including the . (dot) at the end of the DNS zone)
         NodeInstanceRoleArn:
           default: ARN for the worker nodes instance role (with logging policy)
         EC2LogGroup:
@@ -153,6 +156,9 @@ Parameters:
     AcsReleaseName:
       Type: String
       Description: The helm chart release name of alfresco content services
+    RepoPods:
+      Type: String
+      Description: The number of repository pods in the cluster
     Route53DnsZone:
       Type: String
       Description: The hosted zone to create Route53 Record for ACS (add a . (dot) at the end of the DNS zone)
@@ -167,6 +173,7 @@ Conditions:
   PrivateRegistry: !Not [!Equals [!Ref RegistryCredentials, ""]]
 
 Resources:
+
   # SSM documents to run helm commands on the bastion
   # Download scripts directory
   HelmDownloadScript:
@@ -250,6 +257,7 @@ Resources:
                     - !Sub "--rds-endpoint ${RDSEndpoint}"
                     - !Sub "--database-password ${DatabasePassword}"
                     - !Sub "--external-name ${AcsExternalName}"
+                    - !Sub "--repo-pods ${RepoPods}"
                     - !Sub "--s3bucket-name ${S3BucketName}"
                     - !Sub "--s3bucket-kms-alias ${S3BucketKMSAlias}"
                     - !Sub "--s3bucket-location ${AWS::Region}"
@@ -272,14 +280,21 @@ Resources:
               workingDirectory: "/root"
               runCommand:
                 - "chmod u+x /tmp/helmAcs.sh"
-                - !Sub "/tmp/helmAcs.sh\
-                  \ --acs-release ${AcsReleaseName}\
-                  \ --efs-name ${EFSName}\
-                  \ --namespace ${K8sNamespace}\
-                  \ --alfresco-password ${AlfrescoPassword}\
-                  \ --database-password ${DatabasePassword}\
-                  \ --external-name ${AcsExternalName}\
-                  \ --upgrade"
+                - Fn::Join:
+                  - " "
+                  - - "/tmp/helmAcs.sh"
+                    - !Sub "--acs-release ${AcsReleaseName}"
+                    - !Sub "--efs-name ${EFSName}"
+                    - !Sub "--namespace ${K8sNamespace}"
+                    - !Sub "--alfresco-password ${AlfrescoPassword}"
+                    - !Sub "--rds-endpoint ${RDSEndpoint}"
+                    - !Sub "--database-password ${DatabasePassword}"
+                    - !Sub "--external-name ${AcsExternalName}"
+                    - !Sub "--repo-pods ${RepoPods}"
+                    - !Sub "--s3bucket-name ${S3BucketName}"
+                    - !Sub "--s3bucket-kms-alias ${S3BucketKMSAlias}"
+                    - !Sub "--s3bucket-location ${AWS::Region}"
+                    - "--upgrade"
               timeoutSeconds: 60
       DocumentType: Command
 
@@ -410,7 +425,7 @@ Resources:
       Handler: helmHelperLambda.handler
       Role: !GetAtt HelmHelperLambdaRole.Arn
       Runtime: python2.7
-      Timeout: 120
+      Timeout: 300
       Description: "A custom resource to manage Helm charts used for deploying ACS"
 
   HelmHelperLambdaCustomResource:
@@ -432,8 +447,6 @@ Resources:
 
   Route53DnsRecord:
     Type: AWS::Route53::RecordSetGroup
-    DependsOn:
-      - HelmHelperLambdaCustomResource
     Properties:
       Comment: ACS DNS Record for ELB
       HostedZoneName: !Ref Route53DnsZone

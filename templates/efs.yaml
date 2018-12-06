@@ -68,8 +68,8 @@ Resources:
       Description: "NFS used for Persistent volume claims in k8s"
       GroupId: !Ref SecurityGroup
       IpProtocol: tcp
-      FromPort: '2049'
-      ToPort: '2049'
+      FromPort: 2049
+      ToPort: 2049
       SourceSecurityGroupId: !Ref SecurityGroup
 
 Outputs:

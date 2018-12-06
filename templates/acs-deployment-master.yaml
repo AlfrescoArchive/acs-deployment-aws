@@ -34,6 +34,8 @@ Metadata:
             - NodesMetricsEnabled
             - EksExternalUserArn
             - K8sNamespace
+            - IndexEBSVolumeSize
+            - IndexEBSIops
         - Label:
             default: S3 Cross Replication Bucket for storing ACS content store
           Parameters:
@@ -64,6 +66,7 @@ Metadata:
             - AcsReleaseName
             - AlfrescoPassword
             - RegistryCredentials
+            - RepoPods
             - Route53DnsZone
 
       ParameterLabels:
@@ -137,6 +140,8 @@ Metadata:
           default: The helm chart release name of nginx-ingress
         AcsReleaseName:
           default: The helm chart release name of alfresco content services
+        RepoPods:
+          default: The number of repository pods in the cluster
         Route53DnsZone:
           default: The hosted zone to create Route53 Record for ACS (add a . (dot) at the end of the DNS zone)
         UseCrossRegionReplication:
@@ -147,6 +152,10 @@ Metadata:
           default: Destination Replication Bucket
         ReplicationBucketKMSEncryptionKey:
           default: Destination Bucket KMS Encryption Key
+        IndexEBSVolumeSize:
+          default: Size in GB for the Index EBS volume
+        IndexEBSIops:
+          default: IOPS for the Index EBS volume (300 to 20000)
 
 Parameters:
     AvailabilityZones:
@@ -230,7 +239,7 @@ Parameters:
     RDSCreateSnapshotWhenDeleted:
       Description: Creates a snapshot when the stack gets deleted
       Type: String
-      Default: true
+      Default: "true"
       AllowedValues:
       - "true"
       - "false"
@@ -248,17 +257,17 @@ Parameters:
       Type: String
       MinLength: 1
       Description: "The desired number of Bastion instance to run"
-      Default: 1
+      Default: "1"
     MaxNumberOfBastionNodes:
       Type: String
       MinLength: 1
       Description: "The maximum number of Bastion instances to run"
-      Default: 1
+      Default: "1"
     MinNumberOfBastionNodes:
       Type: String
       MinLength: 1
       Description: "The minimum number of Bastion instances to run"
-      Default: 1
+      Default: "1"
     NodeInstanceType:
       Type: "String"
       Default: "m5.xlarge"
@@ -278,21 +287,21 @@ Parameters:
       Type: String
       MinLength: 1
       Description: "The desired number of EKS Worker Nodes to run"
-      Default: 1
+      Default: "2"
     MaxNumberOfNodes:
       Type: String
       MinLength: 1
       Description: "The maximum number of EKS Worker Nodes to run"
-      Default: 3
+      Default: "3"
     MinNumberOfNodes:
       Type: String
       MinLength: 1
       Description: "The minimum number of EKS Worker Nodes to run"
-      Default: 1
+      Default: "2"
     NodesMetricsEnabled:
       Description: Enables all CloudWatch metrics for the nodes auto scaling group
       Type: String
-      Default: false
+      Default: "false"
       AllowedValues:
       - "true"
       - "false"
@@ -328,7 +337,7 @@ Parameters:
       ConstraintDescription: The K8s namespace can not be empty
       Type: String
       Description: The namespace in EKS to deploy Helm charts
-      Default: "acs-deployment"
+      Default: "acs"
     ElbCertArn:
       AllowedPattern: ".+"
       ConstraintDescription: The Elastic Load Balancer Cert Arn can not be empty
@@ -356,13 +365,13 @@ Parameters:
       ConstraintDescription: The helm chart release name of nginx-ingress can not be empty
       Type: String
       Description: The helm chart release name of nginx-ingress
-      Default: "alfresco"
+      Default: "ingress"
     AcsReleaseName:
       AllowedPattern: ".+"
       ConstraintDescription: The helm chart release name of alfresco content services can not be empty
       Type: String
       Description: The helm chart release name of alfresco content services
-      Default: "enterprise"
+      Default: "acs"
     AlfrescoPassword:
       AllowedPattern: ".+"
       ConstraintDescription: The Admin password for Alfresco can not be empty
@@ -374,6 +383,10 @@ Parameters:
       Description: The private registry credentials in base64 format.
       NoEcho: True
       Default: ""
+    RepoPods:
+      Type: String
+      Description: The number of repository pods in the cluster
+      Default: "2"
     Route53DnsZone:
       AllowedPattern: ".+"
       ConstraintDescription: The hosted zone to create Route53 Record for ACS can not be empty
@@ -382,7 +395,7 @@ Parameters:
     UseCrossRegionReplication:
       Description: "Set to true if you want to add an S3 Bucket for replication"
       Type: String
-      Default: false
+      Default: "false"
       AllowedValues:
         - "true"
         - "false"
@@ -398,11 +411,20 @@ Parameters:
       Description: "The KMS encryption key for the destination bucket"
       Type: "String"
       Default: ""
+    IndexEBSVolumeSize:
+      Type: String
+      Description: Size in GB for the Index EBS volume
+      Default: "100"
+    IndexEBSIops:
+      Type: String
+      Description: IOPS for the Index EBS volume (300 to 20000)
+      Default: "300"
 
 Conditions:
   isUseCrossRegionReplication: !Equals [!Ref UseCrossRegionReplication, "true"]
 
 Resources:
+
     VPCStack:
       Type: AWS::CloudFormation::Stack
       Properties:
@@ -411,6 +433,8 @@ Resources:
             Value: !Sub "${AWS::StackName}"
           - Key: Component
             Value: ACS-VPC
+          - Key: KubernetesCluster
+            Value: !Sub "${AWS::StackName}-eks"
         TemplateURL: !Sub "https://s3.amazonaws.com/${QSS3BucketName}/${QSS3KeyPrefix}/templates/aws-vpc.template"
         Parameters:
           AvailabilityZones: !Join [",", !Ref AvailabilityZones]
@@ -419,7 +443,7 @@ Resources:
           PrivateSubnet2ACIDR: !Ref PrivateSubnet2CIDR
           PublicSubnet1CIDR: !Ref PublicSubnet1CIDR
           PublicSubnet2CIDR: !Ref PublicSubnet2CIDR
-          CreatePrivateSubnets: true
+          CreatePrivateSubnets: "true"
           VPCCIDR: !Ref VPCCIDR
 
     EC2LogGroup:
@@ -452,6 +476,15 @@ Resources:
                     - logs:CreateLogGroup
                   Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${EC2LogGroup}:*"
                   Effect: Allow
+          - PolicyName: ebs-volume-policy
+            PolicyDocument:
+              Version: 2012-10-17
+              Statement:
+                - Action:
+                    - ec2:AttachVolume
+                    - ec2:DetachVolume
+                  Resource: "arn:aws:ec2:*:*:volume/*"
+                  Effect: Allow
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
           Statement:
@@ -480,18 +513,19 @@ Resources:
             Value: ACS-NodeSG
           - Key: !Sub "kubernetes.io/cluster/${AWS::StackName}-cluster"
             Value: 'owned'
+          - Key: KubernetesCluster
+            Value: !Sub "${AWS::StackName}-eks"
 
     EFSStack:
       Type: AWS::CloudFormation::Stack
-      DependsOn:
-        - VPCStack
-        - NodeSecurityGroup
       Properties:
         Tags:
           - Key: Name
             Value: !Sub "${AWS::StackName}"
           - Key: Component
             Value: ACS-EFS
+          - Key: KubernetesCluster
+            Value: !Sub "${AWS::StackName}-eks"
         TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/templates/efs.yaml"
         Parameters:
           PrivateSubnet1ID: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
@@ -501,14 +535,15 @@ Resources:
     EKSStack:
       Type: AWS::CloudFormation::Stack
       DependsOn:
-        - VPCStack
-        - NodeInstanceRole
+        - SolrVolume1
       Properties:
         Tags:
           - Key: Name
             Value: !Sub "${AWS::StackName}"
           - Key: Component
             Value: ACS-Bastion
+          - Key: KubernetesCluster
+            Value: !Sub "${AWS::StackName}-eks"
         TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/templates/bastion-and-eks-cluster.yaml"
         Parameters:
           # Bastion stack params
@@ -536,37 +571,54 @@ Resources:
           DesiredNumberOfNodes: !Ref DesiredNumberOfNodes
           NodesMetricsEnabled: !Ref NodesMetricsEnabled
           EksExternalUserArn: !Ref EksExternalUserArn
-          K8sNamespace: !Ref K8sNamespace
+          EKSClusterName: !Sub "${AWS::StackName}-eks"
+
+    SolrVolume1:
+      Type: AWS::EC2::Volume
+      Properties:
+        AutoEnableIO: false
+        AvailabilityZone: !Select [ 0, !Ref AvailabilityZones ]
+        Encrypted: false
+        Iops: !Ref IndexEBSIops
+        Size: !Ref IndexEBSVolumeSize
+        VolumeType: io1
+        Tags:
+          - Key: Name
+            Value: !Sub "${AWS::StackName}-eks-SolrVolume1"
 
     RDSStack:
       Type: AWS::CloudFormation::Stack
-      DependsOn:
-        - VPCStack
       Properties:
         Tags:
           - Key: Name
             Value: !Sub "${AWS::StackName}"
           - Key: Component
             Value: ACS-RDS
+          - Key: KubernetesCluster
+            Value: !Sub "${AWS::StackName}-eks"
         TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/templates/rds.yaml"
         Parameters:
           PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
           PrivateSubnet2: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
           NodeSecurityGroup: !Ref NodeSecurityGroup
           VPCID: !GetAtt VPCStack.Outputs.VPCID
+          RDSInstanceType: !Ref RDSInstanceType
+          RDSAllocatedStorage: !Ref RDSAllocatedStorage
+          RDSDBName: !Ref RDSDBName
+          RDSUsername: !Ref RDSUsername
           RDSPassword: !Ref RDSPassword
           RDSCreateSnapshotWhenDeleted: !Ref RDSCreateSnapshotWhenDeleted
 
     S3Stack:
       Type: AWS::CloudFormation::Stack
-      DependsOn:
-        - NodeInstanceRole
       Properties:
         Tags:
           - Key: Name
             Value: !Sub "${AWS::StackName}"
           - Key: Component
             Value: ACS-S3
+          - Key: KubernetesCluster
+            Value: !Sub "${AWS::StackName}-eks"
         TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/templates/s3-bucket.yaml"
         Parameters:
           TemplateBucketName: !Ref TemplateBucketName
@@ -580,17 +632,14 @@ Resources:
 
     ACSStack:
       Type: AWS::CloudFormation::Stack
-      DependsOn:
-        - EFSStack
-        - EKSStack
-        - RDSStack
-        - S3Stack
       Properties:
         Tags:
           - Key: Name
             Value: !Sub "${AWS::StackName}"
           - Key: Component
             Value: ACS-Main
+          - Key: KubernetesCluster
+            Value: !Sub "${AWS::StackName}-eks"
         TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/templates/acs.yaml"
         Parameters:
           TemplateBucketName: !Ref TemplateBucketName
@@ -613,6 +662,7 @@ Resources:
           RegistryCredentials: !Ref RegistryCredentials
           IngressReleaseName: !Ref IngressReleaseName
           AcsReleaseName: !Ref AcsReleaseName
+          RepoPods: !Ref RepoPods
           Route53DnsZone: !Ref Route53DnsZone
           NodeInstanceRoleArn: !GetAtt NodeInstanceRole.Arn
           EC2LogGroup: !Ref EC2LogGroup
@@ -657,6 +707,8 @@ Outputs:
     Value: !GetAtt NodeInstanceRole.Arn
   NodeSecurityGroupId:
     Value: !Ref NodeSecurityGroup
+  AvailabilityZones:
+    Value: !Join [",", !Ref AvailabilityZones]
 
   # EFS Stack
   EFSSubstackName:

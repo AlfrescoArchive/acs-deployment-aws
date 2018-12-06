@@ -23,7 +23,7 @@ def handler(event, context):
 
     try:
         eventType = event['RequestType']
-        physicalResourceId = str(uuid.uuid1()) if eventType == 'Create' or eventType == 'Update' or eventType == 'Delete' else event['PhysicalResourceId']
+        physicalResourceId = str(uuid.uuid1()) if eventType == 'Create' else event['PhysicalResourceId']
 
         # Get EC2 instances to run SSM commands document
         ssm_instance = ec2_instanceId(event['ResourceProperties']['BastionAutoScalingGroup'])
