@@ -82,7 +82,7 @@ Metadata:
         RepoPods:
           default: The number of repository pods in the cluster
         Route53DnsZone:
-          default: The hosted zone to create Route53 Record for ACS (including the . (dot) at the end of the DNS zone)
+          default: The hosted zone to create Route53 Record for ACS (including the . (dot) at the end)
         NodeInstanceRoleArn:
           default: ARN for the worker nodes instance role (with logging policy)
         EC2LogGroup:
@@ -161,7 +161,7 @@ Parameters:
       Description: The number of repository pods in the cluster
     Route53DnsZone:
       Type: String
-      Description: The hosted zone to create Route53 Record for ACS (add a . (dot) at the end of the DNS zone)
+      Description: The hosted zone to create Route53 Record for ACS (including the . (dot) at the end)
     NodeInstanceRoleArn:
       Type: String
       Description: ARN for the worker nodes instance role (with logging policy)
