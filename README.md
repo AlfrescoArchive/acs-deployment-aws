@@ -119,7 +119,7 @@ See the AWS documentation on [Amazon EC2 Key Pairs](https://docs.aws.amazon.com/
 
 | Parameter | Description |
 | --------- | ----------- |
-| Enable Cross Region Replication for this Bucket | Cross Region Replication replicates your data into another bucket. See the AWS documentation on [Cross-Region Replication](https://docs.aws.amazon.com/AmazonS3/latest/dev/crr.html) for more information. |
+| Enable Cross Region Replication for this Bucket | Cross Region Replication replicates your data into another bucket. This is optional. See the AWS documentation on [Cross-Region Replication](https://docs.aws.amazon.com/AmazonS3/latest/dev/crr.html) for more information. |
 
 **ACS Stack Configuration**
 
@@ -127,10 +127,11 @@ See the AWS documentation on [Amazon EC2 Key Pairs](https://docs.aws.amazon.com/
 | --------- | ----------- |
 | The name of the S3 bucket that holds the templates | Take the `bucket_name` from the upload step.|
 | The Key prefix for the templates in the S3 template bucket | Take the `key_prefix` from the upload step.|
-| The ACS SSL Certificate arn to use with ELB | Take the SSL certificate arn for your domains in the hosted zone. For more information about how to create SSL certificates, see the AWS documentation on the [AWS Certificate Manager](https://docs.aws.amazon.com/acm/latest/userguide/acm-overview.html).|
+| The ACS SSL Certificate arn to use with ELB | Take the SSL certificate arn for your domains in the hosted zone, e.g. `arn:aws:acm:us-east-1:1234567890:certificate/a08b75c0-311d-4999-9995-39fefgh519i9`. For more information about how to create SSL certificates, see the AWS documentation on the [AWS Certificate Manager](https://docs.aws.amazon.com/acm/latest/userguide/acm-overview.html).|
 | The ACS domain name | Choose the domain name which will be used as the entry URL, e.g. **my-acs-eks.example.com**. The domain name consists of ```<subdomain-name>.<hosted-zone-name>```. For more information about how to create a hosted zone and its subdomains, see the AWS documentation on [Creating a Subdomain](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingNewSubdomain.html).|
-| Private Registry Credentials. Base64 encryption of dockerconfig json | Make sure you have your Quay.io credentials as described in the [Prerequisites](#prerequisites). Also, if you're using Docker for Mac, go to **Preferences...** > **General** to ensure your "Securely store docker logins in macOS keychain" preference is OFF before running the next step.<ol><li> Login to quay.io: <br>```docker login quay.io```</li> <li> Validate that you can see the credentials for Quay.io: <br>```cat ~/.docker/config.json```</li><li> Get the encoded credentials: <br>```cat ~/.docker/config.json |  base64```</li><li> Copy the credentials into the textbox.</li></ol> |
-| The hosted zone to create Route53 Record for ACS | Enter your hosted zone e.g. **example.com**. For more information about how to create a hosted zone, see the AWS documentation on [Creating a Public Hosted Zone](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html).|
+| Route53 Dns Zone | Choose the Route53 DNS Zone which will be used to create e.g. **example.com.** (note the dot at the end). For more information about how to create a hosted zone and its subdomains visit the AWS documentation on [Creating a Subdomain](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingNewSubdomain.html).|
+| Private Registry Credentials. Base64 encryption of dockerconfig json | Make sure you have your Quay.io credentials as described in the [Prerequisites](#prerequisites). Also, if you're using Docker for Mac, go to **Preferences...** > **General** to ensure your "Securely store docker logins in macOS keychain" preference is OFF before running the next step.<ol><li> Login to quay.io: <br>```docker login quay.io```</li> <li> Validate that you can see the credentials for Quay.io: <br>```cat ~/.docker/config.json```</li><li> Get the encoded credentials: <br>```cat ~/.docker/config.json | base64```</li><li> Copy the credentials into the textbox.</li></ol> |
+| The hosted zone to create Route53 Record for ACS | Enter your hosted zone e.g. **example.com.**. For more information about how to create a hosted zone, see the AWS documentation on [Creating a Public Hosted Zone](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html).|
 
 After the CFN stack creation has finished, you can find the Alfresco URL in the output from the master template.
 
