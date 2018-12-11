@@ -74,6 +74,4 @@ else
   # Wait until stack complete
   aws cloudformation wait stack-create-complete --stack-name $STACK_NAME
 
-  # Show stack
-  aws cloudformation describe-stacks --stack-name $STACK_NAME
 fi

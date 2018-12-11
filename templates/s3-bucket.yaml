@@ -44,8 +44,8 @@ Parameters:
     UseCrossRegionReplication:
       Description: "Set to true if you want to add an S3 Bucket for replication"
       Type: String
-      Default: false
-      AllowedValues: 
+      Default: "false"
+      AllowedValues:
         - "true"
         - "false"
     ReplicationBucketRegion:
@@ -238,8 +238,6 @@ Resources:
 
   EmptyBucketLifeCycleHandler:
     Type: AWS::Lambda::Function
-    DependsOn:
-      - EmptyBucketHandlerIamRole
     Properties:
       Description: 'A custom lambda function to empty a given s3 buckets and delete it'
       Handler: org.alfresco.aws.lambda.handlers.cfn.EmptyS3Bucket
@@ -268,7 +266,7 @@ Resources:
       Description: !Sub '${AWS::StackName} - A KMS master key to encrypt contents of S3 bucket'
       KeyPolicy:
         Version: '2012-10-17'
-        Id: '${AWS::StackName}-key'
+        Id: !Sub '${AWS::StackName}-key'
         Statement:
           -
             Sid: 'Allow administration of the key'
