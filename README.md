@@ -30,7 +30,7 @@ iam:PassRole
 
 kms:Decrypt
 kms:Encrypt
-                  
+
 logs:CreateLogStream
 logs:GetLogEvents
 logs:PutLogEvents
@@ -39,28 +39,38 @@ logs:DescribeLogStreams
 logs:PutRetentionPolicy
 logs:PutMetricFilter
 logs:CreateLogGroup
-     
+
 s3:GetObject
 s3:GetReplicationConfiguration
 s3:ListBucket
 s3:GetObjectVersionForReplication
-s3:GetObjectVersionAcl 
+s3:GetObjectVersionAcl
 s3:PutObject
 s3:ReplicateObject
-                  
+
 sts:AssumeRole
 ```
 
 ### Preparing the S3 bucket for CFN template deployment
-The master template (`templates/acs-deployment-master.yaml`) requires a few supporting files hosted in S3, like lambdas, scripts and CFN templates. To do this, create or use an S3 bucket in the same region as you intend to deploy ACS. Also, the S3 bucket needs to have a key prefix in it:
-```s3://<bucket_name>/<key_prefix>``` (e.g. ```s3://my-s3-bucket/development```)
+The master template (`templates/acs-deployment-master.yaml`) requires a few supporting files hosted in S3, like lambdas, scripts and CFN templates.
 
-**Note:** With S3 in AWS Console you can create the `<key_prefix>` when creating a folder.
+Before you begin, make sure you:
+* Create or use an S3 bucket in the same region as you intend to deploy ACS.
+* Add a key prefix to the bucket name after you've created it:
+`s3://<bucket_name>/<key_prefix>` (e.g. ```s3://my-s3-bucket/development``` )
+
+To create the S3 bucket and key prefix:
+* Go to the **AWS Console**, and open the **S3** console.
+* Create an S3 bucket using the default settings.
+* Select the bucket that you just created in the **Bucket name** list, and click **Create folder**.
+* Type a name for the folder, choose the encryption setting, and then click **Save**.
+
+**Note:** The `<key_prefix>` acts as a folder object in the S3 bucket, to allow objects to be grouped together. See the AWS documentation on [Using folders in an S3 Bucket](https://docs.aws.amazon.com/AmazonS3/latest/user-guide/using-folders.html) for more details.
 
 To simplify the upload, we created a helper script named **uploadHelper.sh**. Initiate the upload by following the instructions below:
 1) Open a terminal and change directory to the cloned repository.
-2) ```chmod +x uploadHelper.sh```
-3) ```./uploadHelper.sh <bucket_name> <key_prefix>```. This will upload the files to S3.
+2) Run ```chmod +x uploadHelper.sh```.
+3) Run ```./uploadHelper.sh <bucket_name> <key_prefix>```. This will upload the files to S3.
 4) Check that the bucket contains the following files:
 
 ```
@@ -88,44 +98,44 @@ s3://<bucket_name> e.g. my-s3-bucket
 ```
 
 ## Deploying ACS EKS with AWS Console
-**Note:** To use the AWS Console, make sure that you've uploaded the required files to S3 as described in [Preparing the S3 bucket for CFN template deployment](#preparing-the-s3-bucket-for-cfn-template-deployment).
+To use the AWS Console, make sure that you've uploaded the required files to S3 as described in [Preparing the S3 bucket for CFN template deployment](#preparing-the-s3-bucket-for-cfn-template-deployment).
 
-* Go to the AWS Console and open CloudFormation
-* Click ```Create Stack```
-* In ```Upload a template to Amazon S3``` choose `templates/acs-deployment-master.yaml`
-* Choose a stack name, like `my-acs-eks`
-* Fill out the parameters. In many cases you can use the default parameters. For some parameter sections
-we will provide some additional information.
+* Go to the **AWS Console** and open **CloudFormation**.
+* Click ```Create Stack```.
+* In ```Upload a template to Amazon S3``` choose `templates/acs-deployment-master.yaml`.
+* Choose a stack name, for example, `my-acs-eks`.
+* Fill in the parameters in each of the configuration sections.
+
+In many cases you can use the default parameters. Additional information is provided for some parameter sections, including a list of mandatory parameters below:
+* The Availability Zones to deploy to
+* Key Pair Name
+* RDS Password
+* CIDR block to allow remote access
+* Alfresco Password
 
 See the AWS documentation on [Amazon EC2 Key Pairs](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) for details on how to create a key pair name.
 
 **S3 Cross Replication Bucket for storing ACS content store**
 
-```Enable Cross Region Replication for This Bucket``` : Cross Region Replication replicates your data into another bucket. See [Cross-Region Replication](https://docs.aws.amazon.com/AmazonS3/latest/dev/crr.html) for more information.
+| Parameter | Description |
+| --------- | ----------- |
+| Enable Cross Region Replication for this Bucket | Cross Region Replication replicates your data into another bucket. See the AWS documentation on [Cross-Region Replication](https://docs.aws.amazon.com/AmazonS3/latest/dev/crr.html) for more information. |
 
 **ACS Stack Configuration**
 
-```The name of the S3 bucket that holds the templates``` : Take the bucket name from the upload step.
-
-```The Key prefix for the templates in the S3 template bucket``` : Take the `key_prefix` from the upload step.
-
-```The ACS SSL Certificate arn to use with ELB``` : Take the SSL certificate arn for your domains in the hosted zone. For more information about how to create SSL certificates, see the AWS documentation on the [AWS Certificate Manager](https://docs.aws.amazon.com/acm/latest/userguide/acm-overview.html).
-
-```The ACS domain name``` : Choose the domain name which will be used as entry url, e.g. **my-acs-eks.example.com**. The domain name consists of ```<subdomain-name>.<hosted-zone-name>```. For more information about how to create a hosted zone and its subdomains, visit the AWS documentation on [Creating a Subdomain](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingNewSubdomain.html).
-
-```Private Registry Credentials. Base64 encryption of dockerconfig json``` : \
-**Note:** Make sure you have your Quay.io credentials as described in the [Prerequisites](#prerequisites). Also, if you're using Docker for Mac, go to **Preferences...** > **General** to ensure your "Securely store docker logins in macOS keychain" preference is OFF before running the next step.
-1) Login to quay.io with ```docker login quay.io```.
-2) Validate that you can see the credentials with ```cat ~/.docker/config.json``` for quay.io.
-3) Get the encoded credentials with ```cat ~/.docker/config.json | base64```.
-4) Copy them into the textbox.
-
-```The hosted zone to create Route53 Record for ACS``` : Enter your hosted zone e.g. **example.com**. For more information about how to create a hosted zone, see the AWS documentation on [Creating a Public Hosted Zone](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html).
+| Parameter | Description |
+| --------- | ----------- |
+| The name of the S3 bucket that holds the templates | Take the `bucket_name` from the upload step.|
+| The Key prefix for the templates in the S3 template bucket | Take the `key_prefix` from the upload step.|
+| The ACS SSL Certificate arn to use with ELB | Take the SSL certificate arn for your domains in the hosted zone. For more information about how to create SSL certificates, see the AWS documentation on the [AWS Certificate Manager](https://docs.aws.amazon.com/acm/latest/userguide/acm-overview.html).|
+| The ACS domain name | Choose the domain name which will be used as the entry URL, e.g. **my-acs-eks.example.com**. The domain name consists of ```<subdomain-name>.<hosted-zone-name>```. For more information about how to create a hosted zone and its subdomains, see the AWS documentation on [Creating a Subdomain](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingNewSubdomain.html).|
+| Private Registry Credentials. Base64 encryption of dockerconfig json | Make sure you have your Quay.io credentials as described in the [Prerequisites](#prerequisites). Also, if you're using Docker for Mac, go to **Preferences...** > **General** to ensure your "Securely store docker logins in macOS keychain" preference is OFF before running the next step.<ol><li> Login to quay.io: <br>```docker login quay.io```</li> <li> Validate that you can see the credentials for Quay.io: <br>```cat ~/.docker/config.json```</li><li> Get the encoded credentials: <br>```cat ~/.docker/config.json |  base64```</li><li> Copy the credentials into the textbox.</li></ol> |
+| The hosted zone to create Route53 Record for ACS | Enter your hosted zone e.g. **example.com**. For more information about how to create a hosted zone, see the AWS documentation on [Creating a Public Hosted Zone](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html).|
 
 After the CFN stack creation has finished, you can find the Alfresco URL in the output from the master template.
 
 ### Deleting ACS EKS with AWS Console
-Go to CloudFormation and delete the master ACS EKS stack. The nested stacks will be deleted first, followed by the master stack.
+Go to **CloudFormation** and delete the master ACS EKS stack. The nested stacks will be deleted first, followed by the master stack.
 
 
 ## Deploying ACS EKS with AWS Cli
@@ -133,7 +143,7 @@ Go to CloudFormation and delete the master ACS EKS stack. The nested stacks will
 
 ### Prerequisites
 
-To run the Alfresco Content Services (ACS) deployment on AWS provided Kubernetes cluster requires:
+To run the Alfresco Content Services (ACS) deployment on an AWS provided Kubernetes cluster requires:
 
 | Component   | Getting Started Guide |
 | ------------| --------------------- |
@@ -175,7 +185,7 @@ To access the cluster using the deployed bastion, follow the instructions in [Ho
 ## Cluster remote access
 ### Prerequisites
 
-To access the Alfresco Content Services (ACS) deployment on AWS provided Kubernetes cluster requires:
+To access the Alfresco Content Services (ACS) deployment on an AWS provided Kubernetes cluster requires:
 
 | Component   | Getting Started Guide |
 | ------------| --------------------- |
