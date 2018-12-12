@@ -14,7 +14,7 @@ Currently, this setup will only work in AWS US East (N.Virginia) and West (Orego
 ### Prerequisites
 * You need a hosted zone e.g. example.com. See the AWS documentation on [Creating a Public Hosted Zone](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html).
 * An SSL certificate for the Elastic Load Balancer and the domains in the hosted zone. See the AWS documentation on [Creating SSL Certificates](https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/ssl-server-cert.html).
-* Protected Docker images from Quay.io are used during the Helm deployment. You need access to a secret with credentials to be able to pull those images. Alfresco customers can request their credentials by logging a ticket at https://support.alfresco.com.
+* Private Docker images from Quay.io are used during the Helm deployment. You need access to a secret with credentials to be able to pull those images. Alfresco customers can request their credentials by logging a ticket at https://support.alfresco.com.
 
 ### Permissions
 Ensure that the IAM role or IAM user that creates the stack allows the following permissions:
