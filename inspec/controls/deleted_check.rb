@@ -5,7 +5,7 @@
 # agreement is prohibited.
 
 AcsBaseDnsName = attribute('AcsBaseDnsName', description: 'K8s Release')
-Bastion = attribute('BastionSubstackName', default: '', description: 'K8s BastionSubStackName')
+Bastion = attribute('BastionInstanceName', default: '', description: 'K8s BastionInstanceName')
 S3BucketName = attribute('S3BucketName', default: '', description: 'K8s S3BucketName')
 
 # check if alfresco DNS is not available anymore
