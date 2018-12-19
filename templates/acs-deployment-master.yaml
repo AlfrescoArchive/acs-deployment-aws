@@ -36,6 +36,7 @@ Metadata:
             - K8sNamespace
             - IndexEBSVolumeSize
             - IndexEBSIops
+            - FluentdReleaseName
         - Label:
             default: S3 Cross Replication Bucket for storing ACS content store
           Parameters:
@@ -140,6 +141,8 @@ Metadata:
           default: The helm chart release name of nginx-ingress
         AcsReleaseName:
           default: The helm chart release name of alfresco content services
+        FluentdReleaseName:
+          default: The helm chart release name of Fluentd
         RepoPods:
           default: The number of repository pods in the cluster
         Route53DnsZone:
@@ -372,6 +375,12 @@ Parameters:
       Type: String
       Description: The helm chart release name of alfresco content services
       Default: "acs"
+    FluentdReleaseName:
+      AllowedPattern: ".+"
+      ConstraintDescription: The helm chart release name of Fluentd can not be empty
+      Type: String
+      Description: The helm chart release name of Fluentd
+      Default: "alfresco-fluentd"
     AlfrescoPassword:
       AllowedPattern: ".+"
       ConstraintDescription: The Admin password for Alfresco can not be empty
