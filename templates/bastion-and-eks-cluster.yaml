@@ -656,35 +656,15 @@ Resources:
       GroupDescription: Cluster communication with worker nodes
       VpcId: !Ref VPCID
 
-  NodeSecurityGroupIngressRepoCluster:
+  NodeSecurityGroupIngressAll:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      Description: Allow node to communicate with each other repo cluster
+      Description: Allow nodes to communicate with each other
       GroupId: !Ref NodeSecurityGroup
       SourceSecurityGroupId: !Ref NodeSecurityGroup
       IpProtocol: tcp
-      FromPort: 5701
-      ToPort: 5701
-
-  NodeSecurityGroupIngressShareCluster:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      Description: Allow node to communicate with each other share cluster
-      GroupId: !Ref NodeSecurityGroup
-      SourceSecurityGroupId: !Ref NodeSecurityGroup
-      IpProtocol: tcp
-      FromPort: 5801
-      ToPort: 5810
-
-  NodeSecurityKubeDNSTcpCluster:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      Description: Allow node to communicate with each other kubeDns
-      GroupId: !Ref NodeSecurityGroup
-      SourceSecurityGroupId: !Ref NodeSecurityGroup
-      IpProtocol: tcp
-      FromPort: 53
-      ToPort: 53
+      FromPort: 0
+      ToPort: 65535
 
   NodeSecurityKubeDNSUdpCluster:
     Type: AWS::EC2::SecurityGroupIngress
@@ -695,26 +675,6 @@ Resources:
       IpProtocol: udp
       FromPort: 53
       ToPort: 53
-
-  NodeSecurityAcsPortCluster:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      Description: Allow node to communicate with each other solr repo
-      GroupId: !Ref NodeSecurityGroup
-      SourceSecurityGroupId: !Ref NodeSecurityGroup
-      IpProtocol: tcp
-      FromPort: 8080
-      ToPort: 8080
-
-  NodeSecuritySolrPortCluster:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      Description: Allow node to communicate with each other repo solr
-      GroupId: !Ref NodeSecurityGroup
-      SourceSecurityGroupId: !Ref NodeSecurityGroup
-      IpProtocol: tcp
-      FromPort: 8983
-      ToPort: 8983
 
   NodeSecurityGroupFromBastion:
     Type: AWS::EC2::SecurityGroupIngress
