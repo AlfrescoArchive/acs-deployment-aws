@@ -183,7 +183,7 @@ repository:
     tag: \"6.1.0-EA3\"
   replicaCount: $REPO_PODS
   environment:
-    JAVA_OPTS: \" -Dopencmis.server.override=true -Dopencmis.server.value=https://$EXTERNAL_NAME -Dalfresco.restApi.basicAuthScheme=true -Dsolr.base.url=/solr -Dsolr.secureComms=none -Dindex.subsystem.name=solr6 -Dalfresco.cluster.enabled=true -Ddeployment.method=HELM_CHART -Dmessaging.broker.url='failover:($MQ_ENDPOINT)?timeout=3000&jms.useCompression=true' -Dmessaging.broker.user=$MQ_USERNAME -Dmessaging.broker.password=$MQ_PASSWORD -Xms2000M -Xmx2000M\"
+    JAVA_OPTS: \" -Dopencmis.server.override=true -Dopencmis.server.value=https://$EXTERNAL_NAME -Dalfresco.restApi.basicAuthScheme=true -Dsolr.base.url=/solr -Dsolr.secureComms=none -Dindex.subsystem.name=solr6 -Dalfresco.cluster.enabled=true -Ddeployment.method=HELM_CHART -Xms2000M -Xmx2000M\"
 alfresco-search:
   resources:
     requests:
@@ -249,6 +249,10 @@ libreoffice:
 imagemagick:
   livenessProbe:
     initialDelaySeconds: 300
+messageBroker:
+  url: \"failover:($MQ_ENDPOINT)?timeout=3000&jms.useCompression=true\"
+  user: $MQ_USERNAME
+  password: $MQ_PASSWORD
 share:
   livenessProbe:
     initialDelaySeconds: 420
