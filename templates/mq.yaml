@@ -13,7 +13,7 @@ Metadata:
         - Label:
             default: AmazonMQ Stack Configuration
           Parameters:
-            - AmazonMQInstanceType
+            - MQInstanceType
             - SecurityGroup
             - PrivateSubnet1ID
             - PrivateSubnet2ID
@@ -21,7 +21,7 @@ Metadata:
             - MQPassword
 
       ParameterLabels:
-        AmazonMQInstanceType:
+        MQInstanceType:
           default: AmazonMQ Host Instance Type
         SecurityGroup:
           default: The Security Group ID to use for AmazonMQ
@@ -35,16 +35,16 @@ Metadata:
           default: AmazonMQ Password
 
 Parameters:
-  AmazonMQInstanceType:
-    AllowedValues:
-      - "mq.t2.micro"
-      - "mq.m4.large"
-      - "mq.m5.large"
-      - "mq.m5.xlarge"
-    ConstraintDescription: Must contain valid AmazonMQ Host instance type
-    Default: mq.m4.large
-    Description: The broker's instance type
-    Type: String
+    MQInstanceType:
+      AllowedValues:
+        - "mq.t2.micro"
+        - "mq.m4.large"
+        - "mq.m5.large"
+        - "mq.m5.xlarge"
+      ConstraintDescription: Must contain valid AmazonMQ Host instance type
+      Default: mq.m4.large
+      Description: The broker's instance type
+      Type: String
     SecurityGroup:
       Description: "ID for the VPC, This will be used to get the default security group"
       Type: "AWS::EC2::SecurityGroup::Id"
@@ -68,11 +68,11 @@ Resources:
     Type: "AWS::AmazonMQ::Broker"
     Properties:
       AutoMinorVersionUpgrade: "false"
-      BrokerName: ACS-Broker3
+      BrokerName: ACS-Broker
       DeploymentMode: ACTIVE_STANDBY_MULTI_AZ
       EngineType: ActiveMQ
       EngineVersion: "5.15.6"
-      HostInstanceType: !Ref AmazonMQInstanceType
+      HostInstanceType: !Ref MQInstanceType
       Logs:
         General: "true"
         Audit: "true"
@@ -86,10 +86,10 @@ Resources:
         - Groups:
             - "admin"
           ConsoleAccess: "true"
-          Username: "admin"
-          Password: "adminadminadmin"
+          Username: !Ref MQUsername
+          Password: !Ref MQPassword
 
-  AmazonMQIngressRule:
+  MQIngressRule:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       Description: "OpenWire connection"

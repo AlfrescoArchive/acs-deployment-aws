@@ -55,6 +55,7 @@ Metadata:
         - Label:
             default: Alfresco Broker Configuration
           Parameters:
+            - MQInstanceType
             - MQUsername
             - MQPassword
         - Label:
@@ -103,6 +104,8 @@ Metadata:
           default: RDS User Name
         RDSCreateSnapshotWhenDeleted:
           default: Creates a snapshot when the stack gets deleted
+        MQInstanceType:
+          default: AmazonMQ Host Instance Type
         MQUsername:
           default: AmazonMQ User Name
         MQPassword:
@@ -252,6 +255,16 @@ Parameters:
       AllowedValues:
       - "true"
       - "false"
+    MQInstanceType:
+      AllowedValues:
+        - "mq.t2.micro"
+        - "mq.m4.large"
+        - "mq.m5.large"
+        - "mq.m5.xlarge"
+      ConstraintDescription: Must contain valid AmazonMQ Host instance type
+      Default: mq.m4.large
+      Description: The broker's instance type
+      Type: String
     MQUsername:
       AllowedPattern: ".+"
       Default: admin
@@ -567,6 +580,7 @@ Resources:
           PrivateSubnet1ID: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
           PrivateSubnet2ID: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
           SecurityGroup: !Ref NodeSecurityGroup
+          MQInstanceType: !Ref MQInstanceType
           MQUsername: !Ref MQUsername
           MQPassword: !Ref MQPassword
 
