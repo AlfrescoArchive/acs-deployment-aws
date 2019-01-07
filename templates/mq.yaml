@@ -68,7 +68,7 @@ Resources:
     Type: "AWS::AmazonMQ::Broker"
     Properties:
       AutoMinorVersionUpgrade: "false"
-      BrokerName: ACS-Broker
+      BrokerName: !Sub "${AWS::StackName}-Broker"
       DeploymentMode: ACTIVE_STANDBY_MULTI_AZ
       EngineType: ActiveMQ
       EngineVersion: "5.15.6"
