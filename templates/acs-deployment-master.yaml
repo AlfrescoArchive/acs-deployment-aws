@@ -268,7 +268,7 @@ Parameters:
     MQUsername:
       AllowedPattern: ".+"
       Default: admin
-      Description: User name for the AmazonMQ
+      Description: Password for the AmazonMQ. Minimum 12 characters.
       Type: String
     MQPassword:
       AllowedPattern: ".{12,}"

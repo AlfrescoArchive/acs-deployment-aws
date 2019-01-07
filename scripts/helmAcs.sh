@@ -168,6 +168,8 @@ echo "externalProtocol: https
 externalHost: \"$EXTERNAL_NAME\"
 externalPort: \"443\"
 alfresco-infrastructure:
+  activemq:
+    enabled: false
   persistence: 
     efs:
       enabled: true
@@ -223,8 +225,6 @@ persistence:
   repository:
     enabled: false
 postgresql:
-  enabled: false
-activemq:
   enabled: false
 database:
   external: true

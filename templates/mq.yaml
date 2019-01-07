@@ -59,7 +59,7 @@ Parameters:
       Description: User name for the AmazonMQ
       Type: String
     MQPassword:
-      Description: Password for the AmazonMQ
+      Description: Password for the AmazonMQ. Minimum 12 characters.
 #      NoEcho: True
       Type: String
 
