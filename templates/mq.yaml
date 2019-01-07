@@ -1,0 +1,107 @@
+# Alfresco Enterprise ACS Deployment AWS
+# Copyright (C) 2005 - 2019 Alfresco Software Limited
+# License rights for this program may be obtained from Alfresco Software, Ltd.
+# pursuant to a written agreement and any use of this program without such an
+# agreement is prohibited.
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "AmazonMQ stack that deploys two ActiveMQ Broker (active/standby) in existent subnets."
+
+Metadata:
+    AWS::CloudFormation::Interface:
+      ParameterGroups:
+        - Label:
+            default: AmazonMQ Stack Configuration
+          Parameters:
+            - AmazonMQInstanceType
+            - SecurityGroup
+            - PrivateSubnet1ID
+            - PrivateSubnet2ID
+            - MQUsername
+            - MQPassword
+
+      ParameterLabels:
+        AmazonMQInstanceType:
+          default: AmazonMQ Host Instance Type
+        SecurityGroup:
+          default: The Security Group ID to use for AmazonMQ
+        PrivateSubnet1ID:
+          default: The ID of Private Subnet 1
+        PrivateSubnet2ID:
+          default: The ID of Private Subnet 2
+        MQUsername:
+          default: AmazonMQ User Name
+        MQPassword:
+          default: AmazonMQ Password
+
+Parameters:
+  AmazonMQInstanceType:
+    AllowedValues:
+      - "mq.t2.micro"
+      - "mq.m4.large"
+      - "mq.m5.large"
+      - "mq.m5.xlarge"
+    ConstraintDescription: Must contain valid AmazonMQ Host instance type
+    Default: mq.m4.large
+    Description: The broker's instance type
+    Type: String
+    SecurityGroup:
+      Description: "ID for the VPC, This will be used to get the default security group"
+      Type: "AWS::EC2::SecurityGroup::Id"
+    PrivateSubnet1ID:
+      Description: "ID of Private Subnet 1"
+      Type: "AWS::EC2::Subnet::Id"
+    PrivateSubnet2ID:
+      Description: "ID of Private Subnet 2"
+      Type: "AWS::EC2::Subnet::Id"
+    MQUsername:
+      Default: admin
+      Description: User name for the AmazonMQ
+      Type: String
+    MQPassword:
+      Description: Password for the AmazonMQ
+#      NoEcho: True
+      Type: String
+
+Resources:
+  Broker:
+    Type: "AWS::AmazonMQ::Broker"
+    Properties:
+      AutoMinorVersionUpgrade: "false"
+      BrokerName: ACS-Broker3
+      DeploymentMode: ACTIVE_STANDBY_MULTI_AZ
+      EngineType: ActiveMQ
+      EngineVersion: "5.15.6"
+      HostInstanceType: !Ref AmazonMQInstanceType
+      Logs:
+        General: "true"
+        Audit: "true"
+      PubliclyAccessible: "true"
+      SecurityGroups:
+        - !Ref SecurityGroup
+      SubnetIds:
+        - !Ref PrivateSubnet1ID
+        - !Ref PrivateSubnet2ID
+      Users:
+        - Groups:
+            - "admin"
+          ConsoleAccess: "true"
+          Username: "admin"
+          Password: "adminadminadmin"
+
+  AmazonMQIngressRule:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: "OpenWire connection"
+      GroupId: !Ref SecurityGroup
+      IpProtocol: tcp
+      FromPort: 61617
+      ToPort: 61617
+      SourceSecurityGroupId: !Ref SecurityGroup
+
+Outputs:
+  SubstackName:
+    Value: !Sub "${AWS::StackName}" 
+  OpenWireEndpoints:
+    Value: !Join [",", !GetAtt Broker.OpenWireEndpoints]
+    Description: Returns the OpenWire Endpoints as a comma separated string.

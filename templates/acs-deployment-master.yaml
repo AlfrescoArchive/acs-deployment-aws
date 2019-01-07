@@ -53,6 +53,11 @@ Metadata:
             - RDSPassword
             - RDSCreateSnapshotWhenDeleted
         - Label:
+            default: Alfresco Broker Configuration
+          Parameters:
+            - MQUsername
+            - MQPassword
+        - Label:
             default: ACS Stack Configuration
           Parameters:
             - TemplateBucketName
@@ -98,6 +103,10 @@ Metadata:
           default: RDS User Name
         RDSCreateSnapshotWhenDeleted:
           default: Creates a snapshot when the stack gets deleted
+        MQUsername:
+          default: AmazonMQ User Name
+        MQPassword:
+          default: AmazonMQ Password
         BastionInstanceType:
           default: The instance type to deploy Bastion to
         MaxNumberOfBastionNodes:
@@ -243,6 +252,17 @@ Parameters:
       AllowedValues:
       - "true"
       - "false"
+    MQUsername:
+      AllowedPattern: ".+"
+      Default: admin
+      Description: User name for the AmazonMQ
+      Type: String
+    MQPassword:
+      AllowedPattern: ".{12,}"
+      Default: adminadminadmin
+      Description: Password for the AmazonMQ
+#      NoEcho: True
+      Type: String
     BastionInstanceType:
       Type: "String"
       Default: "t2.micro"
@@ -532,6 +552,24 @@ Resources:
           PrivateSubnet2ID: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
           SecurityGroup: !Ref NodeSecurityGroup
 
+    MQStack:
+      Type: AWS::CloudFormation::Stack
+      Properties:
+        Tags:
+          - Key: Name
+            Value: !Sub "${AWS::StackName}"
+          - Key: Component
+            Value: ACS-MQ
+          - Key: KubernetesCluster
+            Value: !Sub "${AWS::StackName}-eks"
+        TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/templates/mq.yaml"
+        Parameters:
+          PrivateSubnet1ID: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
+          PrivateSubnet2ID: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
+          SecurityGroup: !Ref NodeSecurityGroup
+          MQUsername: !Ref MQUsername
+          MQPassword: !Ref MQPassword
+
     EKSStack:
       Type: AWS::CloudFormation::Stack
       DependsOn:
@@ -658,6 +696,9 @@ Resources:
           NginxIngressVersion: !Ref NginxIngressVersion
           AlfrescoPassword: !Ref AlfrescoPassword
           RDSEndpoint: !GetAtt RDSStack.Outputs.Endpoint
+          MQEndpoint: !GetAtt MQStack.OpenWireEndpoints
+          MQUsername: !Ref MQUsername
+          MQPassword: !Ref MQPassword
           DatabasePassword: !Ref RDSPassword
           RegistryCredentials: !Ref RegistryCredentials
           IngressReleaseName: !Ref IngressReleaseName

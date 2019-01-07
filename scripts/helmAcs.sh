@@ -21,6 +21,9 @@ usage() {
   echo -e "--alfresco-password \t Alfresco admin password"
   echo -e "--rds-endpoint \t RDS Endpoint for Aurora MySql connection"
   echo -e "--database-password \t Database password"
+  echo -e "--mq-endpoint \t MQ Endpoint for AmazonMQ connection"
+  echo -e "--mq-username \t Username for AmazonMQ connection"
+  echo -e "--mq-password \t Password for AmazonMQ connection"
   echo -e "--external-name \t External host name of ACS"
   echo -e "--registry-secret \t Base64 dockerconfig.json string to private registry"
   echo -e "--install \t Install a new ACS Helm chart"
@@ -28,7 +31,7 @@ usage() {
   echo -e "--repo-pods \t Repo Replica number"
 }
 
-if [ $# -lt 12 ]; then
+if [ $# -lt 15 ]; then
   usage
 else
   # extract options and their arguments into variables.
@@ -72,6 +75,18 @@ else
               ;;
           --database-password)
               DATABASE_PASSWORD="$2";
+              shift 2
+              ;;
+          --mq-endpoint)
+              MQ_ENDPOINT="$2";
+              shift 2
+              ;;
+          --mq-username)
+              MQ_USERNAME="$2";
+              shift 2
+              ;;
+          --mq-password)
+              MQ_PASSWORD="$2";
               shift 2
               ;;
           --external-name)
@@ -166,7 +181,7 @@ repository:
     tag: \"6.1.0-EA3\"
   replicaCount: $REPO_PODS
   environment:
-    JAVA_OPTS: \" -Dopencmis.server.override=true -Dopencmis.server.value=https://$EXTERNAL_NAME -Dalfresco.restApi.basicAuthScheme=true -Dsolr.base.url=/solr -Dsolr.secureComms=none -Dindex.subsystem.name=solr6 -Dalfresco.cluster.enabled=true -Ddeployment.method=HELM_CHART -Xms2000M -Xmx2000M\"
+    JAVA_OPTS: \" -Dopencmis.server.override=true -Dopencmis.server.value=https://$EXTERNAL_NAME -Dalfresco.restApi.basicAuthScheme=true -Dsolr.base.url=/solr -Dsolr.secureComms=none -Dindex.subsystem.name=solr6 -Dalfresco.cluster.enabled=true -Ddeployment.method=HELM_CHART -Dmessaging.broker.url='failover:($MQ_ENDPOINT)?timeout=3000&jms.useCompression=true' -Dmessaging.broker.user=$MQ_USERNAME Dmessaging.broker.password=$MQ_PASSWORD -Xms2000M -Xmx2000M\"
 alfresco-search:
   resources:
     requests:
@@ -208,6 +223,8 @@ persistence:
   repository:
     enabled: false
 postgresql:
+  enabled: false
+activemq:
   enabled: false
 database:
   external: true
@@ -258,7 +275,7 @@ registryPullSecrets: quay-registry-secret" > acs_install_values.yaml
       --set s3connector.config.bucketLocation="$S3BUCKET_LOCATION" \
       --set s3connector.secrets.encryption=kms \
       --set s3connector.secrets.awsKmsKeyId="$S3BUCKET_KMS_ALIAS" \
-      --set repository.environment.JAVA_OPTS=" -Dopencmis.server.override=true -Dopencmis.server.value=https://$EXTERNAL_NAME -Dalfresco.restApi.basicAuthScheme=true -Dsolr.base.url=/solr -Dsolr.secureComms=none -Dindex.subsystem.name=solr6 -Dalfresco.cluster.enabled=true -Ddeployment.method=HELM_CHART -Xms2000M -Xmx2000M" \
+      --set repository.environment.JAVA_OPTS=" -Dopencmis.server.override=true -Dopencmis.server.value=https://$EXTERNAL_NAME -Dalfresco.restApi.basicAuthScheme=true -Dsolr.base.url=/solr -Dsolr.secureComms=none -Dindex.subsystem.name=solr6 -Dalfresco.cluster.enabled=true -Ddeployment.method=HELM_CHART -Dmessaging.broker.url='failover:($MQ_ENDPOINT)?timeout=3000&jms.useCompression=true' -Dmessaging.broker.user=$MQ_USERNAME Dmessaging.broker.password=$MQ_PASSWORD -Xms2000M -Xmx2000M" \
       --set repository.image.tag="6.1.0-EA3" \
       --set repository.replicaCount="$REPO_PODS" \
       --namespace=$DESIREDNAMESPACE
