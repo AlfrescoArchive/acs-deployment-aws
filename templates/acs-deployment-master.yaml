@@ -696,7 +696,7 @@ Resources:
           NginxIngressVersion: !Ref NginxIngressVersion
           AlfrescoPassword: !Ref AlfrescoPassword
           RDSEndpoint: !GetAtt RDSStack.Outputs.Endpoint
-          MQEndpoint: !GetAtt MQStack.OpenWireEndpoints
+          MQEndpoint: !GetAtt MQStack.Outputs.OpenWireEndpoint
           MQUsername: !Ref MQUsername
           MQPassword: !Ref MQPassword
           DatabasePassword: !Ref RDSPassword

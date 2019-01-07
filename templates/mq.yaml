@@ -102,6 +102,6 @@ Resources:
 Outputs:
   SubstackName:
     Value: !Sub "${AWS::StackName}" 
-  OpenWireEndpoints:
+  OpenWireEndpoint:
     Value: !Join [",", !GetAtt Broker.OpenWireEndpoints]
     Description: Returns the OpenWire Endpoints as a comma separated string.
