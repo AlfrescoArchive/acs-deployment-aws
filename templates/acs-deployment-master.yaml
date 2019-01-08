@@ -273,9 +273,8 @@ Parameters:
     MQPassword:
       AllowedPattern: ".{12,}"
       ConstraintDescription: AmazonMQ user password requires minimum 12 characters.
-      Default: adminadminadmin
       Description: Password for the AmazonMQ. Minimum 12 characters.
-#      NoEcho: True
+      NoEcho: True
       Type: String
     BastionInstanceType:
       Type: "String"

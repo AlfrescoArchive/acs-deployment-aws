@@ -66,5 +66,9 @@
   {
     "ParameterKey": "RegistryCredentials",
     "ParameterValue": "@@RegistryCredentialsValue@@"
+  },
+  {
+    "ParameterKey": "MQPassword",
+    "ParameterValue": "@@MQPasswordValue@@"
   }
 ]

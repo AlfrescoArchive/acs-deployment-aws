@@ -163,7 +163,7 @@ Parameters:
       Type: String
     MQPassword:
       Description: Password for the AmazonMQ. Minimum 12 characters.
-#      NoEcho: True
+      NoEcho: True
       Type: String
     RegistryCredentials:
       Type: String
