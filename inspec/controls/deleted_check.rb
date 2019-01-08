@@ -10,7 +10,7 @@ S3BucketName = attribute('S3BucketName', default: '', description: 'K8s S3Bucket
 
 # check if alfresco DNS is not available anymore
 describe command("curl -v https://#{AcsBaseDnsName} --connect-timeout 5") do
-  its('exit_status') { should eq 7 }
+  its('exit_status') { should eq 6 }
 end
 
 # Check if bastion is deleted

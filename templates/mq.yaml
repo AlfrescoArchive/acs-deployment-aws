@@ -53,7 +53,7 @@ Parameters:
         - "mq.m5.2xlarge"
         - "mq.m5.4xlarge"
       ConstraintDescription: Must contain valid AmazonMQ Host instance type
-      Default: mq.m4.large
+      Default: mq.m5.large
       Description: The broker's instance type
       Type: String
     MQDeploymentMode:
