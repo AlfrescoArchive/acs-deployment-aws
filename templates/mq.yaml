@@ -15,6 +15,7 @@ Metadata:
           Parameters:
             - MasterStackName
             - MQInstanceType
+            - MQDeploymentMode
             - SecurityGroup
             - PrivateSubnet1ID
             - PrivateSubnet2ID
@@ -26,6 +27,8 @@ Metadata:
           default: The name of the master stack
         MQInstanceType:
           default: AmazonMQ Host Instance Type
+        MQDeploymentMode:
+          default: AmazonMQ Deployment mode
         SecurityGroup:
           default: The Security Group ID to use for AmazonMQ
         PrivateSubnet1ID:
@@ -53,6 +56,14 @@ Parameters:
       Default: mq.m4.large
       Description: The broker's instance type
       Type: String
+    MQDeploymentMode:
+      AllowedValues:
+        - "SINGLE_INSTANCE"
+        - "ACTIVE_STANDBY_MULTI_AZ"
+      ConstraintDescription: Must contain valid AmazonMQ deployment mode
+      Default: ACTIVE_STANDBY_MULTI_AZ
+      Description: The deployment mode of the broker
+      Type: String
     SecurityGroup:
       Description: "ID for the VPC, This will be used to get the default security group"
       Type: "AWS::EC2::SecurityGroup::Id"
@@ -77,7 +88,7 @@ Resources:
     Properties:
       AutoMinorVersionUpgrade: "false"
       BrokerName: !Sub "${MasterStackName}-Broker"
-      DeploymentMode: ACTIVE_STANDBY_MULTI_AZ
+      DeploymentMode: !Ref MQDeploymentMode
       EngineType: ActiveMQ
       EngineVersion: "5.15.6"
       HostInstanceType: !Ref MQInstanceType

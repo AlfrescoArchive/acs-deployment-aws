@@ -173,6 +173,7 @@ See the AWS documentation on [Amazon EC2 Key Pairs](https://docs.aws.amazon.com/
 | Parameter | Default | Description |
 | --------- | ------- | ----------- |
 | AmazonMQ Host Instance Type (MQInstanceType) | mq.m4.large | The broker's instance type |
+| AmazonMQ Deployment mode (MQDeploymentMode) | ACTIVE_STANDBY_MULTI_AZ | The deployment mode of the broker |
 | AmazonMQ User Name (MQUsername) | admin | User name for the AmazonMQ |
 | AmazonMQ Password (MQPassword) | <span style="color:red">Requires input</span> | Password for the AmazonMQ. Minimum 12 characters. |
 
