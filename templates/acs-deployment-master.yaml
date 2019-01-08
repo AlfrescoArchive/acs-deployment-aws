@@ -261,6 +261,8 @@ Parameters:
         - "mq.m4.large"
         - "mq.m5.large"
         - "mq.m5.xlarge"
+        - "mq.m5.2xlarge"
+        - "mq.m5.4xlarge"
       ConstraintDescription: Must contain valid AmazonMQ Host instance type
       Default: mq.m4.large
       Description: The broker's instance type
@@ -268,7 +270,7 @@ Parameters:
     MQUsername:
       AllowedPattern: ".+"
       Default: admin
-      Description: Password for the AmazonMQ. Minimum 12 characters.
+      Description: User name for the AmazonMQ
       Type: String
     MQPassword:
       AllowedPattern: ".{12,}"
