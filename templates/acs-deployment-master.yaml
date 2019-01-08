@@ -578,6 +578,7 @@ Resources:
             Value: !Sub "${AWS::StackName}-eks"
         TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/templates/mq.yaml"
         Parameters:
+          MasterStackName: !Sub "${AWS::StackName}"
           PrivateSubnet1ID: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
           PrivateSubnet2ID: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
           SecurityGroup: !Ref NodeSecurityGroup

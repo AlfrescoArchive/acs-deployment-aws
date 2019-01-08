@@ -13,6 +13,7 @@ Metadata:
         - Label:
             default: AmazonMQ Stack Configuration
           Parameters:
+            - MasterStackName
             - MQInstanceType
             - SecurityGroup
             - PrivateSubnet1ID
@@ -21,6 +22,8 @@ Metadata:
             - MQPassword
 
       ParameterLabels:
+        MasterStackName:
+          default: The name of the master stack
         MQInstanceType:
           default: AmazonMQ Host Instance Type
         SecurityGroup:
@@ -35,6 +38,9 @@ Metadata:
           default: AmazonMQ Password
 
 Parameters:
+    MasterStackName:
+      Description: Needed for unique Broker name
+      Type: String
     MQInstanceType:
       AllowedValues:
         - "mq.t2.micro"
@@ -68,7 +74,7 @@ Resources:
     Type: "AWS::AmazonMQ::Broker"
     Properties:
       AutoMinorVersionUpgrade: "false"
-      BrokerName: !Sub "${AWS::StackName}-Broker"
+      BrokerName: !Sub "${MasterStackName}-Broker"
       DeploymentMode: ACTIVE_STANDBY_MULTI_AZ
       EngineType: ActiveMQ
       EngineVersion: "5.15.6"
