@@ -22,6 +22,7 @@ else
 
   aws s3 cp ./templates s3://$S3_BUCKET/$S3_KEY_PREFIX/templates --recursive
   aws s3 cp ./scripts s3://$S3_BUCKET/$S3_KEY_PREFIX/scripts --recursive
+  aws s3 cp ./lambdas/cluster-init-helper-lambda/cluster-init-helper-lambda.zip s3://$S3_BUCKET/$S3_KEY_PREFIX/lambdas/
   aws s3 cp ./lambdas/eks-helper-lambda/eks-helper-lambda.zip s3://$S3_BUCKET/$S3_KEY_PREFIX/lambdas/
   aws s3 cp ./lambdas/helm-helper-lambda/helm-helper-lambda.zip s3://$S3_BUCKET/$S3_KEY_PREFIX/lambdas/
   aws s3 cp ./lambdas/empty-s3-bucket/alfresco-lambda-empty-s3-bucket.jar s3://$S3_BUCKET/$S3_KEY_PREFIX/lambdas/

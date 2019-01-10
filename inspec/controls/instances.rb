@@ -4,7 +4,7 @@
 # pursuant to a written agreement and any use of this program without such an
 # agreement is prohibited.
 
-Bastion = attribute('BastionSubstackName', default: '', description: 'K8s BastionSubStackName')
+Bastion = attribute('BastionInstanceName', default: '', description: 'K8s BastionInstanceName')
 S3BucketName = attribute('S3BucketName', default: '', description: 'K8s S3BucketName')
 
 describe aws_ec2_instance(name: Bastion) do
