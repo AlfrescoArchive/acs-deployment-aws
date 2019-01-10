@@ -1,3 +1,10 @@
+# 1.1.6
+
+## Features
+* Using Alfresco's Helm Charts 1.1.6 https://github.com/Alfresco/acs-deployment
+* Use AWS EBS volume for Solr
+* Implemented Fluentd logging enhancement
+
 # 1.0.0-EA2
 
 ## Features
