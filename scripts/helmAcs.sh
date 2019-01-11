@@ -163,6 +163,7 @@ repository:
   adminPassword: \"$ALFRESCO_PASSWORD\"
   image:
     repository: \"alfresco/alfresco-content-repository-aws\"
+    tag: \"6.1.0-EA3\"
   replicaCount: $REPO_PODS
   environment:
     JAVA_OPTS: \" -Dopencmis.server.override=true -Dopencmis.server.value=https://$EXTERNAL_NAME -Dalfresco.restApi.basicAuthScheme=true -Dsolr.base.url=/solr -Dsolr.secureComms=none -Dindex.subsystem.name=solr6 -Dalfresco.cluster.enabled=true -Ddeployment.method=HELM_CHART -Xms2000M -Xmx2000M\"
@@ -236,15 +237,13 @@ share:
     initialDelaySeconds: 420
 registryPullSecrets: quay-registry-secret" > acs_install_values.yaml
 
-    CHART_VERSION=1.1.6
-
-    helm install alfresco-incubator/alfresco-content-services --version $CHART_VERSION -f acs_install_values.yaml --name $ACS_RELEASE --namespace=$DESIREDNAMESPACE
+    helm install alfresco-incubator/alfresco-content-services --version 1.1.6 -f acs_install_values.yaml --name $ACS_RELEASE --namespace=$DESIREDNAMESPACE
 
   fi
 
   if [ "$UPGRADE" = "true" ]; then
     echo Upgrading Alfresco Content Services helm chart...
-    helm upgrade $ACS_RELEASE alfresco-incubator/alfresco-content-services --version $CHART_VERSION \
+    helm upgrade $ACS_RELEASE alfresco-incubator/alfresco-content-services \
       --install \
       --reuse-values \
       --set externalHost="$EXTERNAL_NAME" \
@@ -260,6 +259,7 @@ registryPullSecrets: quay-registry-secret" > acs_install_values.yaml
       --set s3connector.secrets.encryption=kms \
       --set s3connector.secrets.awsKmsKeyId="$S3BUCKET_KMS_ALIAS" \
       --set repository.environment.JAVA_OPTS=" -Dopencmis.server.override=true -Dopencmis.server.value=https://$EXTERNAL_NAME -Dalfresco.restApi.basicAuthScheme=true -Dsolr.base.url=/solr -Dsolr.secureComms=none -Dindex.subsystem.name=solr6 -Dalfresco.cluster.enabled=true -Ddeployment.method=HELM_CHART -Xms2000M -Xmx2000M" \
+      --set repository.image.tag="6.1.0-EA3" \
       --set repository.replicaCount="$REPO_PODS" \
       --namespace=$DESIREDNAMESPACE
   fi
