@@ -238,13 +238,13 @@ registryPullSecrets: quay-registry-secret" > acs_install_values.yaml
 
     CHART_VERSION=1.1.8
 
-    helm install alfresco-incubator/alfresco-content-services --version $CHART_VERSION -f acs_install_values.yaml --name $ACS_RELEASE --namespace=$DESIREDNAMESPACE
+    helm install alfresco-stable/alfresco-content-services --version $CHART_VERSION -f acs_install_values.yaml --name $ACS_RELEASE --namespace=$DESIREDNAMESPACE
 
   fi
 
   if [ "$UPGRADE" = "true" ]; then
     echo Upgrading Alfresco Content Services helm chart...
-    helm upgrade $ACS_RELEASE alfresco-incubator/alfresco-content-services --version $CHART_VERSION \
+    helm upgrade $ACS_RELEASE alfresco-stable/alfresco-content-services --version $CHART_VERSION \
       --install \
       --reuse-values \
       --set externalHost="$EXTERNAL_NAME" \
