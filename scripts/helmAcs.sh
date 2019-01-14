@@ -236,7 +236,7 @@ share:
     initialDelaySeconds: 420
 registryPullSecrets: quay-registry-secret" > acs_install_values.yaml
 
-    CHART_VERSION=1.1.9
+    CHART_VERSION=1.1.8
 
     helm install alfresco-incubator/alfresco-content-services --version $CHART_VERSION -f acs_install_values.yaml --name $ACS_RELEASE --namespace=$DESIREDNAMESPACE
 
