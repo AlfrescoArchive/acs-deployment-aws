@@ -1,3 +1,8 @@
+# 1.1.8.1
+
+## Features
+* Use AmazonMQ as message broker
+
 # 1.1.8
 
 ## Features
