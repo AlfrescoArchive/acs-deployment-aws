@@ -40,6 +40,16 @@ def handler(event, context):
             helmupgrade_doc = describe_document(event['ResourceProperties']['HelmUpgradeRunScript'])
             helmelb_doc = describe_document(event['ResourceProperties']['GetElbEndpointRunScript'])
 
+            # First download all helper scripts
+            init_doc = describe_document(event['ResourceProperties']['HelmDownloadScript'])
+            logger.info('Downloading helper scripts...')
+            init = ssm_sendcommand(ssm_instance, init_doc['Name'], {})
+            if ssm_commandstatus(init['CommandId'], ssm_instance) is True:
+                logger.info('scripts directory was downloaded successfully!')
+            else:
+                logger.error('Helper scripts download was unsuccessful')
+                cfnresponse.send(event, context, cfnresponse.FAILED, {})
+
             if helmingress_doc['Status'] == 'Active' and helminstall_doc['Status'] == 'Active' and helmupgrade_doc['Status'] == 'Active' and helmelb_doc['Status'] == 'Active':
 
                 # Deploy nginx-ingress helm chart
