@@ -85,6 +85,7 @@ s3://<bucket_name> e.g. my-s3-bucket
           |       |      +-- getElb.sh
           |       |      +-- hardening_bootstrap.sh
           |       |      +-- helmAcs.sh
+          |       |      +-- helmFluentd.sh
           |       |      +-- helmIngress.sh
           |       |      +-- helmInit.sh
           |       |-- templates
@@ -93,6 +94,7 @@ s3://<bucket_name> e.g. my-s3-bucket
           |       |      +-- acs-master-parameters.json
           |       |      +-- bastion-and-eks-cluster.yaml
           |       |      +-- efs.yaml
+          |       |      +-- mq.yaml
           |       |      +-- rds.yaml
           |       |      +-- s3-bucket.yaml
 ```
@@ -115,23 +117,83 @@ In many cases you can use the default parameters. Additional information is prov
 
 See the AWS documentation on [Amazon EC2 Key Pairs](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) for details on how to create a key pair name.
 
+**VPC Stack Configuration**
+
+| Parameter | Default | Description |
+| --------- | ------- | ----------- |
+| The AZ's to deploy to. (AvailabilityZones)| <span style="color:red">Requires input</span> | List of Availability Zones to use for the subnets in the VPC. Please choose two or more zones. |
+| The key pair name to use to access the instances (KeyPairName)| <span style="color:red">Requires input</span> | The name of an existing public/private key pair, which allows you to securely connect to your instance after it launches |
+| The CIDR block for the first private subnet (PrivateSubnet1CIDR)| 10.0.0.0/19 | CIDR block for private subnet 1 located in Availability Zone 1 |
+| The CIDR block for the second private subnet (PrivateSubnet2CIDR)| 10.0.32.0/19 | CIDR block for private subnet 1 located in Availability Zone 2 |
+| The CIDR block for the first public subnet (PublicSubnet1CIDR)| 10.0.128.0/20 | CIDR block for the public (DMZ) subnet 1 located in Availability Zone 1 |
+| The CIDR block for the second public subnet (PublicSubnet2CIDR)| 10.0.144.0/20 | CIDR block for the public (DMZ) subnet 2 located in Availability Zone 2 |
+| The CIDR block for the VPC to create (VPCCIDR)| 10.0.0.0/16 | CIDR block for the VPC |
+
+**Bastion and EKS Cluster Stack Configuration**
+
+| Parameter | Default | Description |
+| --------- | ------- | ----------- |
+| The CIDR block to allow remote access (RemoteAccessCIDR)| <span style="color:red">Requires input</span> | The CIDR IP range that is permitted to access the AWS resources. It is recommended that you set this value to a trusted IP range. For example <my_ip>/32 |
+| The instance type to deploy Bastion to (BastionInstanceType)| t2.micro | The type of EC2 instance to be launched for Bastion Host |
+| The maximum number of nodes to scale up to for Bastion (MaxNumberOfBastionNodes)| 1 | The maximum number of Bastion instances to run |
+| The minimum number of nodes to scale down to for Bastion (MinNumberOfBastionNodes)| 1 | The minimum number of Bastion instances to run |
+| The desired number of nodes to keep running for Bastion (DesiredNumberOfBastionNodes)| 1 | The desired number of Bastion instance to run |
+| The instance type to deploy EKS Worker Node to (NodeInstanceType)| m5.xlarge | The type of EC2 instance to be launched for EKS Worker Node |
+| The maximum number of nodes to scale up to for EKS Worker Node (MaxNumberOfNodes)| 3 | The maximum number of EKS Worker Nodes to run |
+| The minimum number of nodes to scale down to for EKS Worker Node (MinNumberOfNodes)| 2 | The minimum number of EKS Worker Nodes to run |
+| The desired number of nodes to keep running for EKS Worker Node (DesiredNumberOfNodes)| 2 | The desired number of EKS Worker Nodes to run |
+| Enables all CloudWatch metrics for the nodes auto scaling group (NodesMetricsEnabled)| false | Enables all CloudWatch metrics for the nodes auto scaling group |
+| The AWS IAM user arn who will be authorised to connect the cluster externally (EksExternalUserArn)| "" | The AWS IAM user arn who will be authorised to connect the cluster externally |
+| The namespace in EKS to deploy Helm charts (K8sNamespace)| acs | The namespace in EKS to deploy Helm charts |
+| Size in GB for the Index EBS volume (IndexEBSVolumeSize)| 100 | Size in GB for the Index EBS volume |
+| IOPS for the Index EBS volume (300 to 20000) (IndexEBSIops)| 300 | IOPS for the Index EBS volume (300 to 20000) |
+
 **S3 Cross Replication Bucket for storing ACS content store**
 
-| Parameter | Description |
-| --------- | ----------- |
-| Enable Cross Region Replication for this Bucket | Cross Region Replication replicates your data into another bucket. This is optional. See the AWS documentation on [Cross-Region Replication](https://docs.aws.amazon.com/AmazonS3/latest/dev/crr.html) for more information. |
+| Parameter | Default | Description |
+| --------- | ------- | ----------- |
+| Enable Cross Region Replication for this Bucket (UseCrossRegionReplication) | false | Set to true if you want to add an S3 Bucket for replication. See the AWS documentation on [Cross-Region Replication](https://docs.aws.amazon.com/AmazonS3/latest/dev/crr.html) for more information. |
+| Destination Bucket region (ReplicationBucketRegion)| eu-west-1 | The Region of the Replication bucket |
+| Destination Replication Bucket (ReplicationBucket)| "" | Name of the destination S3 Bucket you want to replicate data into. |
+| Destination Bucket KMS Encryption Key (ReplicationBucketKMSEncryptionKey)| "" | The KMS encryption key for the destination bucket |
+
+**Alfresco Storage Configuration**
+
+| Parameter | Default | Description |
+| --------- | ------- | ----------- |
+| RDS Instance Type (RDSInstanceType)| db.r4.xlarge | EC2 instance type for the Amazon RDS instances |
+| RDS Allocated Storage (RDSAllocatedStorage)| 5 | Size in GiB for the Amazon RDS MySQL database allocated storage (only non-Amazon Aurora region) |
+| RDS DB Name (RDSDBName)| alfresco | DB name for the Amazon RDS Aurora database (MySQL if non-Amazon Aurora region). |
+| RDS User Name (RDSUsername)| alfresco | User name for the Amazon RDS database |
+| RDS Password (RDSPassword)| <span style="color:red">Requires input</span> | Password for the Amazon RDS database |
+| Creates a snapshot when the stack gets deleted (RDSCreateSnapshotWhenDeleted)| true | Creates a snapshot when the stack gets deleted |
+
+**Alfresco Broker Configuration**
+
+| Parameter | Default | Description |
+| --------- | ------- | ----------- |
+| AmazonMQ Host Instance Type (MQInstanceType) | mq.m5.large | The broker's instance type |
+| AmazonMQ Deployment mode (MQDeploymentMode) | ACTIVE_STANDBY_MULTI_AZ | The deployment mode of the broker |
+| AmazonMQ User Name (MQUsername) | admin | User name for the AmazonMQ |
+| AmazonMQ Password (MQPassword) | <span style="color:red">Requires input</span> | Password for the AmazonMQ. Minimum 12 characters. |
 
 **ACS Stack Configuration**
 
-| Parameter | Description |
-| --------- | ----------- |
-| The name of the S3 bucket that holds the templates | Take the `bucket_name` from the upload step. |
-| The Key prefix for the templates in the S3 template bucket | Take the `key_prefix` from the upload step. |
-| The ACS SSL Certificate arn to use with ELB | Take the SSL certificate arn for your domains in the hosted zone, e.g. `arn:aws:acm:us-east-1:1234567890:certificate/a08b75c0-311d-4999-9995-39fefgh519i9`. For more information about how to create SSL certificates, see the AWS documentation on the [AWS Certificate Manager](https://docs.aws.amazon.com/acm/latest/userguide/acm-overview.html). |
-| The ACS domain name | Choose the domain name which will be used as the entry URL, e.g. **my-acs-eks.example.com**. The domain name consists of ```<subdomain-name>.<hosted-zone-name>```. For more information about how to create a hosted zone and its subdomains, see the AWS documentation on [Creating a Subdomain](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingNewSubdomain.html). |
-| Route53 Dns Zone | Choose the Route53 DNS Zone which will be used to create e.g. **example.com.** (note the dot at the end). For more information about how to create a hosted zone and its subdomains visit the AWS documentation on [Creating a Subdomain](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingNewSubdomain.html). |
-| Private Registry Credentials. Base64 encryption of dockerconfig json | Make sure you have your Quay.io credentials as described in the [Prerequisites](#prerequisites). Also, if you're using Docker for Mac, go to **Preferences...** > **General** to ensure your "Securely store docker logins in macOS keychain" preference is OFF before running the next step.<ol><li> Login to quay.io: <br>```docker login quay.io```</li> <li> Validate that you can see the credentials for Quay.io: <br>```cat ~/.docker/config.json```</li><li> Get the encoded credentials: <br>```cat ~/.docker/config.json \| base64```</li><li> Copy the credentials into the textbox.</li></ol> |
-| The hosted zone to create Route53 Record for ACS | Enter your hosted zone e.g. **example.com.**. For more information about how to create a hosted zone, see the AWS documentation on [Creating a Public Hosted Zone](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html). |
+| Parameter | Default | Description |
+| --------- | ------- | ----------- |
+| The name of the S3 bucket that holds the templates (TemplateBucketName)| <span style="color:red">Requires input</span> | Take the `bucket_name` from the upload step. |
+| The Key prefix for the templates in the S3 template bucket (TemplateBucketKeyPrefix)| development | Take the `key_prefix` from the upload step. |
+| The namespace in EKS to deploy Helm charts (K8sNamespace)| acs | The namespace in EKS to deploy Helm charts |
+| The ACS SSL Certificate arn to use with ELB (ElbCertArn)| <span style="color:red">Requires input</span> | Take the SSL certificate arn for your domains in the hosted zone, e.g. `arn:aws:acm:us-east-1:1234567890:certificate/a08b75c0-311d-4999-9995-39fefgh519i9`. For more information about how to create SSL certificates, see the AWS documentation on the [AWS Certificate Manager](https://docs.aws.amazon.com/acm/latest/userguide/acm-overview.html). |
+| The ACS SSL Certificate policy to use with ELB (ElbCertPolicy)| ELBSecurityPolicy-TLS-1-2-2017-01 | The ACS SSL Certificate policy to use with ELB |
+| The ACS domain name (AcsExternalName)| <span style="color:red">Requires input</span> | Choose the domain name which will be used as the entry URL, e.g. **my-acs-eks.example.com**. The domain name consists of ```<subdomain-name>.<hosted-zone-name>```. For more information about how to create a hosted zone and its subdomains, see the AWS documentation on [Creating a Subdomain](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingNewSubdomain.html). |
+| The nginx-ingress chart version (NginxIngressVersion)| 0.14.0 | The nginx-ingress chart version |
+| The helm chart release name of nginx-ingress (IngressReleaseName)| ingress | The helm chart release name of nginx-ingress |
+| The helm chart release name of alfresco content services (AcsReleaseName)| acs | The helm chart release name of alfresco content services |
+| The Admin password for Alfresco (AlfrescoPassword)| <span style="color:red">Requires input</span> | The Admin password for Alfresco |
+| Private Registry Credentials. Base64 encryption of dockerconfig json (RegistryCredentials)| <span style="color:red">Requires input</span> | Make sure you have your Quay.io credentials as described in the [Prerequisites](#prerequisites). Also, if you're using Docker for Mac, go to **Preferences...** > **General** to ensure your "Securely store docker logins in macOS keychain" preference is OFF before running the next step.<ol><li> Login to quay.io: <br>```docker login quay.io```</li> <li> Validate that you can see the credentials for Quay.io: <br>```cat ~/.docker/config.json```</li><li> Get the encoded credentials: <br>```cat ~/.docker/config.json \| base64```</li><li> Copy the credentials into the textbox.</li></ol> |
+| The number of repository pods in the cluster (RepoPods)| 2 | The number of repository pods in the cluster |
+| The hosted zone to create Route53 Record for ACS (Route53DnsZone)| <span style="color:red">Requires input</span> | Enter your hosted zone e.g. **example.com.**. For more information about how to create a hosted zone, see the AWS documentation on [Creating a Public Hosted Zone](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html). |
 
 After the CFN stack creation has finished, you can find the Alfresco URL in the output from the master template.
 

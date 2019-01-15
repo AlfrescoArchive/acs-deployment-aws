@@ -54,6 +54,13 @@ Metadata:
             - RDSPassword
             - RDSCreateSnapshotWhenDeleted
         - Label:
+            default: Alfresco Broker Configuration
+          Parameters:
+            - MQInstanceType
+            - MQDeploymentMode
+            - MQUsername
+            - MQPassword
+        - Label:
             default: ACS Stack Configuration
           Parameters:
             - TemplateBucketName
@@ -99,6 +106,14 @@ Metadata:
           default: RDS User Name
         RDSCreateSnapshotWhenDeleted:
           default: Creates a snapshot when the stack gets deleted
+        MQInstanceType:
+          default: AmazonMQ Host Instance Type
+        MQDeploymentMode:
+          default: AmazonMQ Deployment mode
+        MQUsername:
+          default: AmazonMQ User Name
+        MQPassword:
+          default: AmazonMQ Password
         BastionInstanceType:
           default: The instance type to deploy Bastion to
         MaxNumberOfBastionNodes:
@@ -246,6 +261,37 @@ Parameters:
       AllowedValues:
       - "true"
       - "false"
+    MQInstanceType:
+      AllowedValues:
+        - "mq.t2.micro"
+        - "mq.m4.large"
+        - "mq.m5.large"
+        - "mq.m5.xlarge"
+        - "mq.m5.2xlarge"
+        - "mq.m5.4xlarge"
+      ConstraintDescription: Must contain valid AmazonMQ Host instance type
+      Default: mq.m5.large
+      Description: The broker's instance type
+      Type: String
+    MQDeploymentMode:
+      AllowedValues:
+        - "SINGLE_INSTANCE"
+        - "ACTIVE_STANDBY_MULTI_AZ"
+      ConstraintDescription: Must contain valid AmazonMQ deployment mode
+      Default: ACTIVE_STANDBY_MULTI_AZ
+      Description: The deployment mode of the broker
+      Type: String
+    MQUsername:
+      AllowedPattern: ".+"
+      Default: admin
+      Description: User name for the AmazonMQ
+      Type: String
+    MQPassword:
+      AllowedPattern: ".{12,}"
+      ConstraintDescription: AmazonMQ user password requires minimum 12 characters.
+      Description: Password for the AmazonMQ. Minimum 12 characters.
+      NoEcho: True
+      Type: String
     BastionInstanceType:
       Type: "String"
       Default: "t2.micro"
@@ -541,6 +587,27 @@ Resources:
           PrivateSubnet2ID: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
           SecurityGroup: !Ref NodeSecurityGroup
 
+    MQStack:
+      Type: AWS::CloudFormation::Stack
+      Properties:
+        Tags:
+          - Key: Name
+            Value: !Sub "${AWS::StackName}"
+          - Key: Component
+            Value: ACS-MQ
+          - Key: KubernetesCluster
+            Value: !Sub "${AWS::StackName}-eks"
+        TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/templates/mq.yaml"
+        Parameters:
+          MasterStackName: !Sub "${AWS::StackName}"
+          PrivateSubnet1ID: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
+          PrivateSubnet2ID: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
+          SecurityGroup: !Ref NodeSecurityGroup
+          MQInstanceType: !Ref MQInstanceType
+          MQDeploymentMode: !Ref MQDeploymentMode
+          MQUsername: !Ref MQUsername
+          MQPassword: !Ref MQPassword
+
     EKSStack:
       Type: AWS::CloudFormation::Stack
       DependsOn:
@@ -667,6 +734,9 @@ Resources:
           NginxIngressVersion: !Ref NginxIngressVersion
           AlfrescoPassword: !Ref AlfrescoPassword
           RDSEndpoint: !GetAtt RDSStack.Outputs.Endpoint
+          MQEndpoint: !GetAtt MQStack.Outputs.OpenWireEndpoint
+          MQUsername: !Ref MQUsername
+          MQPassword: !Ref MQPassword
           DatabasePassword: !Ref RDSPassword
           RegistryCredentials: !Ref RegistryCredentials
           IngressReleaseName: !Ref IngressReleaseName
