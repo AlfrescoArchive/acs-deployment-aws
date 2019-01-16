@@ -160,17 +160,17 @@ EOF
   SOLR_VOLUME1_ID=$(aws ec2 describe-volumes --region $REGION --filters "Name=tag:Name,Values=$SOLR_VOLUME1_NAME_TAG" --query "Volumes[?State=='available'].{Volume:VolumeId}" --output text)
 
   ALFRESCO_PASSWORD=$(printf %s $ALFRESCO_PASSWORD | iconv -t utf16le | openssl md4| awk '{ print $2}')
+  CHART_VERSION=1.1.8
+  VALUES_FILE="acs_helm_values.yaml"
 
-  if [ "$INSTALL" = "true" ]; then
-    echo Installing Alfresco Content Services helm chart...
-
-echo "externalProtocol: https
+  echo Creating values file named $VALUES_FILE
+  echo "externalProtocol: https
 externalHost: \"$EXTERNAL_NAME\"
 externalPort: \"443\"
 alfresco-infrastructure:
   activemq:
     enabled: false
-  persistence: 
+  persistence:
     efs:
       enabled: true
       dns: \"$EFS_NAME\"
@@ -255,34 +255,17 @@ messageBroker:
 share:
   livenessProbe:
     initialDelaySeconds: 420
-registryPullSecrets: quay-registry-secret" > acs_install_values.yaml
+registryPullSecrets: quay-registry-secret" > $VALUES_FILE
 
-    CHART_VERSION=1.1.8
-
-    helm install alfresco-stable/alfresco-content-services --version $CHART_VERSION -f acs_install_values.yaml --name $ACS_RELEASE --namespace=$DESIREDNAMESPACE
-
+  if [ "$INSTALL" = "true" ]; then
+    echo Installing Alfresco Content Services helm chart...
+    helm install alfresco-stable/alfresco-content-services --version $CHART_VERSION -f $VALUES_FILE --name $ACS_RELEASE --namespace=$DESIREDNAMESPACE
   fi
 
   if [ "$UPGRADE" = "true" ]; then
     echo Upgrading Alfresco Content Services helm chart...
-    helm upgrade $ACS_RELEASE alfresco-stable/alfresco-content-services --version $CHART_VERSION \
-      --install \
-      --reuse-values \
-      --set externalHost="$EXTERNAL_NAME" \
-      --set repository.adminPassword="$ALFRESCO_PASSWORD" \
-      --set alfresco-infrastructure.persistence.efs.dns="$EFS_NAME" \
-      --set persistence.solr.data.subPath="$DESIREDNAMESPACE/alfresco-content-services/solr-data" \
-      --set postgresql.enabled=false \
-      --set database.external=true \
-      --set database.url="'jdbc:mariadb:aurora//$RDS_ENDPOINT:3306/alfresco?useUnicode=yes&characterEncoding=UTF-8'" \
-      --set database.password="$DATABASE_PASSWORD" \
-      --set s3connector.config.bucketName="$S3BUCKET_NAME" \
-      --set s3connector.config.bucketLocation="$S3BUCKET_LOCATION" \
-      --set s3connector.secrets.encryption=kms \
-      --set s3connector.secrets.awsKmsKeyId="$S3BUCKET_KMS_ALIAS" \
-      --set repository.environment.JAVA_OPTS=" -Dopencmis.server.override=true -Dopencmis.server.value=https://$EXTERNAL_NAME -Dalfresco.restApi.basicAuthScheme=true -Dsolr.base.url=/solr -Dsolr.secureComms=none -Dindex.subsystem.name=solr6 -Dalfresco.cluster.enabled=true -Ddeployment.method=HELM_CHART -Xms2000M -Xmx2000M" \
-      --set repository.replicaCount="$REPO_PODS" \
-      --namespace=$DESIREDNAMESPACE
+    helm upgrade $ACS_RELEASE alfresco-stable/alfresco-content-services --version $CHART_VERSION -f $VALUES_FILE \
+     --install --namespace=$DESIREDNAMESPACE
   fi
 
   STATUS=$(helm ls $ACS_RELEASE | grep $ACS_RELEASE | awk '{print $8}')
