@@ -414,13 +414,13 @@ Resources:
                   - ssm:GetCommandInvocation
                 Resource: '*'
         - PolicyName: HelmHelperLambdaRoleCfnPolicy
-            PolicyDocument:
-              Version: 2012-10-17
-              Statement:
-                - Effect: Allow
-                  Action:
-                    - cloudformation:DescribeStacks
-                  Resource: '*'
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudformation:DescribeStacks
+                Resource: '*'
         - PolicyName: s3GetObjectPolicy
           PolicyDocument:
             Version: 2012-10-17
