@@ -17,6 +17,7 @@ logger.setLevel(logging.INFO)
 
 ssm_client = boto3.client('ssm')
 ec2_client = boto3.client('ec2')
+cfn_client = boto3.client('cloudformation')
 
 def handler(event, context):
     '''Main handler function for Helm deployment'''
@@ -99,58 +100,64 @@ def handler(event, context):
 
         if eventType == 'Delete':
 
-            helmdelacs_doc = describe_document(event['ResourceProperties']['HelmDeleteAcsRunScript'])
-            helmdel_doc = describe_document(event['ResourceProperties']['HelmDeleteIngressRunScript'])
+            response = cfn_client.describe_stacks(StackName=event['ResourceProperties']['StackName'])
+            status = response['Stacks'][0]['StackStatus']
 
-            if helmdelacs_doc['Status'] == 'Active' and helmdel_doc['Status'] == 'Active':
-
-                # Delete ACS
-                logger.info('Deleting ACS helm chart...')
-                helmdelacs = ssm_sendcommand(ssm_instance, helmdelacs_doc['Name'], {})
-                if ssm_commandstatus(helmdelacs['CommandId'], ssm_instance) is True:
-                    logger.info('ACS helm chart purged successfully!')
-
-                    # Delete the ingress
-                    sgId = describe_sg(event['ResourceProperties']['VPCID'], event['ResourceProperties']['EKSName'])
-                    # Only delete ingress if exists.
-                    # If stack creation was unable to create ingress at the first place this code will not run
-
-                    if sgId is not None:
-                        # Delete nginx-ingress ELB as it is not fully managed by CFN
-                        logger.info('Deleting Nginx-ingress helm chart...')
-                        helmdel = ssm_sendcommand(ssm_instance, helmdel_doc['Name'], {})
-                        if ssm_commandstatus(helmdel['CommandId'], ssm_instance) is True:
-                            logger.info('Nginx-ingress helm chart purged successfully!')
-
-                        # Revoke elb SecurityGroup rule from node sg and then delete elb SecurityGroup created by nginx-ingess
-                        revoke_ingress(event['ResourceProperties']['NodeSecurityGroup'], sgId)
-
-                        # Wait for nginx-ingress security group id to disassociate from ingress ELB network interface(s)
-                        netInt = list_interfaces(event['ResourceProperties']['VPCID'], sgId)
-
-                        for int in netInt:
-                            while True:
-                                if describe_interfaces(int) != None:
-                                    if describe_interfaces(int) == sgId:
-                                        logger.info('NetworkInterfaceId "{int}" is still associated with ingress security group "{sgId}", waiting...'.format(int=int, sgId=sgId))
-                                        time.sleep(5)
-                                else:
-                                    logger.info('NetworkInterfaceId "{int}" does not exists anymore'.format(int=int))
-                                    break
-
-                        if delete_sg_status(sgId) is True:
-                            logger.info('Deleted nginx-ingress SecurityGroup Id: "{sgId}" successfully'.format(sgId=sgId))
-                    else:
-                        logger.info('No ingress security group was found.  Exiting.')
-
-                    logger.info('Signalling success to CloudFormation...')
-                    cfnresponse.send(event, context, cfnresponse.SUCCESS, data, physicalResourceId)
-                else:
-                    logger.error('Failed to delete ACS helm chart')
-                    cfnresponse.send(event, context, cfnresponse.FAILED, {})
+            if status == 'UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS':
+                logger.info('Skip deleting ACS helm chart')
             else:
-                logger.error('SSM commands are not active')
-                cfnresponse.send(event, context, cfnresponse.FAILED, {})
+                helmdelacs_doc = describe_document(event['ResourceProperties']['HelmDeleteAcsRunScript'])
+                helmdel_doc = describe_document(event['ResourceProperties']['HelmDeleteIngressRunScript'])
+
+                if helmdelacs_doc['Status'] == 'Active' and helmdel_doc['Status'] == 'Active':
+
+                    # Delete ACS
+                    logger.info('Deleting ACS helm chart...')
+                    helmdelacs = ssm_sendcommand(ssm_instance, helmdelacs_doc['Name'], {})
+                    if ssm_commandstatus(helmdelacs['CommandId'], ssm_instance) is True:
+                        logger.info('ACS helm chart purged successfully!')
+
+                        # Delete the ingress
+                        sgId = describe_sg(event['ResourceProperties']['VPCID'], event['ResourceProperties']['EKSName'])
+                        # Only delete ingress if exists.
+                        # If stack creation was unable to create ingress at the first place this code will not run
+
+                        if sgId is not None:
+                            # Delete nginx-ingress ELB as it is not fully managed by CFN
+                            logger.info('Deleting Nginx-ingress helm chart...')
+                            helmdel = ssm_sendcommand(ssm_instance, helmdel_doc['Name'], {})
+                            if ssm_commandstatus(helmdel['CommandId'], ssm_instance) is True:
+                                logger.info('Nginx-ingress helm chart purged successfully!')
+
+                            # Revoke elb SecurityGroup rule from node sg and then delete elb SecurityGroup created by nginx-ingess
+                            revoke_ingress(event['ResourceProperties']['NodeSecurityGroup'], sgId)
+
+                            # Wait for nginx-ingress security group id to disassociate from ingress ELB network interface(s)
+                            netInt = list_interfaces(event['ResourceProperties']['VPCID'], sgId)
+
+                            for int in netInt:
+                                while True:
+                                    if describe_interfaces(int) != None:
+                                        if describe_interfaces(int) == sgId:
+                                            logger.info('NetworkInterfaceId "{int}" is still associated with ingress security group "{sgId}", waiting...'.format(int=int, sgId=sgId))
+                                            time.sleep(5)
+                                    else:
+                                        logger.info('NetworkInterfaceId "{int}" does not exists anymore'.format(int=int))
+                                        break
+
+                            if delete_sg_status(sgId) is True:
+                                logger.info('Deleted nginx-ingress SecurityGroup Id: "{sgId}" successfully'.format(sgId=sgId))
+                        else:
+                            logger.info('No ingress security group was found.  Exiting.')
+
+                        logger.info('Signalling success to CloudFormation...')
+                        cfnresponse.send(event, context, cfnresponse.SUCCESS, data, physicalResourceId)
+                    else:
+                        logger.error('Failed to delete ACS helm chart')
+                        cfnresponse.send(event, context, cfnresponse.FAILED, {})
+                else:
+                    logger.error('SSM commands are not active')
+                    cfnresponse.send(event, context, cfnresponse.FAILED, {})
 
     except Exception as err:
         logger.error('Helm Helper lambda Error: "{type}": "{message}"'.format(type=type(err), message=str(err)))
