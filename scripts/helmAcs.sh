@@ -264,8 +264,8 @@ registryPullSecrets: quay-registry-secret" > $VALUES_FILE
 
   if [ "$UPGRADE" = "true" ]; then
     echo Upgrading Alfresco Content Services helm chart...
-    helm upgrade $ACS_RELEASE alfresco-stable/alfresco-content-services --version $CHART_VERSION -f $VALUES_FILE \
-     --install --force --namespace=$DESIREDNAMESPACE
+    helm upgrade $ACS_RELEASE alfresco-stable/alfresco-content-services --version $CHART_VERSION --reuse-values -f $VALUES_FILE \
+     --install --namespace=$DESIREDNAMESPACE
   fi
 
   STATUS=$(helm ls $ACS_RELEASE | grep $ACS_RELEASE | awk '{print $8}')
