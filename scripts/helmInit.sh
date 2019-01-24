@@ -12,7 +12,7 @@ export KUBECONFIG=/home/ec2-user/.kube/config
 
 WAIT_INTERVAL=1
 COUNTER=0
-TIMEOUT=300
+TIMEOUT=180
 t0=`date +%s`
 
 echo "Waiting for nodes to be ready"
@@ -51,26 +51,35 @@ SOLRNODE=$(kubectl get nodes --selector failure-domain.beta.kubernetes.io/zone=$
 kubectl taint nodes $SOLRNODE SolrMasterOnly=true:NoSchedule
 kubectl label nodes $SOLRNODE SolrMasterOnly=true
 
+HELM_VERSION_EXITCODE=0
 TILLER=$(kubectl get pods -l name=tiller --namespace kube-system -o jsonpath={.items..phase})
 if [ "$TILLER" != "Running" ]; then
-  echo Tiller is not running.  Creating one...
+  echo "Tiller is not running.  Creating one..."
   helm init --service-account tiller
-  TILLER=$(kubectl get pods -l name=tiller --namespace kube-system -o jsonpath={.items..phase})
-  while [ "$TILLER" != "Running" ]; do
-    echo tiller pod is still creating, sleeping for a second...
-    sleep 1
-    TILLER=$(kubectl get pods -l name=tiller --namespace kube-system -o jsonpath={.items..phase})
+  COUNTER=0
+  TIMEOUT=20
+  HELM_VERSION_EXITCODE=1
+  echo "Waiting for tiller to become available"
+  until [ $HELM_VERSION_EXITCODE -eq 0 ] || [ "$COUNTER" -eq "$TIMEOUT" ]; do
+    printf '.'
+    sleep $WAIT_INTERVAL
+    COUNTER=$(($COUNTER+$WAIT_INTERVAL))
+    helm version -s --tiller-connection-timeout 5 &> /dev/null
+    HELM_VERSION_EXITCODE=$?
   done
-fi
-echo Tiller created successfully
-helm repo add alfresco-incubator http://kubernetes-charts.alfresco.com/incubator
-helm repo add alfresco-stable http://kubernetes-charts.alfresco.com/stable
-helm repo add incubator https://kubernetes-charts-incubator.storage.googleapis.com/
-# Below logic is for AWS Systems Manager return code of the script
-TILLER=$(kubectl get pods -l name=tiller --namespace kube-system -o jsonpath={.items..phase})
 
-if [ "$TILLER" = "Running" ]; then
-  exit 0
+  if [ $HELM_VERSION_EXITCODE -eq 0 ]; then
+    echo 
+    echo "Tiller installed successfully"
+    helm version
+    helm repo add alfresco-incubator http://kubernetes-charts.alfresco.com/incubator
+    helm repo add alfresco-stable http://kubernetes-charts.alfresco.com/stable
+    helm repo add incubator https://kubernetes-charts-incubator.storage.googleapis.com
+  fi
 else
-  exit 1
+  echo "Tiller is already deployed"
+  helm version
 fi
+
+# Use HELM_VERSION_EXITCODE for script exit code so Systems Manager can detect failure
+exit $HELM_VERSION_EXITCODE

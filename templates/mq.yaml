@@ -1,0 +1,129 @@
+# Alfresco Enterprise ACS Deployment AWS
+# Copyright (C) 2005 - 2019 Alfresco Software Limited
+# License rights for this program may be obtained from Alfresco Software, Ltd.
+# pursuant to a written agreement and any use of this program without such an
+# agreement is prohibited.
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "AmazonMQ stack that deploys two ActiveMQ Broker (active/standby) in existent subnets."
+
+Metadata:
+    AWS::CloudFormation::Interface:
+      ParameterGroups:
+        - Label:
+            default: AmazonMQ Stack Configuration
+          Parameters:
+            - MasterStackName
+            - MQInstanceType
+            - MQDeploymentMode
+            - SecurityGroup
+            - PrivateSubnet1ID
+            - PrivateSubnet2ID
+            - MQUsername
+            - MQPassword
+
+      ParameterLabels:
+        MasterStackName:
+          default: The name of the master stack
+        MQInstanceType:
+          default: AmazonMQ Host Instance Type
+        MQDeploymentMode:
+          default: AmazonMQ Deployment mode
+        SecurityGroup:
+          default: The Security Group ID to use for AmazonMQ
+        PrivateSubnet1ID:
+          default: The ID of Private Subnet 1
+        PrivateSubnet2ID:
+          default: The ID of Private Subnet 2
+        MQUsername:
+          default: AmazonMQ User Name
+        MQPassword:
+          default: AmazonMQ Password
+
+Parameters:
+    MasterStackName:
+      Description: Needed for unique Broker name
+      Type: String
+    MQInstanceType:
+      AllowedValues:
+        - "mq.t2.micro"
+        - "mq.m4.large"
+        - "mq.m5.large"
+        - "mq.m5.xlarge"
+        - "mq.m5.2xlarge"
+        - "mq.m5.4xlarge"
+      ConstraintDescription: Must contain valid AmazonMQ Host instance type
+      Default: mq.m5.large
+      Description: The broker's instance type
+      Type: String
+    MQDeploymentMode:
+      AllowedValues:
+        - "SINGLE_INSTANCE"
+        - "ACTIVE_STANDBY_MULTI_AZ"
+      ConstraintDescription: Must contain valid AmazonMQ deployment mode
+      Default: ACTIVE_STANDBY_MULTI_AZ
+      Description: The deployment mode of the broker
+      Type: String
+    SecurityGroup:
+      Description: "ID for the VPC, This will be used to get the default security group"
+      Type: "AWS::EC2::SecurityGroup::Id"
+    PrivateSubnet1ID:
+      Description: "ID of Private Subnet 1"
+      Type: "AWS::EC2::Subnet::Id"
+    PrivateSubnet2ID:
+      Description: "ID of Private Subnet 2"
+      Type: "AWS::EC2::Subnet::Id"
+    MQUsername:
+      AllowedPattern: ".+"
+      Default: admin
+      Description: User name for the AmazonMQ
+      Type: String
+    MQPassword:
+      AllowedPattern: ".{12,}"
+      ConstraintDescription: AmazonMQ user password requires minimum 12 characters.
+      Description: Password for the AmazonMQ. Minimum 12 characters.
+      NoEcho: True
+      Type: String
+
+Resources:
+  Broker:
+    Type: "AWS::AmazonMQ::Broker"
+    Properties:
+      AutoMinorVersionUpgrade: "false"
+      BrokerName: !Sub "${MasterStackName}-Broker"
+      DeploymentMode: !Ref MQDeploymentMode
+      EngineType: ActiveMQ
+      EngineVersion: "5.15.6"
+      HostInstanceType: !Ref MQInstanceType
+      Logs:
+        General: "true"
+        Audit: "true"
+      PubliclyAccessible: "true"
+      SecurityGroups:
+        - !Ref SecurityGroup
+      SubnetIds:
+        - !Ref PrivateSubnet1ID
+        - !Ref PrivateSubnet2ID
+      Users:
+        - Groups:
+            - "admin"
+          ConsoleAccess: "true"
+          Username: !Ref MQUsername
+          Password: !Ref MQPassword
+
+  MQIngressRule:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: "OpenWire connection"
+      GroupId: !Ref SecurityGroup
+      IpProtocol: tcp
+      FromPort: 61617
+      ToPort: 61617
+      SourceSecurityGroupId: !Ref SecurityGroup
+
+Outputs:
+  SubstackName:
+    Value: !Sub "${AWS::StackName}" 
+  OpenWireEndpoint:
+    Value: !Join [",", !GetAtt Broker.OpenWireEndpoints]
+    Description: Returns the OpenWire Endpoints as a comma separated string.

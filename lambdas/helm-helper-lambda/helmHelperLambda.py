@@ -28,115 +28,121 @@ def handler(event, context):
         # Get EC2 instances to run SSM commands document
         ssm_instance = ec2_instanceId(event['ResourceProperties']['BastionAutoScalingGroup'])
 
+        logger.info('Events received: {event}'.format(event=event))
+
+        # Dict to return lambda outputs
+        data = {}
+
         if eventType == 'Create' or eventType == 'Update':
-            logger.info('Events received: {event}'.format(event=event))
-
-            # Dict to return lambda outputs
-            data = {}
-
-            # First download all helper scripts
-            init_doc = describe_document(event['ResourceProperties']['HelmDownloadScript'])
-            init = ssm_sendcommand(ssm_instance, init_doc['Name'], {})
-            if ssm_commandstatus(init['CommandId'], ssm_instance) is True:
-                logger.info('HelmDownloadScript directory was downloaded successfully!')
-
             # Execute scripts to setup helm deployment
-            helminit_doc = describe_document(event['ResourceProperties']['HelmInitRunScript'])
             helmingress_doc = describe_document(event['ResourceProperties']['HelmInstallIngressRunScript'])
             helminstall_doc = describe_document(event['ResourceProperties']['HelmInstallRunScript'])
             helmupgrade_doc = describe_document(event['ResourceProperties']['HelmUpgradeRunScript'])
             helmelb_doc = describe_document(event['ResourceProperties']['GetElbEndpointRunScript'])
-            helmfluentd_doc = describe_document(event['ResourceProperties']['HelmInstallFluentdRunScript'])
 
-            if helminit_doc['Status'] == 'Active' and helmingress_doc['Status'] == 'Active' and helminstall_doc['Status'] == 'Active':
+            if helmingress_doc['Status'] == 'Active' and helminstall_doc['Status'] == 'Active' and helmupgrade_doc['Status'] == 'Active' and helmelb_doc['Status'] == 'Active':
 
-                # Deploy Tiller with Helm init
-                helminit = ssm_sendcommand(ssm_instance, helminit_doc['Name'], {})
-                if ssm_commandstatus(helminit['CommandId'], ssm_instance) is True:
-                    logger.info('Tiller was deployed successfully!')
+                # Deploy nginx-ingress helm chart
+                logger.info('Installing Nginx-ingress...')
+                helmingress = ssm_sendcommand(ssm_instance, helmingress_doc['Name'], {})
+                if ssm_commandstatus(helmingress['CommandId'], ssm_instance) is True:
+                    logger.info('Nginx-ingress deployed successfully!')
 
-                    # Deploy nginx-ingress helm chart
-                    helmingress = ssm_sendcommand(ssm_instance, helmingress_doc['Name'], {})
-                    if ssm_commandstatus(helmingress['CommandId'], ssm_instance) is True:
-                        logger.info('Nginx-ingress deployed successfully!')
-
-                        if eventType == 'Create':
-                            # Install helm chart
-                            helmdeploy = ssm_sendcommand(ssm_instance, helminstall_doc['Name'], {})
-                            helmdeployfluentd = ssm_sendcommand(ssm_instance, helmfluentd_doc['Name'], {})
-                            if ssm_commandstatus(helmdeploy['CommandId'], ssm_instance) is True:
-                                logger.info('Helm installation completed successfully!')
-                            else:
-                                logger.error('Helm installation was unsuccessful')
-                                cfnresponse.send(event, context, cfnresponse.FAILED, {})
-                            if ssm_commandstatus(helmdeployfluentd['CommandId'], ssm_instance) is True:
-                                logger.info('Helm Fluentd installation completed successfully!')
-                            else:
-                                logger.error('Helm Fluentd installation was unsuccessful')
-                                cfnresponse.send(event, context, cfnresponse.FAILED, {})
-
-                        if eventType == 'Update':
-                            # Upgrade helm release
-                            helmdeploy = ssm_sendcommand(ssm_instance, helmupgrade_doc['Name'], {})
-                            if ssm_commandstatus(helmdeploy['CommandId'], ssm_instance) is True:
-                                logger.info('Helm upgrade completed successfully!')
-                            else:
-                                logger.error('Helm upgrade was unsuccessful')
-                                cfnresponse.send(event, context, cfnresponse.FAILED, {})
-
-                        # Get ELB to return as Stack Output
-                        helmelb = ssm_sendcommand(ssm_instance, helmelb_doc['Name'], {})
-                        if ssm_commandstatus(helmelb['CommandId'], ssm_instance) is True:
-                            logger.info('Got ELB successfully!')
-                            helmelb_output = ssm_commandoutput(helmelb['CommandId'], ssm_instance)
-                            data['elb'] = helmelb_output['StandardOutputContent'].rstrip('\n')
+                    if eventType == 'Create':
+                        # Install helm chart
+                        logger.info('Installing helm chart...')
+                        helmdeploy = ssm_sendcommand(ssm_instance, helminstall_doc['Name'], {})
+                        if ssm_commandstatus(helmdeploy['CommandId'], ssm_instance) is True:
+                            logger.info('Helm chart installation completed successfully!')
                         else:
-                            logger.error('Get Elb command was unsuccessful')
+                            logger.error('Helm chart installation was unsuccessful')
                             cfnresponse.send(event, context, cfnresponse.FAILED, {})
+                            return
+
+                    if eventType == 'Update':
+                        # Upgrade helm release
+                        logger.info('Upgrading helm chart...')
+                        helmdeploy = ssm_sendcommand(ssm_instance, helmupgrade_doc['Name'], {})
+                        if ssm_commandstatus(helmdeploy['CommandId'], ssm_instance) is True:
+                            logger.info('Helm chart upgrade completed successfully!')
+                        else:
+                            logger.error('Helm chart upgrade was unsuccessful')
+                            cfnresponse.send(event, context, cfnresponse.FAILED, {})
+                            return
+
+                    # Get ELB to return as Stack Output
+                    logger.info('Retrieving ELB URL...')
+                    helmelb = ssm_sendcommand(ssm_instance, helmelb_doc['Name'], {})
+                    if ssm_commandstatus(helmelb['CommandId'], ssm_instance) is True:
+                        logger.info('Got ELB successfully!')
+                        helmelb_output = ssm_commandoutput(helmelb['CommandId'], ssm_instance)
+                        data['elb'] = helmelb_output['StandardOutputContent'].rstrip('\n')
+                        logger.info('Signalling success to CloudFormation...')
+                        cfnresponse.send(event, context, cfnresponse.SUCCESS, data, physicalResourceId)
                     else:
-                        logger.error('Nginx-ingress deployment was unsuccessful')
+                        logger.error('Get Elb command was unsuccessful')
                         cfnresponse.send(event, context, cfnresponse.FAILED, {})
                 else:
-                    logger.error('Tiller deployment was unsuccessful')
+                    logger.error('Nginx-ingress deployment was unsuccessful')
                     cfnresponse.send(event, context, cfnresponse.FAILED, {})
-            cfnresponse.send(event, context, cfnresponse.SUCCESS, data, physicalResourceId)
+            else:
+                logger.error('SSM commands are not active')
+                cfnresponse.send(event, context, cfnresponse.FAILED, {})
 
         if eventType == 'Delete':
-            logger.info('Events received: {event}'.format(event=event))
 
-            sgId = describe_sg(event['ResourceProperties']['VPCID'], event['ResourceProperties']['EKSName'])
-            # Only delete ingress if exists.
-            # If stack creation was unable to create ingress at the first place this code will not run
+            helmdelacs_doc = describe_document(event['ResourceProperties']['HelmDeleteAcsRunScript'])
+            helmdel_doc = describe_document(event['ResourceProperties']['HelmDeleteIngressRunScript'])
 
-            if sgId is not None:
-                # Delete nginx-ingress ELB as it is not fully managed by CFN
-                helmdel_doc = describe_document(event['ResourceProperties']['HelmDeleteIngressRunScript'])
-                helmdel = ssm_sendcommand(ssm_instance, helmdel_doc['Name'], {})
-                if ssm_commandstatus(helmdel['CommandId'], ssm_instance) is True:
-                    logger.info('Nginx-ingress chart purged successfully!')
+            if helmdelacs_doc['Status'] == 'Active' and helmdel_doc['Status'] == 'Active':
 
-                # Revoke elb SecurityGroup rule from node sg and then delete elb SecurityGroup created by nginx-ingess
-                revoke_ingress(event['ResourceProperties']['NodeSecurityGroup'], sgId)
+                # Delete ACS
+                logger.info('Deleting ACS helm chart...')
+                helmdelacs = ssm_sendcommand(ssm_instance, helmdelacs_doc['Name'], {})
+                if ssm_commandstatus(helmdelacs['CommandId'], ssm_instance) is True:
+                    logger.info('ACS helm chart purged successfully!')
 
-                # Wait for nginx-ingress security group id to disassociate from ingress ELB network interface(s)
-                netInt = list_interfaces(event['ResourceProperties']['VPCID'], sgId)
+                    # Delete the ingress
+                    sgId = describe_sg(event['ResourceProperties']['VPCID'], event['ResourceProperties']['EKSName'])
+                    # Only delete ingress if exists.
+                    # If stack creation was unable to create ingress at the first place this code will not run
 
-                for int in netInt:
-                    while True:
-                        if describe_interfaces(int) != None:
-                            if describe_interfaces(int) == sgId:
-                                logger.info('NetworkInterfaceId "{int}" is still associated with ingress security group "{sgId}", waiting...'.format(int=int, sgId=sgId))
-                                time.sleep(5)
-                        else:
-                            logger.info('NetworkInterfaceId "{int}" does not exists anymore'.format(int=int))
-                            break
+                    if sgId is not None:
+                        # Delete nginx-ingress ELB as it is not fully managed by CFN
+                        logger.info('Deleting Nginx-ingress helm chart...')
+                        helmdel = ssm_sendcommand(ssm_instance, helmdel_doc['Name'], {})
+                        if ssm_commandstatus(helmdel['CommandId'], ssm_instance) is True:
+                            logger.info('Nginx-ingress helm chart purged successfully!')
 
-                if delete_sg_status(sgId) is True:
-                    logger.info('Deleted nginx-ingress SecurityGroup Id: "{sgId}" successfully'.format(sgId=sgId))
+                        # Revoke elb SecurityGroup rule from node sg and then delete elb SecurityGroup created by nginx-ingess
+                        revoke_ingress(event['ResourceProperties']['NodeSecurityGroup'], sgId)
+
+                        # Wait for nginx-ingress security group id to disassociate from ingress ELB network interface(s)
+                        netInt = list_interfaces(event['ResourceProperties']['VPCID'], sgId)
+
+                        for int in netInt:
+                            while True:
+                                if describe_interfaces(int) != None:
+                                    if describe_interfaces(int) == sgId:
+                                        logger.info('NetworkInterfaceId "{int}" is still associated with ingress security group "{sgId}", waiting...'.format(int=int, sgId=sgId))
+                                        time.sleep(5)
+                                else:
+                                    logger.info('NetworkInterfaceId "{int}" does not exists anymore'.format(int=int))
+                                    break
+
+                        if delete_sg_status(sgId) is True:
+                            logger.info('Deleted nginx-ingress SecurityGroup Id: "{sgId}" successfully'.format(sgId=sgId))
+                    else:
+                        logger.info('No ingress security group was found.  Exiting.')
+
+                    logger.info('Signalling success to CloudFormation...')
+                    cfnresponse.send(event, context, cfnresponse.SUCCESS, data, physicalResourceId)
+                else:
+                    logger.error('Failed to delete ACS helm chart')
+                    cfnresponse.send(event, context, cfnresponse.FAILED, {})
             else:
-                logger.info('No ingress security group was found.  Exiting..')
-
-            cfnresponse.send(event, context, cfnresponse.SUCCESS, {}, physicalResourceId)
+                logger.error('SSM commands are not active')
+                cfnresponse.send(event, context, cfnresponse.FAILED, {})
 
     except Exception as err:
         logger.error('Helm Helper lambda Error: "{type}": "{message}"'.format(type=type(err), message=str(err)))
@@ -200,12 +206,11 @@ def ssm_commandoutput(command_id, instance_id):
 def ssm_commandstatus(command_id, instance_id):
     '''A function to return ssm command status'''
     try:
-        STATUS = ""
-        for i in range(0,100):
-            while STATUS != "Success":
-              	time.sleep(1)
-                output = ssm_commandoutput(command_id, instance_id)
-              	STATUS = output['Status']
+        STATUS = "InProgress"
+        while STATUS == "InProgress":
+            time.sleep(1)
+            output = ssm_commandoutput(command_id, instance_id)
+            STATUS = output['Status']
         if output['Status'] == 'Success' and output['ResponseCode'] == 0:
             return True
     except Exception as err:
@@ -275,7 +280,7 @@ def list_interfaces(vpcId, sgId):
         return err
 
 def describe_interfaces(interfaceId):
-    '''A function to describe network interfac Security Group Id'''
+    '''A function to describe network interface Security Group Id'''
     try:
         response = ec2_client.describe_network_interface_attribute(
                     Attribute='groupSet',
@@ -300,7 +305,7 @@ def delete_sg_status(sgId):
         STATUS = ""
         for i in range(0,100):
             while STATUS is False:
-              	time.sleep(5)
+                time.sleep(5)
                 STATUS = delete_sg(sgId)
         return True
 

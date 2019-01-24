@@ -1,3 +1,15 @@
+# 1.1.8.1
+
+## Features
+* Use AmazonMQ as message broker
+
+# 1.1.8
+
+## Features
+* Using Alfresco's Helm Charts 1.1.8 https://github.com/Alfresco/acs-deployment
+* Using AWS EBS for Solr
+* Adding FluentD logging capabilities
+
 # 1.0.0-EA2
 
 ## Features

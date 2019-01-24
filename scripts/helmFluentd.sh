@@ -33,12 +33,8 @@ else
               usage
               exit 1
               ;;
-          --stackname)
-              STACKNAME="$2";
-              shift 2
-              ;;
-          --namespace)
-              DESIREDNAMESPACE="$2";
+          --releasename)
+              RELEASE_NAME="$2";
               shift 2
               ;;
           --instance-role)
@@ -68,9 +64,6 @@ else
 
   if [ "$INSTALL" = "true" ]; then
     echo Installing Fluentd CloudWatchLogs helm chart...
-    # init not needed since it is initilized on helmInit.sh
-    # helm init --client-only
-    # helm repo update
 
     # This option below is because the container runs as user fluentd
     # to be able to write pos files to the workernode system, requires to run fluentd as root
@@ -81,8 +74,7 @@ else
 EOF
 
     helm install incubator/fluentd-cloudwatch \
-      --name $STACKNAME-fluentd \
-      --namespace=$DESIREDNAMESPACE \
+      --name $RELEASE_NAME \
       --set awsRole=$INSTANCE_ROLE \
       --set awsRegion=$REGION \
       --set rbac.create=true \
@@ -90,15 +82,15 @@ EOF
       -f /tmp/extraVars.yaml
   fi
 
-  STATUS=$(helm ls $STACKNAME-fluentd | grep fluentd | awk '{print $8}')
+  STATUS=$(helm ls $RELEASE_NAME | grep fluentd | awk '{print $8}')
   while [ "$STATUS" != "DEPLOYED" ]; do
     echo fluentd cloudwatch is still deploying, sleeping for a second...
     sleep 1
-    STATUS=$(helm ls $STACKNAME-fluentd | grep fluentd | awk '{print $8}')
+    STATUS=$(helm ls $RELEASE_NAME | grep fluentd | awk '{print $8}')
   done
   echo fluentd cloudwatch deployed successfully
   # Below logic is for AWS Systems Manager return code for the script
-  STATUS=$(helm ls $STACKNAME-fluentd | grep fluentd | awk '{print $8}')
+  STATUS=$(helm ls $RELEASE_NAME | grep fluentd | awk '{print $8}')
   if [ "$STATUS" = "DEPLOYED" ]; then
     exit 0
   else
