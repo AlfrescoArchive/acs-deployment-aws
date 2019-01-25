@@ -152,7 +152,6 @@ data:
   fi
 
   ALFRESCO_PASSWORD=$(printf %s $ALFRESCO_PASSWORD | iconv -t utf16le | openssl md4| awk '{ print $2}')
-  CHART_VERSION=1.1.8
   VALUES_FILE="acs_helm_values.yaml"
 
   echo Creating values file named $VALUES_FILE
@@ -249,6 +248,8 @@ share:
   livenessProbe:
     initialDelaySeconds: 420
 registryPullSecrets: quay-registry-secret" > $VALUES_FILE
+
+  CHART_VERSION=1.1.8
 
   if [ "$INSTALL" = "true" ]; then
     echo Installing Alfresco Content Services helm chart...
