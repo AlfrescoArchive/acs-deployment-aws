@@ -41,6 +41,7 @@ Metadata:
             - NodeInstanceRoleArn
             - EC2LogGroup
             - HelmDownloadScript
+            - SolrVolume1Id
 
       ParameterLabels:
         TemplateBucketName:
@@ -97,6 +98,8 @@ Metadata:
           default: ARN for the worker nodes instance role (with logging policy)
         EC2LogGroup:
           default: Log group name to ship all ACS logs with Fluentd
+        SolrVolume1Id:
+          default: Solr volume id
 
 Parameters:
     TemplateBucketName:
@@ -192,6 +195,9 @@ Parameters:
     EC2LogGroup:
       Type: String
       Description: Log group name to ship all ACS logs with Fluentd
+    SolrVolume1Id:
+      Type: String
+      Description: Volume id from the used EBS volume for Solr
 
 Conditions:
   PrivateRegistry: !Not [!Equals [!Ref RegistryCredentials, ""]]
@@ -271,6 +277,7 @@ Resources:
                     - !Sub "--s3bucket-name ${S3BucketName}"
                     - !Sub "--s3bucket-kms-alias ${S3BucketKMSAlias}"
                     - !Sub "--s3bucket-location ${AWS::Region}"
+                    - !Sub "--solr-volume-1-id ${SolrVolume1Id}"
                     - !If [PrivateRegistry, !Join ["", [--registry-secret, " ", !Ref RegistryCredentials]], !Ref "AWS::NoValue"]
                     - "--install"
               timeoutSeconds: 90
@@ -307,6 +314,7 @@ Resources:
                     - !Sub "--s3bucket-name ${S3BucketName}"
                     - !Sub "--s3bucket-kms-alias ${S3BucketKMSAlias}"
                     - !Sub "--s3bucket-location ${AWS::Region}"
+                    - !Sub "--solr-volume-1-id ${SolrVolume1Id}"
                     - "--upgrade"
               timeoutSeconds: 60
       DocumentType: Command

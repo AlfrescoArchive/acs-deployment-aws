@@ -29,9 +29,10 @@ usage() {
   echo -e "--install \t Install a new ACS Helm chart"
   echo -e "--upgrade \t Upgrade an existing ACS Helm Chart"
   echo -e "--repo-pods \t Repo Replica number"
+  echo -e "--solr-volume-1-id \t Solr volume id"
 }
 
-if [ $# -lt 15 ]; then
+if [ $# -lt 16 ]; then
   usage
 else
   # extract options and their arguments into variables.
@@ -101,6 +102,10 @@ else
               REPO_PODS="$2";
               shift 2
               ;;
+          --solr-volume-1-id)
+              SOLR_VOLUME1_ID="$2";
+              shift 2
+              ;;
           --install)
               INSTALL="true";
               shift
@@ -127,16 +132,15 @@ else
   if [ ! -z ${REGISTRYCREDENTIALS} ]; then
     if [[ $(isBase64) == "True" ]]; then
       echo "Creating secrets file to access private repository"
-      cat <<EOF > secret.yaml
-apiVersion: v1
+      echo "apiVersion: v1
 kind: Secret
 metadata:
   name: quay-registry-secret
   namespace: $DESIREDNAMESPACE
 type: kubernetes.io/dockerconfigjson
 data:
-  .dockerconfigjson: $REGISTRYCREDENTIALS
-EOF
+  .dockerconfigjson: $REGISTRYCREDENTIALS" > secret.yaml
+
       kubectl create -f secret.yaml
     else
       echo "REGISTRYCREDENTIALS provided is not base64 encoded skipping..."
@@ -146,18 +150,6 @@ EOF
   else
     echo "REGISTRYCREDENTIALS value is empty skipping..."
   fi
-
-  # We get Bastion AZ and Region to get a valid right region and query for volumes
-  INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
-  BASTION_AZ=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
-  REGION=${BASTION_AZ%?}
-  # We use this tag below to find the proper EKS cluster name and figure out the unique volume
-  TAG_NAME="KubernetesCluster"
-  TAG_VALUE=$(aws ec2 describe-tags --filters "Name=resource-id,Values=$INSTANCE_ID" "Name=key,Values=$TAG_NAME" --region $REGION --output=text | cut -f5)
-  # EKSname is not unique if we have multiple ACS deployments in the same cluster
-  # It must be a name unique per Alfresco deployment, not per EKS cluster.
-  SOLR_VOLUME1_NAME_TAG="$TAG_VALUE-SolrVolume1"
-  SOLR_VOLUME1_ID=$(aws ec2 describe-volumes --region $REGION --filters "Name=tag:Name,Values=$SOLR_VOLUME1_NAME_TAG" --query "Volumes[?State=='available'].{Volume:VolumeId}" --output text)
 
   ALFRESCO_PASSWORD=$(printf %s $ALFRESCO_PASSWORD | iconv -t utf16le | openssl md4| awk '{ print $2}')
   CHART_VERSION=1.1.8
@@ -265,9 +257,7 @@ registryPullSecrets: quay-registry-secret" > $VALUES_FILE
   if [ "$UPGRADE" = "true" ]; then
     echo Upgrading Alfresco Content Services helm chart...
     helm upgrade $ACS_RELEASE alfresco-stable/alfresco-content-services --version $CHART_VERSION -f $VALUES_FILE \
-     --install --namespace=$DESIREDNAMESPACE \
-     --set alfresco-search.persistence.enabled=false \
-     --set alfresco-search.persistence.existingClaim=$ACS_RELEASE-alfresco-search-solr-claim
+     --install --namespace=$DESIREDNAMESPACE
   fi
 
   STATUS=$(helm ls $ACS_RELEASE | grep $ACS_RELEASE | awk '{print $8}')
