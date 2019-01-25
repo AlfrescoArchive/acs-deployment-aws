@@ -182,7 +182,8 @@ alfresco-search:
     limits:
       memory: \"12500Mi\"
   environment:
-    SOLR_JAVA_MEM: \"-Xms12000M -Xmx12000M\"
+    MAX_SOLR_RAM_PERCENTAGE: \"70\"
+    JAVA_TOOL_OPTIONS: \"$JAVA_TOOL_OPTIONS -XX:MaxRAMPercentage=70\"
   persistence:
     VolumeSizeRequest: \"100Gi\"
     EbsPvConfiguration:

@@ -662,6 +662,66 @@ Resources:
           - Key: Name
             Value: !Sub "${AWS::StackName}-eks-SolrVolume1"
 
+    AWSDataLifecycleManagerRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  -  dlm.amazonaws.com
+              Action:
+                - sts:AssumeRole
+        Policies:
+          - PolicyName: AWSDLMServiceRole
+            PolicyDocument:
+              Version: 2012-10-17
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - ec2:CreateSnapshot
+                    - ec2:DeleteSnapshot
+                    - ec2:DescribeVolumes
+                    - ec2:DescribeSnapshots
+                  Resource: '*'
+                - Effect: Allow
+                  Action:
+                    - ec2:CreateTags
+                  Resource: "arn:aws:ec2:*::snapshot/*"
+
+    DataLifecyclePolicy:
+      DependsOn:
+        - SolrVolume1
+      Type: AWS::DLM::LifecyclePolicy
+      Properties:
+        Description: "Lifecycle Policy using CloudFormation"
+        State: "ENABLED"
+        ExecutionRoleArn: !GetAtt AWSDataLifecycleManagerRole.Arn
+        PolicyDetails:
+          ResourceTypes:
+            - "VOLUME"
+          TargetTags:
+            -
+              Key: Name
+              Value: !Sub "${AWS::StackName}-eks-SolrVolume1"
+          Schedules:
+            -
+              Name: "SolrVolume1 Daily Snapshot"
+              TagsToAdd:
+                -
+                  Key: "type"
+                  Value: "SolrVolumeSnapshot"
+              CreateRule:
+                Interval: 24
+                IntervalUnit: "HOURS"
+                Times:
+                  - "01:00"
+              RetainRule:
+                Count: 10
+              CopyTags: true
+
     RDSStack:
       Type: AWS::CloudFormation::Stack
       Properties:

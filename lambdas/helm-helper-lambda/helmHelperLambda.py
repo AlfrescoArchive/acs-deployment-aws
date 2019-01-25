@@ -61,23 +61,25 @@ def handler(event, context):
 
                     if eventType == 'Create':
                         # Install helm chart
-                        logger.info('Installing ACS helm chart...')
+                        logger.info('Installing helm chart...')
                         helmdeploy = ssm_sendcommand(ssm_instance, helminstall_doc['Name'], {})
                         if ssm_commandstatus(helmdeploy['CommandId'], ssm_instance) is True:
-                            logger.info('ACS helm chart installation completed successfully!')
+                            logger.info('Helm chart installation completed successfully!')
                         else:
-                            logger.error('ACS helm chart installation was unsuccessful')
+                            logger.error('Helm chart installation was unsuccessful')
                             cfnresponse.send(event, context, cfnresponse.FAILED, {})
+                            return
 
                     if eventType == 'Update':
                         # Upgrade helm release
-                        logger.info('Upgrading ACS helm chart...')
+                        logger.info('Upgrading helm chart...')
                         helmdeploy = ssm_sendcommand(ssm_instance, helmupgrade_doc['Name'], {})
                         if ssm_commandstatus(helmdeploy['CommandId'], ssm_instance) is True:
-                            logger.info('ACS helm chart upgrade completed successfully!')
+                            logger.info('Helm chart upgrade completed successfully!')
                         else:
-                            logger.error('ACS helm chart upgrade was unsuccessful')
+                            logger.error('Helm chart upgrade was unsuccessful')
                             cfnresponse.send(event, context, cfnresponse.FAILED, {})
+                            return
 
                     # Get ELB to return as Stack Output
                     logger.info('Retrieving ELB URL...')
