@@ -804,8 +804,6 @@ Resources:
           AcsReleaseName: !Ref AcsReleaseName
           RepoPods: !Ref RepoPods
           Route53DnsZone: !Ref Route53DnsZone
-          NodeInstanceRoleArn: !GetAtt NodeInstanceRole.Arn
-          EC2LogGroup: !Ref EC2LogGroup
 
 Outputs:
   # VPC stack
