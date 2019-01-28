@@ -41,16 +41,6 @@ def handler(event, context):
             helmupgrade_doc = describe_document(event['ResourceProperties']['HelmUpgradeRunScript'])
             helmelb_doc = describe_document(event['ResourceProperties']['GetElbEndpointRunScript'])
 
-            # First download all helper scripts
-            init_doc = describe_document(event['ResourceProperties']['HelmDownloadScript'])
-            logger.info('Downloading helper scripts...')
-            init = ssm_sendcommand(ssm_instance, init_doc['Name'], {})
-            if ssm_commandstatus(init['CommandId'], ssm_instance) is True:
-                logger.info('scripts directory was downloaded successfully!')
-            else:
-                logger.error('Helper scripts download was unsuccessful')
-                cfnresponse.send(event, context, cfnresponse.FAILED, {})
-
             if helmingress_doc['Status'] == 'Active' and helminstall_doc['Status'] == 'Active' and helmupgrade_doc['Status'] == 'Active' and helmelb_doc['Status'] == 'Active':
 
                 # Deploy nginx-ingress helm chart
@@ -71,6 +61,17 @@ def handler(event, context):
                             return
 
                     if eventType == 'Update':
+                        # First download all helper scripts
+                        init_doc = describe_document(event['ResourceProperties']['HelmDownloadScript'])
+                        logger.info('Downloading helper scripts...')
+                        init = ssm_sendcommand(ssm_instance, init_doc['Name'], {})
+                        if ssm_commandstatus(init['CommandId'], ssm_instance) is True:
+                            logger.info('scripts directory was downloaded successfully!')
+                        else:
+                            logger.error('Helper scripts download was unsuccessful')
+                            cfnresponse.send(event, context, cfnresponse.FAILED, {})
+                            return
+
                         # Upgrade helm release
                         logger.info('Upgrading helm chart...')
                         helmdeploy = ssm_sendcommand(ssm_instance, helmupgrade_doc['Name'], {})
@@ -107,6 +108,7 @@ def handler(event, context):
 
             if status == 'UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS':
                 logger.info('Skip deleting ACS helm chart')
+                cfnresponse.send(event, context, cfnresponse.SUCCESS, data, physicalResourceId)
             else:
                 helmdelacs_doc = describe_document(event['ResourceProperties']['HelmDeleteAcsRunScript'])
                 helmdel_doc = describe_document(event['ResourceProperties']['HelmDeleteIngressRunScript'])

@@ -805,7 +805,6 @@ Resources:
           Route53DnsZone: !Ref Route53DnsZone
           NodeInstanceRoleArn: !GetAtt NodeInstanceRole.Arn
           EC2LogGroup: !Ref EC2LogGroup
-          SolrVolume1Id: !Ref SolrVolume1
 
 Outputs:
   # VPC stack
