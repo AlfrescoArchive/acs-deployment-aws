@@ -156,7 +156,7 @@ data:
   # EKSname is not unique if we have multiple ACS deployments in the same cluster
   # It must be a name unique per Alfresco deployment, not per EKS cluster.
   SOLR_VOLUME1_NAME_TAG="$TAG_VALUE-SolrVolume1"
-  SOLR_VOLUME1_ID=$(aws ec2 describe-volumes --region $REGION --filters "Name=tag:Name,Values=$SOLR_VOLUME1_NAME_TAG" --query "Volumes[?State=='available'].{Volume:VolumeId}" --output text)
+  SOLR_VOLUME1_ID=$(aws ec2 describe-volumes --region $REGION --filters "Name=tag:Name,Values=$SOLR_VOLUME1_NAME_TAG" --query "Volumes[?State=='available' || State=='in-use'].{Volume:VolumeId}" --output text)
 
   ALFRESCO_PASSWORD=$(printf %s $ALFRESCO_PASSWORD | iconv -t utf16le | openssl md4| awk '{ print $2}')
   VALUES_FILE="acs_helm_values.yaml"
