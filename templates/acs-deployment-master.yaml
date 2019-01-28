@@ -648,6 +648,7 @@ Resources:
           NodesMetricsEnabled: !Ref NodesMetricsEnabled
           EksExternalUserArn: !Ref EksExternalUserArn
           EKSClusterName: !Sub "${AWS::StackName}-eks"
+          FluentdReleaseName: !Ref FluentdReleaseName
 
     SolrVolume1:
       Type: AWS::EC2::Volume
