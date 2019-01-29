@@ -187,6 +187,22 @@ Resources:
 
   # SSM documents to run helm commands on the bastion
 
+  # Download scripts directory
+  HelmDownloadScript:
+    Type: "AWS::SSM::Document"
+    Properties:
+      Content:
+        schemaVersion: "2.2"
+        description: Download directory of helm helper scripts
+        mainSteps:
+          - action: aws:downloadContent
+            name: downloadHelmScriptsDirectory
+            inputs:
+              sourceType: "S3"
+              sourceInfo: !Sub "{ \"path\": \"https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/scripts\" }"
+              destinationPath: "/tmp"
+      DocumentType: Command
+
   # Execute Helm nginx-ingress installation
   HelmInstallIngressRunScript:
     Type: "AWS::SSM::Document"
@@ -384,6 +400,14 @@ Resources:
                   - ssm:SendCommand
                   - ssm:GetCommandInvocation
                 Resource: '*'
+        - PolicyName: HelmHelperLambdaRoleCfnPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudformation:DescribeStacks
+                Resource: '*'
         - PolicyName: s3GetObjectPolicy
           PolicyDocument:
             Version: 2012-10-17
@@ -415,12 +439,14 @@ Resources:
       VPCID: !Ref VPCID
       NodeSecurityGroup: !Ref NodeSecurityGroup
       BastionAutoScalingGroup: !Ref BastionAutoScalingGroup
+      HelmDownloadScript: !Ref HelmDownloadScript
       HelmInstallIngressRunScript: !Ref HelmInstallIngressRunScript
       HelmInstallRunScript: !Ref HelmInstallRunScript
       HelmUpgradeRunScript: !Ref HelmUpgradeRunScript
       GetElbEndpointRunScript: !Ref GetElbEndpointRunScript
       HelmDeleteAcsRunScript: !Ref HelmDeleteAcsRunScript
       HelmDeleteIngressRunScript: !Ref HelmDeleteIngressRunScript
+      StackName: !Sub "${AWS::StackName}"
 
   Route53DnsRecord:
     Type: AWS::Route53::RecordSetGroup
