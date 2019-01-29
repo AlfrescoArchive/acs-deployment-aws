@@ -256,7 +256,7 @@ share:
     initialDelaySeconds: 420
 registryPullSecrets: quay-registry-secret" > $VALUES_FILE
 
-  CHART_VERSION=1.1.8
+  CHART_VERSION=1.1.10
 
   if [ "$INSTALL" = "true" ]; then
     echo Installing Alfresco Content Services helm chart...
