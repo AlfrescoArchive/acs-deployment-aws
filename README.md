@@ -1,4 +1,4 @@
-# Alfresco Content Services Deployment on AWS Cloud
+# Alfresco Content Services Deployment Template for Amazon Elastic Service for Kubernetes (EKS)
 
 ## Overview
 
@@ -14,7 +14,7 @@ Currently, this setup will only work in AWS US East (N.Virginia) and West (Orego
 ### Prerequisites
 * You need a hosted zone e.g. example.com. See the AWS documentation on [Creating a Public Hosted Zone](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html).
 * An SSL certificate for the Elastic Load Balancer and the domains in the hosted zone. See the AWS documentation on [Creating SSL Certificates](https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/ssl-server-cert.html).
-* Private Docker images from Quay.io are used during the Helm deployment. You need access to a secret with credentials to be able to pull those images. Alfresco customers can request their credentials by logging a ticket at https://support.alfresco.com.
+* Private Docker images from Quay.io are used during the Helm deployment. You need access to a secret with credentials to be able to pull those images. Alfresco customers and partners can request their credentials by logging a ticket at https://support.alfresco.com.
 
 ### Permissions
 Ensure that the IAM role or IAM user that creates the stack allows the following permissions:
@@ -196,6 +196,63 @@ See the AWS documentation on [Amazon EC2 Key Pairs](https://docs.aws.amazon.com/
 | The hosted zone to create Route53 Record for ACS (Route53DnsZone)| <span style="color:red">Requires input</span> | Enter your hosted zone e.g. **example.com.**. For more information about how to create a hosted zone, see the AWS documentation on [Creating a Public Hosted Zone](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html). |
 
 After the CFN stack creation has finished, you can find the Alfresco URL in the output from the master template.
+
+### Upgrading the ACS helm deployment with CFN templates
+This section describes how to perform a Helm upgrade using the CFN template update feature in the AWS Console. Alternatively, you can manually upgrade the ACS Helm charts by establishing a connection to the cluster (see [EKS cluster remote access](docs/eks_cluster_remote_access.md)) or using the bastion host (see [How to connect ACS bastion host remotely](docs/bastion_access.md)).
+
+**Note:**
+* Upgrading using the CFN update template is only possible to version 1.1.8.2 or later.
+* Downgrading to an older ACS Helm chart is not supported.
+* If the upgrade fails, Helm will revert to the previous chart version.
+
+#### Upgrade steps
+1. Choose the CFN template version you would like to upgrade to from the [Releases](https://github.com/Alfresco/acs-deployment-aws/releases) page. Make sure it is 1.1.10 or newer. Also, check the [Changelog](CHANGELOG.md) for the chosen version to see the feature updates in each release.
+2. Checkout your git deployment to this commit or download and unzip the release artefact.
+3. Change directory to
+```acs-deployment-aws```
+.
+4. Prepare an S3 bucket to upload all the required files, like nested templates, scripts, lambdas. You can simply follow the same steps as in [Preparing the S3 bucket for CFN template deployment](#preparing-the-s3-bucket-for-cfn-template-deployment). The `<bucket_name>` and `<key_prefix>` don’t need to be the same as during the first deployment of ACS EKS, but make sure that the bucket resides in the same region as your ACS deployment.
+5. Go to the **AWS Console** and open **CloudFormation**.
+6. Check the master stack from your ACS deployment (it starts with the description: Master template to deploy ACS ...)
+7. Click on
+```Actions```
+and then on
+```Update Stack```
+.
+8. In
+```Upload a template to Amazon S3```
+choose `acs-deployment-aws/templates/acs-deployment-master.yaml` and click
+```Next```
+.
+9. In the
+```ACS Stack Configuration```
+section, provide the bucket name for the first parameter labeled with
+```The name of the S3 bucket that holds the templates```
+, and the key prefix for the second parameter labeled with
+```The Key prefix for the templates in the S3 template bucket```
+from step 4.
+10. Click
+```Next```
+and update any additional options for your stack (if needed).
+11. Click
+```Next```
+and check the change details.
+12. Check the Capabilities that are needed for the update.
+13. Click on
+```Update```
+.
+
+The whole CFN update process takes some minutes. You can follow the update process by looking at the **Status** column in CloudFormation. Validate that the deployment is using the newer chart versions by establishing a connection to the cluster ([EKS cluster remote access](docs/eks_cluster_remote_access.md)) or using the bastion host ([How to connect ACS bastion host remotely](docs/bastion_access.md)) and execute:
+
+```bash
+helm ls
+```
+
+**Troubleshooting:**
+* If the stack fails to update due to problems with a lambda function, use the CloudWatch logs to identify the problem.
+* If there is not enough information, go to the created EC2LogGroup (in the CloudFormation stack) and search for the Bastion log stream ending with
+```amazon-ssm-agent.log```
+to get more detailed log information.
 
 ### Deleting ACS EKS with AWS Console
 Go to **CloudFormation** and delete the master ACS EKS stack. The nested stacks will be deleted first, followed by the master stack.
