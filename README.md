@@ -1,4 +1,4 @@
-# Alfresco Content Services Deployment on AWS Cloud
+# Alfresco Content Services Deployment Template for Amazon Elastic Service for Kubernetes (EKS)
 
 ## Overview
 
@@ -14,7 +14,7 @@ Currently, this setup will only work in AWS US East (N.Virginia) and West (Orego
 ### Prerequisites
 * You need a hosted zone e.g. example.com. See the AWS documentation on [Creating a Public Hosted Zone](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html).
 * An SSL certificate for the Elastic Load Balancer and the domains in the hosted zone. See the AWS documentation on [Creating SSL Certificates](https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/ssl-server-cert.html).
-* Private Docker images from Quay.io are used during the Helm deployment. You need access to a secret with credentials to be able to pull those images. Alfresco customers can request their credentials by logging a ticket at https://support.alfresco.com.
+* Private Docker images from Quay.io are used during the Helm deployment. You need access to a secret with credentials to be able to pull those images. Alfresco customers and partners can request their credentials by logging a ticket at https://support.alfresco.com.
 
 ### Permissions
 Ensure that the IAM role or IAM user that creates the stack allows the following permissions:
@@ -199,12 +199,12 @@ After the CFN stack creation has finished, you can find the Alfresco URL in the 
 
 ### Upgrading the ACS helm deployment with CFN templates
 **Note:** This section is about helm upgrades using the CFN template update feature from AWS. It would be also possible to manually upgrade the ACS helm charts with establishing a connection to the cluster ([EKS cluster remote access](docs/eks_cluster_remote_access.md)) or using the bastion host ([How to connect ACS bastion host remotely](docs/bastion_access.md)). \
-**Note:** Upgrading using the CFN update template is only possible to version 1.1.10 or later. \
+**Note:** Upgrading using the CFN update template is only possible to version 1.1.8.2 or later. \
 **Note:** Downgrading to an older ACS helm chart is not supported. \
 **Note:** In a case of a failed upgrade, helm will revert to the previous chart version.
 
 Upgrade steps:
-1. Choose the CFN template version you would like to upgrade with [Releases](https://github.com/Alfresco/acs-deployment-aws/releases) (Make sure it is 1.1.10 or newer! Check the [Changelog](CHANGELOG.md) for the chosen version).
+1. Choose the CFN template version you would like to upgrade with [Releases](https://github.com/Alfresco/acs-deployment-aws/releases) (Make sure it is 1.1.8.2 or newer! Check the [Changelog](CHANGELOG.md) for the chosen version).
 2. Checkout your git deployment to this commit or download and unzip the release artefact.
 3. Use the acs-deployment-aws directory for the next step.
 4. Prepare an S3 bucket to upload all needed files like nested templates, scripts, lambdas. You can simply follow the same steps as in [Preparing the S3 bucket for CFN template deployment](#preparing-the-s3-bucket-for-cfn-template-deployment). The `<bucket_name>` and `<key_prefix>` doesn't need to be the same as during the first deploying of ACS EKS but make sure that the bucket recides in the same region than your ACS deployment.

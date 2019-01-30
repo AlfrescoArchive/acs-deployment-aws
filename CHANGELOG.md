@@ -1,4 +1,4 @@
-# 1.1.10
+# 1.1.8.2
 
 ## Features
 * Implemented life cycle policy to create a daily snapshot from the EBS solr volume
