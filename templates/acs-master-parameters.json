@@ -64,6 +64,10 @@
     "ParameterValue": "@@AlfrescoPasswordValue@@"
   },
   {
+    "ParameterKey": "RDSCreateSnapshotWhenDeleted",
+    "ParameterValue": "@@RDSCreateSnapshotWhenDeletedValue@@"
+  },
+  {
     "ParameterKey": "RegistryCredentials",
     "ParameterValue": "@@RegistryCredentialsValue@@"
   },
