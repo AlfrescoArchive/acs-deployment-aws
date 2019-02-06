@@ -115,6 +115,11 @@ In many cases you can use the default parameters. Additional information is prov
 * CIDR block to allow remote access
 * Alfresco Password
 * AmazonMQ Password
+* The name of the S3 bucket that holds the templates
+* The ACS domain name
+* The ACS SSL Certificate arn to use with ELB
+* Private Registry Credentials
+* The hosted zone to create Route53 Record for ACS
 
 See the AWS documentation on [Amazon EC2 Key Pairs](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) for details on how to create a key pair name.
 
