@@ -86,6 +86,7 @@ rbac:
 controller:
   config:
     force-ssl-redirect: "true"
+    server-tokens: "false"
   scope:
     enabled: true
     namespace: $DESIREDNAMESPACE
