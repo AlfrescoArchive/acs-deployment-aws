@@ -702,15 +702,137 @@ Resources:
       GroupDescription: Cluster communication with worker nodes
       VpcId: !Ref VPCID
 
-  NodeSecurityGroupIngress:
+  NodeSecurityGroupIngressSSH:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      Description: Allow nodes to communicate with each other
+      Description: Allow SSH traffic from bastion nodes
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref BastionSecurityGroup
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+
+  NodeSecurityGroupIngressDNSTCP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow DNS TCP traffic
       GroupId: !Ref NodeSecurityGroup
       SourceSecurityGroupId: !Ref NodeSecurityGroup
-      IpProtocol: '-1'
-      FromPort: 0
-      ToPort: 65535
+      IpProtocol: tcp
+      FromPort: 53
+      ToPort: 53
+
+  NodeSecurityIngressDNSUDP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow DNS UDP traffic
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: udp
+      FromPort: 53
+      ToPort: 53
+
+  NodeSecurityIngressHTTP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow HTTP traffic
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 80
+      ToPort: 80
+
+  NodeSecurityIngressHTTPS:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow HTTPS traffic
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+
+  NodeSecurityGroupIngressRepoCluster:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow the repo cluster to communicate across worker nodes
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 5701
+      ToPort: 5701
+
+  NodeSecurityGroupIngressShareCluster:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow the Share cluster to communicate across worker nodes
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 5801
+      ToPort: 5810
+
+  NodeSecurityGroupIngressRepoShare:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow Repo and Share access across worker nodes
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 8080
+      ToPort: 8080
+
+  NodeSecurityGroupIngressTransformers:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow transformers access across worker nodes
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 8090
+      ToPort: 8090
+
+  NodeSecurityGroupIngressTransformRouter:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow transform router access across worker nodes
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 8095
+      ToPort: 8095
+
+  NodeSecurityGroupIngressSharedFileStore:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow shared file store access across worker nodes
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 8099
+      ToPort: 8099
+
+  NodeSecurityGroupIngressSOLR:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow SOLR access across worker nodes
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 8983
+      ToPort: 8983
+
+  NodeSecurityGroupIngressActiveMQ:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow ActiveMQ access across worker nodes
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 61616
+      ToPort: 61616
+
+  # The following security groups are defined by the AWS EKS worker node template but with a restricted port range
 
   NodeSecurityGroupFromControlPlaneIngress:
     Type: AWS::EC2::SecurityGroupIngress
@@ -719,8 +841,8 @@ Resources:
       GroupId: !Ref NodeSecurityGroup
       SourceSecurityGroupId: !Ref ControlPlaneSecurityGroup
       IpProtocol: tcp
-      FromPort: 1025
-      ToPort: 65535
+      FromPort: 10250
+      ToPort: 10250
 
   ControlPlaneEgressToNodeSecurityGroup:
     Type: AWS::EC2::SecurityGroupEgress
@@ -729,8 +851,10 @@ Resources:
       GroupId: !Ref ControlPlaneSecurityGroup
       DestinationSecurityGroupId: !Ref NodeSecurityGroup
       IpProtocol: tcp
-      FromPort: 1025
-      ToPort: 65535
+      FromPort: 10250
+      ToPort: 10250
+
+  # The following security groups are defined by the AWS EKS worker node template
 
   NodeSecurityGroupFromControlPlaneOn443Ingress:
     Type: AWS::EC2::SecurityGroupIngress
