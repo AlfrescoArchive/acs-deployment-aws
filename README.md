@@ -114,6 +114,7 @@ In many cases you can use the default parameters. Additional information is prov
 * RDS Password
 * CIDR block to allow remote access
 * Alfresco Password
+* AmazonMQ Password
 
 See the AWS documentation on [Amazon EC2 Key Pairs](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) for details on how to create a key pair name.
 
