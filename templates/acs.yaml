@@ -38,8 +38,6 @@ Metadata:
             - RegistryCredentials
             - RepoPods
             - Route53DnsZone
-            - NodeInstanceRoleArn
-            - EC2LogGroup
 
       ParameterLabels:
         TemplateBucketName:
@@ -92,10 +90,6 @@ Metadata:
           default: The number of repository pods in the cluster
         Route53DnsZone:
           default: The hosted zone to create Route53 Record for ACS (including the . (dot) at the end)
-        NodeInstanceRoleArn:
-          default: ARN for the worker nodes instance role (with logging policy)
-        EC2LogGroup:
-          default: Log group name to ship all ACS logs with Fluentd
 
 Parameters:
     TemplateBucketName:
@@ -185,12 +179,6 @@ Parameters:
     Route53DnsZone:
       Type: String
       Description: The hosted zone to create Route53 Record for ACS (including the . (dot) at the end)
-    NodeInstanceRoleArn:
-      Type: String
-      Description: ARN for the worker nodes instance role (with logging policy)
-    EC2LogGroup:
-      Type: String
-      Description: Log group name to ship all ACS logs with Fluentd
 
 Conditions:
   PrivateRegistry: !Not [!Equals [!Ref RegistryCredentials, ""]]
@@ -198,6 +186,22 @@ Conditions:
 Resources:
 
   # SSM documents to run helm commands on the bastion
+
+  # Download scripts directory
+  HelmDownloadScript:
+    Type: "AWS::SSM::Document"
+    Properties:
+      Content:
+        schemaVersion: "2.2"
+        description: Download directory of helm helper scripts
+        mainSteps:
+          - action: aws:downloadContent
+            name: downloadHelmScriptsDirectory
+            inputs:
+              sourceType: "S3"
+              sourceInfo: !Sub "{ \"path\": \"https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/scripts\" }"
+              destinationPath: "/tmp"
+      DocumentType: Command
 
   # Execute Helm nginx-ingress installation
   HelmInstallIngressRunScript:
@@ -396,6 +400,14 @@ Resources:
                   - ssm:SendCommand
                   - ssm:GetCommandInvocation
                 Resource: '*'
+        - PolicyName: HelmHelperLambdaRoleCfnPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudformation:DescribeStacks
+                Resource: '*'
         - PolicyName: s3GetObjectPolicy
           PolicyDocument:
             Version: 2012-10-17
@@ -427,12 +439,14 @@ Resources:
       VPCID: !Ref VPCID
       NodeSecurityGroup: !Ref NodeSecurityGroup
       BastionAutoScalingGroup: !Ref BastionAutoScalingGroup
+      HelmDownloadScript: !Ref HelmDownloadScript
       HelmInstallIngressRunScript: !Ref HelmInstallIngressRunScript
       HelmInstallRunScript: !Ref HelmInstallRunScript
       HelmUpgradeRunScript: !Ref HelmUpgradeRunScript
       GetElbEndpointRunScript: !Ref GetElbEndpointRunScript
       HelmDeleteAcsRunScript: !Ref HelmDeleteAcsRunScript
       HelmDeleteIngressRunScript: !Ref HelmDeleteIngressRunScript
+      StackName: !Sub "${AWS::StackName}"
 
   Route53DnsRecord:
     Type: AWS::Route53::RecordSetGroup

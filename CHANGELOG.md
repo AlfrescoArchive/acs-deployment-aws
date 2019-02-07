@@ -1,3 +1,14 @@
+# 1.1.10
+
+## Features
+* Using Alfresco's Helm Charts 1.1.10 https://github.com/Alfresco/acs-deployment
+
+# 1.1.8.2
+
+## Features
+* Implemented life cycle policy to create a daily snapshot from the EBS solr volume
+* Use CFN update template to upgrade ACS helm chart version
+
 # 1.1.8.1
 
 ## Features
