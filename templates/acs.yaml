@@ -38,9 +38,6 @@ Metadata:
             - RegistryCredentials
             - RepoPods
             - Route53DnsZone
-            - NodeInstanceRoleArn
-            - EC2LogGroup
-            - HelmDownloadScript
 
       ParameterLabels:
         TemplateBucketName:
@@ -93,10 +90,6 @@ Metadata:
           default: The number of repository pods in the cluster
         Route53DnsZone:
           default: The hosted zone to create Route53 Record for ACS (including the . (dot) at the end)
-        NodeInstanceRoleArn:
-          default: ARN for the worker nodes instance role (with logging policy)
-        EC2LogGroup:
-          default: Log group name to ship all ACS logs with Fluentd
 
 Parameters:
     TemplateBucketName:
@@ -186,12 +179,6 @@ Parameters:
     Route53DnsZone:
       Type: String
       Description: The hosted zone to create Route53 Record for ACS (including the . (dot) at the end)
-    NodeInstanceRoleArn:
-      Type: String
-      Description: ARN for the worker nodes instance role (with logging policy)
-    EC2LogGroup:
-      Type: String
-      Description: Log group name to ship all ACS logs with Fluentd
 
 Conditions:
   PrivateRegistry: !Not [!Equals [!Ref RegistryCredentials, ""]]

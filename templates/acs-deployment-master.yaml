@@ -648,6 +648,7 @@ Resources:
           NodesMetricsEnabled: !Ref NodesMetricsEnabled
           EksExternalUserArn: !Ref EksExternalUserArn
           EKSClusterName: !Sub "${AWS::StackName}-eks"
+          FluentdReleaseName: !Ref FluentdReleaseName
 
     SolrVolume1:
       Type: AWS::EC2::Volume
@@ -803,8 +804,6 @@ Resources:
           AcsReleaseName: !Ref AcsReleaseName
           RepoPods: !Ref RepoPods
           Route53DnsZone: !Ref Route53DnsZone
-          NodeInstanceRoleArn: !GetAtt NodeInstanceRole.Arn
-          EC2LogGroup: !Ref EC2LogGroup
 
 Outputs:
   # VPC stack

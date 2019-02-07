@@ -208,16 +208,50 @@ Parameters:
       Default: "alfresco-fluentd"
 
 Mappings:
+  # see https://github.com/aws-quickstart/quickstart-linux-bastion/blob/master/templates/linux-bastion.template for latest AMI IDs
   BastionAmiRegionMap:
     us-east-1:
-      AmiId: ami-cfe4b2b0
+      AmiId: ami-0080e4c5bc078760e
     us-west-2:
-      AmiId: ami-0ad99772
+      AmiId: ami-01e24be29428c15b2
+    us-east-2:
+      AmiId: ami-0cd3dfa4e37921605
+    eu-central-1:
+      AmiId: ami-0cfbf4f6db41068ac
+    eu-north-1:
+      AmiId: ami-86fe70f8
+    eu-west-1:
+      AmiId: ami-08935252a36e25f85
+    ap-northeast-1:
+      AmiId: ami-00a5245b4816c38e6
+    ap-northeast-2:
+      AmiId: ami-00dc207f8ba6dc919
+    ap-southeast-1:
+      AmiId: ami-05b3bcf7f311194b3
+    ap-southeast-2:
+      AmiId: ami-02fd0b06f06d93dfc
+  # see https://docs.aws.amazon.com/eks/latest/userguide/eks-optimized-ami.html for latest worker node AMI IDs
   NodeAmiRegionMap:
     us-east-1:
-      AmiId: ami-dea4d5a1
+      AmiId: ami-0c24db5df6badc35a
     us-west-2:
-      AmiId: ami-73a6e20b
+      AmiId: ami-0a2abab4107669c1b
+    us-east-2:
+      AmiId: ami-0c2e8d28b1f854c68
+    eu-central-1:
+      AmiId: ami-010caa98bae9a09e2
+    eu-north-1:
+      AmiId: ami-06ee67302ab7cf838
+    eu-west-1:
+      AmiId: ami-01e08d22b9439c15a
+    ap-northeast-1:
+      AmiId: ami-0f0e8066383e7a2cb
+    ap-northeast-2:
+      AmiId: ami-0b7baa90de70f683f
+    ap-southeast-1:
+      AmiId: ami-019966ed970c18502
+    ap-southeast-2:
+      AmiId: ami-06ade0abbd8eca425
 
 Conditions:
   isNodesMetricsEnabled: !Equals [!Ref NodesMetricsEnabled, "true"]
@@ -627,15 +661,15 @@ Resources:
             easy_install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz
             EIP_LIST=${BastionEIP},Null,Null,Null
             CLOUDWATCHGROUP=${EC2LogGroup}
-            curl -o kubectl https://amazon-eks.s3-us-west-2.amazonaws.com/1.10.3/2018-06-05/bin/linux/amd64/kubectl
+            curl -o kubectl https://amazon-eks.s3-us-west-2.amazonaws.com/1.11.5/2018-12-06/bin/linux/amd64/kubectl
             chmod +x ./kubectl
             mv kubectl /usr/local/bin
             kubectl version --short --client
-            curl -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.10.3/2018-07-26/bin/linux/amd64/aws-iam-authenticator
+            curl -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.11.5/2018-12-06/bin/linux/amd64/aws-iam-authenticator
             chmod +x ./aws-iam-authenticator
             mv aws-iam-authenticator /usr/local/bin
-            aws-iam-authenticator help
-            curl -o helm.tar.gz https://storage.googleapis.com/kubernetes-helm/helm-v2.9.1-linux-amd64.tar.gz
+            aws-iam-authenticator version
+            curl -o helm.tar.gz https://storage.googleapis.com/kubernetes-helm/helm-v2.12.3-linux-amd64.tar.gz
             tar xf helm.tar.gz
             mv ./linux-amd64/helm /usr/local/bin
             helm version --client
@@ -668,10 +702,60 @@ Resources:
       GroupDescription: Cluster communication with worker nodes
       VpcId: !Ref VPCID
 
+  NodeSecurityGroupIngressSSH:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow SSH traffic from bastion nodes
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref BastionSecurityGroup
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+
+  NodeSecurityGroupIngressDNSTCP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow DNS TCP traffic
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 53
+      ToPort: 53
+
+  NodeSecurityIngressDNSUDP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow DNS UDP traffic
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: udp
+      FromPort: 53
+      ToPort: 53
+
+  NodeSecurityIngressHTTP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow HTTP traffic
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 80
+      ToPort: 80
+
+  NodeSecurityIngressHTTPS:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow HTTPS traffic
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+
   NodeSecurityGroupIngressRepoCluster:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      Description: Allow node to communicate with each other repo cluster
+      Description: Allow the repo cluster to communicate across worker nodes
       GroupId: !Ref NodeSecurityGroup
       SourceSecurityGroupId: !Ref NodeSecurityGroup
       IpProtocol: tcp
@@ -681,62 +765,74 @@ Resources:
   NodeSecurityGroupIngressShareCluster:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      Description: Allow node to communicate with each other share cluster
+      Description: Allow the Share cluster to communicate across worker nodes
       GroupId: !Ref NodeSecurityGroup
       SourceSecurityGroupId: !Ref NodeSecurityGroup
       IpProtocol: tcp
       FromPort: 5801
       ToPort: 5810
 
-  NodeSecurityKubeDNSTcpCluster:
+  NodeSecurityGroupIngressRepoShare:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      Description: Allow node to communicate with each other kubeDns
-      GroupId: !Ref NodeSecurityGroup
-      SourceSecurityGroupId: !Ref NodeSecurityGroup
-      IpProtocol: tcp
-      FromPort: 53
-      ToPort: 53
-
-  NodeSecurityKubeDNSUdpCluster:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      Description: Allow node to communicate with each other kubeDns
-      GroupId: !Ref NodeSecurityGroup
-      SourceSecurityGroupId: !Ref NodeSecurityGroup
-      IpProtocol: udp
-      FromPort: 53
-      ToPort: 53
-
-  NodeSecurityAcsPortCluster:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      Description: Allow node to communicate with each other solr repo
+      Description: Allow Repo and Share access across worker nodes
       GroupId: !Ref NodeSecurityGroup
       SourceSecurityGroupId: !Ref NodeSecurityGroup
       IpProtocol: tcp
       FromPort: 8080
       ToPort: 8080
 
-  NodeSecuritySolrPortCluster:
+  NodeSecurityGroupIngressTransformers:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      Description: Allow node to communicate with each other repo solr
+      Description: Allow transformers access across worker nodes
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 8090
+      ToPort: 8090
+
+  NodeSecurityGroupIngressTransformRouter:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow transform router access across worker nodes
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 8095
+      ToPort: 8095
+
+  NodeSecurityGroupIngressSharedFileStore:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow shared file store access across worker nodes
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 8099
+      ToPort: 8099
+
+  NodeSecurityGroupIngressSOLR:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow SOLR access across worker nodes
       GroupId: !Ref NodeSecurityGroup
       SourceSecurityGroupId: !Ref NodeSecurityGroup
       IpProtocol: tcp
       FromPort: 8983
       ToPort: 8983
 
-  NodeSecurityGroupFromBastion:
+  NodeSecurityGroupIngressActiveMQ:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      Description: Allow bastion to SSH to worker nodes
+      Description: Allow ActiveMQ access across worker nodes
       GroupId: !Ref NodeSecurityGroup
-      SourceSecurityGroupId: !Ref BastionSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
       IpProtocol: tcp
-      FromPort: 22
-      ToPort: 22
+      FromPort: 61616
+      ToPort: 61616
+
+  # The following security groups are defined by the AWS EKS worker node template but with a restricted port range
 
   NodeSecurityGroupFromControlPlaneIngress:
     Type: AWS::EC2::SecurityGroupIngress
@@ -757,6 +853,28 @@ Resources:
       IpProtocol: tcp
       FromPort: 10250
       ToPort: 10250
+
+  # The following security groups are defined by the AWS EKS worker node template
+
+  NodeSecurityGroupFromControlPlaneOn443Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow pods running extension API servers on port 443 to receive communication from cluster control plane
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref ControlPlaneSecurityGroup
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+
+  ControlPlaneEgressToNodeSecurityGroupOn443:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      Description: Allow the cluster control plane to communicate with pods running extension API servers on port 443
+      GroupId: !Ref ControlPlaneSecurityGroup
+      DestinationSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
 
   ClusterControlPlaneSecurityGroupIngress:
     Type: AWS::EC2::SecurityGroupIngress
@@ -964,33 +1082,8 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
             #!/bin/bash -xe
-            CLOUDWATCHGROUP=${EC2LogGroup}
-            CA_CERTIFICATE_DIRECTORY=/etc/kubernetes/pki
-            CA_CERTIFICATE_FILE_PATH=$CA_CERTIFICATE_DIRECTORY/ca.crt
-            MODEL_DIRECTORY_PATH=~/.aws/eks
-            MODEL_FILE_PATH=$MODEL_DIRECTORY_PATH/eks-2017-11-01.normal.json
-            mkdir -p $CA_CERTIFICATE_DIRECTORY
-            mkdir -p $MODEL_DIRECTORY_PATH
-            curl -o $MODEL_FILE_PATH https://s3-us-west-2.amazonaws.com/amazon-eks/1.10.3/2018-06-05/eks-2017-11-01.normal.json
-            aws configure add-model --service-model file://$MODEL_FILE_PATH --service-name eks
-            aws eks describe-cluster --region=${AWS::Region} --name=${EKSClusterName} --query 'cluster.{certificateAuthorityData:certificateAuthority.data,endpoint:endpoint}' > /tmp/describe_cluster_result.json
-            cat /tmp/describe_cluster_result.json | grep certificateAuthorityData | awk '{print $2}' | sed 's/[,\"]//g' | base64 -d >  $CA_CERTIFICATE_FILE_PATH
-            MASTER_ENDPOINT=$(cat /tmp/describe_cluster_result.json | grep endpoint | awk '{print $2}' | sed 's/[,\"]//g')
-            INTERNAL_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
-            sed -i s,MASTER_ENDPOINT,$MASTER_ENDPOINT,g /var/lib/kubelet/kubeconfig
-            sed -i s,CLUSTER_NAME,${EKSClusterName},g /var/lib/kubelet/kubeconfig
-            sed -i s,REGION,${AWS::Region},g /etc/systemd/system/kubelet.service
-            sed -i s,MAX_PODS,58,g /etc/systemd/system/kubelet.service
-            sed -i s,MASTER_ENDPOINT,$MASTER_ENDPOINT,g /etc/systemd/system/kubelet.service
-            sed -i s,INTERNAL_IP,$INTERNAL_IP,g /etc/systemd/system/kubelet.service
-            DNS_CLUSTER_IP=10.100.0.10
-            if [[ $INTERNAL_IP == 10.* ]] ; then DNS_CLUSTER_IP=172.20.0.10; fi
-            sed -i s,DNS_CLUSTER_IP,$DNS_CLUSTER_IP,g  /etc/systemd/system/kubelet.service
-            sed -i s,CERTIFICATE_AUTHORITY_FILE,$CA_CERTIFICATE_FILE_PATH,g /var/lib/kubelet/kubeconfig
-            sed -i s,CLIENT_CA_FILE,$CA_CERTIFICATE_FILE_PATH,g  /etc/systemd/system/kubelet.service
-            systemctl daemon-reload
-            systemctl restart kubelet
             yum install -y amazon-efs-utils
+            /etc/eks/bootstrap.sh ${EKSClusterName}
             /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource NodeLaunchConfig --region ${AWS::Region}
             sleep 30
             /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource NodeAutoScalingGroup --region ${AWS::Region}
