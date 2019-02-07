@@ -283,7 +283,7 @@ aws cloudformation create-stack \
   --stack-name my-acs-eks \
   --template-body file://templates/acs-deployment-master.yaml \
   --capabilities CAPABILITY_IAM \
-  --parameters ParameterKey=KeyPairName,ParameterValue=<MyKey.pem> \
+  --parameters ParameterKey=KeyPairName,ParameterValue=<MyKeyPairName> \
                ParameterKey=AvailabilityZones,ParameterValue=us-east-1a\\,us-east-1b \
                ParameterKey=RemoteAccessCIDR,ParameterValue=<my_ip/32> \
                ParameterKey=TemplateBucketName,ParameterValue=<bucket_name> \
@@ -291,6 +291,7 @@ aws cloudformation create-stack \
                ParameterKey=EksExternalUserArn,ParameterValue=arn:aws:iam::<AccountId>:user/<IamUser> \
                ParameterKey=AcsExternalName,ParameterValue=<dns-name> \
                ParameterKey=RDSPassword,ParameterValue=<rds-password> \
+               ParameterKey=MQPassword,ParameterValue=<mq-password> \
                ParameterKey=AlfrescoPassword,ParameterValue=<admin-password> \
                ParameterKey=Route53DnsZone,ParameterValue=<dnsZone> \
                ParameterKey=ElbCertArn,ParameterValue=arn:aws:acm:us-east-1:<AccountId>:certificate/<elbCertId> \
