@@ -16,6 +16,7 @@ Metadata:
             - EksExternalUserArn
             - EKSClusterName
             - FluentdReleaseName
+            - AutoscalerReleaseName
             - TemplateBucketName
             - TemplateBucketKeyPrefix
         - Label:
@@ -97,6 +98,8 @@ Metadata:
           default: The EKS cluster name
         FluentdReleaseName:
           default: The helm chart release name of Fluentd
+        AutoscalerReleaseName:
+          default: The helm chart release name of Cluster Autoscaler
 
 Parameters:
     TemplateBucketName:
@@ -206,6 +209,12 @@ Parameters:
       Type: String
       Description: The helm chart release name of Fluentd
       Default: "alfresco-fluentd"
+    AutoscalerReleaseName:
+      AllowedPattern: ".+"
+      ConstraintDescription: The helm chart release name of Cluster Autoscaler can not be empty
+      Type: String
+      Description: The helm chart release name of Cluster Autoscaler
+      Default: "alfresco-cluster-autoscaler"
 
 Mappings:
   # see https://github.com/aws-quickstart/quickstart-linux-bastion/blob/master/templates/linux-bastion.template for latest AMI IDs
@@ -910,6 +919,9 @@ Resources:
       - Key: !Sub 'kubernetes.io/cluster/${EKSClusterName}'
         Value: 'owned'
         PropagateAtLaunch: true
+      - Key: k8s.io/cluster-autoscaler/enabled
+        Value: 'true'
+        PropagateAtLaunch: true
       - Key: KubernetesCluster
         Value: !Sub "${EKSClusterName}"
         PropagateAtLaunch: true
@@ -1209,6 +1221,27 @@ Resources:
                   \ --region ${AWS::Region}\
                   \ --loggroup ${EC2LogGroup}\
                   \ --install"
+              timeoutSeconds: 90
+      DocumentType: Command
+
+  # Execute helm install cluster autoscaler
+  HelmInstallAutoscalerRunScript:
+    Type: "AWS::SSM::Document"
+    Properties:
+      Content:
+        schemaVersion: "2.2"
+        description: Install Cluster Autoscaler Helm chart
+        mainSteps:
+          - action: aws:runShellScript
+            name: helmInstallAutoscaler
+            inputs:
+              workingDirectory: "/root"
+              runCommand:
+                - "chmod u+x /tmp/helmAutoscaler.sh"
+                - !Sub "/tmp/helmAutoscaler.sh\
+                  \ --releasename ${AutoscalerReleaseName}\
+                  \ --region ${AWS::Region}\
+                  \ --clustername ${EKSClusterName}"
               timeoutSeconds: 90
       DocumentType: Command
 

@@ -540,6 +540,18 @@ Resources:
                     - ec2:DetachVolume
                   Resource: "arn:aws:ec2:*:*:volume/*"
                   Effect: Allow
+          - PolicyName: cluster-autoscaler
+            Version: 2012-10-17
+            Statement:
+              - Action:
+                  - autoscaling:DescribeAutoScalingGroups
+                  - autoscaling:DescribeAutoScalingInstances
+                  - autoscaling:SetDesiredCapacity
+                  - autoscaling:DescribeLaunchConfigurations
+                  - autoscaling:DescribeTags
+                  - autoscaling:TerminateInstanceInAutoScalingGroup
+                Resource: "*"
+                Effect: Allow
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
           Statement:
