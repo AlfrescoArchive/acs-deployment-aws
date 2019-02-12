@@ -1323,6 +1323,7 @@ Resources:
       HelmDownloadScript: !Ref HelmDownloadScript
       HelmInitRunScript: !Ref HelmInitRunScript
       HelmInstallFluentdRunScript: !Ref HelmInstallFluentdRunScript
+      HelmInstallAutoscalerRunScript: !Ref HelmInstallAutoscalerRunScript
 
 Outputs:
   SubstackName:
