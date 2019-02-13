@@ -770,7 +770,7 @@ Resources:
       SourceSecurityGroupId: !Ref NodeSecurityGroup
       IpProtocol: tcp
       FromPort: 5801
-      ToPort: 5810
+      ToPort: 5801
 
   NodeSecurityGroupIngressRepoShare:
     Type: AWS::EC2::SecurityGroupIngress
@@ -831,6 +831,16 @@ Resources:
       IpProtocol: tcp
       FromPort: 61616
       ToPort: 61616
+
+  NodeSecurityGroupIngressKubernetesDashboard:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow Kubernetes Dashboard access across worker nodes
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 8443
+      ToPort: 8443
 
   # The following security groups are defined by the AWS EKS worker node template but with a restricted port range
 
