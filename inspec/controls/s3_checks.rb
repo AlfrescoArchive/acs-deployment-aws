@@ -80,7 +80,7 @@ describe 'Validate KMS' do
     end
 
   # Check if object is in CRR bucket
-  let(:lsObject) { command("sleep 10; aws s3 ls s3://#{S3ReplicationBucket}/#{Filename} --cli-read-timeout 3 --cli-connect-timeout 3")  }
+  let(:lsObject) { command("sleep 2; aws s3 ls s3://#{S3ReplicationBucket}/#{Filename} --cli-read-timeout 3 --cli-connect-timeout 3")  }
 
     it "Listing the file from the CRR bucket should exit status should be 0" do
       expect(lsObject.exit_status).to eq 0
