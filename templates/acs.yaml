@@ -36,7 +36,11 @@ Metadata:
             - MQUsername
             - MQPassword
             - RegistryCredentials
+            - RepoImage
+            - RepoTag
             - RepoPods
+            - ShareImage
+            - ShareTag
             - Route53DnsZone
 
       ParameterLabels:
@@ -86,8 +90,16 @@ Metadata:
           default: The helm chart release name of nginx-ingress
         AcsReleaseName:
           default: The helm chart release name of alfresco content services
+        RepoImage:
+          default: The Alfresco Repository docker image name
+        RepoTag:
+          default: The Alfresco Repository docker tag name
         RepoPods:
           default: The number of repository pods in the cluster
+        ShareImage:
+          default: The Alfresco Share docker image name
+        ShareTag:
+          default: The Alfresco Share docker tag name
         Route53DnsZone:
           default: The hosted zone to create Route53 Record for ACS (including the . (dot) at the end)
 
@@ -173,9 +185,21 @@ Parameters:
     AcsReleaseName:
       Type: String
       Description: The helm chart release name of alfresco content services
+    RepoImage:
+      Type: String
+      Description: The Alfresco Repository docker image name
+    RepoTag:
+      Type: String
+      Description: The Alfresco Repository docker tag name
     RepoPods:
       Type: String
       Description: The number of repository pods in the cluster
+    ShareImage:
+      Type: String
+      Description: The Alfresco Share docker image name
+    ShareTag:
+      Type: String
+      Description: The Alfresco Share docker tag name
     Route53DnsZone:
       Type: String
       Description: The hosted zone to create Route53 Record for ACS (including the . (dot) at the end)
@@ -254,7 +278,11 @@ Resources:
                     - !Sub "--mq-username ${MQUsername}"
                     - !Sub "--mq-password ${MQPassword}"
                     - !Sub "--external-name ${AcsExternalName}"
+                    - !Sub "--repo-image ${RepoImage}"
+                    - !Sub "--repo-tag ${RepoTag}"
                     - !Sub "--repo-pods ${RepoPods}"
+                    - !Sub "--share-image ${ShareImage}"
+                    - !Sub "--share-tag ${ShareTag}"
                     - !Sub "--s3bucket-name ${S3BucketName}"
                     - !Sub "--s3bucket-kms-alias ${S3BucketKMSAlias}"
                     - !Sub "--s3bucket-location ${AWS::Region}"
@@ -290,7 +318,11 @@ Resources:
                     - !Sub "--mq-username ${MQUsername}"
                     - !Sub "--mq-password ${MQPassword}"
                     - !Sub "--external-name ${AcsExternalName}"
+                    - !Sub "--repo-image ${RepoImage}"
+                    - !Sub "--repo-tag ${RepoTag}"
                     - !Sub "--repo-pods ${RepoPods}"
+                    - !Sub "--share-image ${ShareImage}"
+                    - !Sub "--share-tag ${ShareTag}"
                     - !Sub "--s3bucket-name ${S3BucketName}"
                     - !Sub "--s3bucket-kms-alias ${S3BucketKMSAlias}"
                     - !Sub "--s3bucket-location ${AWS::Region}"
