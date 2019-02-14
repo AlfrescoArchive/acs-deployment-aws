@@ -193,8 +193,8 @@ repository:
     initialDelaySeconds: 420
   adminPassword: \"$ALFRESCO_PASSWORD\"
   image:
-    repository: \"$REPO_IMAGE\"
-    tag: \"$REPO_TAG\"
+    `if [ ! -z ${REPO_IMAGE} ]; then echo repository: "$REPO_IMAGE"; fi`
+    `if [ ! -z ${REPO_TAG} ]; then echo tag: "$REPO_TAG"; fi`
   replicaCount: $REPO_PODS
   environment:
     JAVA_OPTS: \" -Dopencmis.server.override=true -Dopencmis.server.value=https://$EXTERNAL_NAME -Dalfresco.restApi.basicAuthScheme=true -Dsolr.base.url=/solr -Dsolr.secureComms=none -Dindex.subsystem.name=solr6 -Dalfresco.cluster.enabled=true -Ddeployment.method=HELM_CHART -Dlocal.transform.service.enabled=true -Dtransform.service.enabled=true -Dmessaging.broker.url='failover:($MQ_ENDPOINT)?timeout=3000&jms.useCompression=true' -Dmessaging.broker.user=$MQ_USERNAME -Dmessaging.broker.password=$MQ_PASSWORD -Xms2000M -Xmx2000M\"
@@ -272,8 +272,8 @@ share:
   livenessProbe:
     initialDelaySeconds: 420
   image:
-    repository: \"$SHARE_IMAGE\"
-    tag: \"$SHARE_TAG\"
+    `if [ ! -z ${SHARE_IMAGE} ]; then echo repository: "$SHARE_IMAGE"; fi`
+    `if [ ! -z ${SHARE_TAG} ]; then echo tag: "$SHARE_TAG"; fi`
 registryPullSecrets: quay-registry-secret" > $VALUES_FILE
 
   CHART_VERSION=1.1.10

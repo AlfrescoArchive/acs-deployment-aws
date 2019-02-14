@@ -453,11 +453,11 @@ Parameters:
     RepoImage:
       Type: String
       Description: The Alfresco Repository docker image name
-      Default: "alfresco/alfresco-content-repository-aws"
+      Default: ""
     RepoTag:
       Type: String
       Description: The Alfresco Repository docker tag name
-      Default: "6.1.0-RC7"
+      Default: ""
     RepoPods:
       Type: String
       Description: The number of repository pods in the cluster
@@ -465,11 +465,11 @@ Parameters:
     ShareImage:
       Type: String
       Description: The Alfresco Share docker image name
-      Default: "alfresco/alfresco-share"
+      Default: ""
     ShareTag:
       Type: String
       Description: The Alfresco Share docker tag name
-      Default: "6.1.0-RC3"
+      Default: ""
     Route53DnsZone:
       AllowedPattern: ".+"
       ConstraintDescription: The hosted zone to create Route53 Record for ACS can not be empty
