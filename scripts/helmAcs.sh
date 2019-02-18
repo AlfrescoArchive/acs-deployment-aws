@@ -28,7 +28,11 @@ usage() {
   echo -e "--registry-secret \t Base64 dockerconfig.json string to private registry"
   echo -e "--install \t Install a new ACS Helm chart"
   echo -e "--upgrade \t Upgrade an existing ACS Helm Chart"
+  echo -e "--repo-image \t Repo docker image registry name"
+  echo -e "--repo-tag \t Repo docker image tag name"
   echo -e "--repo-pods \t Repo Replica number"
+  echo -e "--share-image \t Share docker image registry name"
+  echo -e "--share-tag \t Share docker image tag name"
 }
 
 if [ $# -lt 15 ]; then
@@ -192,7 +196,7 @@ repository:
   livenessProbe:
     initialDelaySeconds: 420
   adminPassword: \"$ALFRESCO_PASSWORD\"
-  image:
+  `if [ ! -z ${REPO_IMAGE} ] || [ ! -z ${REPO_TAG} ]; then echo image: ; fi`
     `if [ ! -z ${REPO_IMAGE} ]; then echo repository: "$REPO_IMAGE"; fi`
     `if [ ! -z ${REPO_TAG} ]; then echo tag: "$REPO_TAG"; fi`
   replicaCount: $REPO_PODS
@@ -271,7 +275,7 @@ messageBroker:
 share:
   livenessProbe:
     initialDelaySeconds: 420
-  image:
+  `if [ ! -z ${SHARE_IMAGE} ] || [ ! -z ${SHARE_TAG} ]; then echo image: ; fi`
     `if [ ! -z ${SHARE_IMAGE} ]; then echo repository: "$SHARE_IMAGE"; fi`
     `if [ ! -z ${SHARE_TAG} ]; then echo tag: "$SHARE_TAG"; fi`
 registryPullSecrets: quay-registry-secret" > $VALUES_FILE
