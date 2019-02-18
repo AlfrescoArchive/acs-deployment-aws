@@ -206,6 +206,10 @@ Parameters:
 
 Conditions:
   PrivateRegistry: !Not [!Equals [!Ref RegistryCredentials, ""]]
+  NewRepoImage: !Not [!Equals [!Ref RepoImage, ""]]
+  NewRepoTag: !Not [!Equals [!Ref RepoTag, ""]]
+  NewShareImage: !Not [!Equals [!Ref ShareImage, ""]]
+  NewShareTag: !Not [!Equals [!Ref ShareTag, ""]]
 
 Resources:
 
@@ -278,11 +282,11 @@ Resources:
                     - !Sub "--mq-username ${MQUsername}"
                     - !Sub "--mq-password ${MQPassword}"
                     - !Sub "--external-name ${AcsExternalName}"
-                    - !Sub "--repo-image ${RepoImage}"
-                    - !Sub "--repo-tag ${RepoTag}"
+                    - !If [NewRepoImage, !Join ["", [--repo-image, " ", !Ref RepoImage]], !Ref "AWS::NoValue"]
+                    - !If [NewRepoTag, !Join ["", [--repo-tag, " ", !Ref RepoTag]], !Ref "AWS::NoValue"]
+                    - !If [NewShareImage, !Join ["", [--share-image, " ", !Ref ShareImage]], !Ref "AWS::NoValue"]
+                    - !If [NewShareTag, !Join ["", [--share-tag, " ", !Ref ShareTag]], !Ref "AWS::NoValue"]
                     - !Sub "--repo-pods ${RepoPods}"
-                    - !Sub "--share-image ${ShareImage}"
-                    - !Sub "--share-tag ${ShareTag}"
                     - !Sub "--s3bucket-name ${S3BucketName}"
                     - !Sub "--s3bucket-kms-alias ${S3BucketKMSAlias}"
                     - !Sub "--s3bucket-location ${AWS::Region}"
@@ -318,11 +322,11 @@ Resources:
                     - !Sub "--mq-username ${MQUsername}"
                     - !Sub "--mq-password ${MQPassword}"
                     - !Sub "--external-name ${AcsExternalName}"
-                    - !Sub "--repo-image ${RepoImage}"
-                    - !Sub "--repo-tag ${RepoTag}"
+                    - !If [NewRepoImage, !Join ["", [--repo-image, " ", !Ref RepoImage]], !Ref "AWS::NoValue"]
+                    - !If [NewRepoTag, !Join ["", [--repo-tag, " ", !Ref RepoTag]], !Ref "AWS::NoValue"]
+                    - !If [NewShareImage, !Join ["", [--share-image, " ", !Ref ShareImage]], !Ref "AWS::NoValue"]
+                    - !If [NewShareTag, !Join ["", [--share-tag, " ", !Ref ShareTag]], !Ref "AWS::NoValue"]
                     - !Sub "--repo-pods ${RepoPods}"
-                    - !Sub "--share-image ${ShareImage}"
-                    - !Sub "--share-tag ${ShareTag}"
                     - !Sub "--s3bucket-name ${S3BucketName}"
                     - !Sub "--s3bucket-kms-alias ${S3BucketKMSAlias}"
                     - !Sub "--s3bucket-location ${AWS::Region}"
