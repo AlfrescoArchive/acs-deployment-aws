@@ -21,6 +21,7 @@ usage() {
   echo -e "--aws-cert-arn \t AWS SSL Certificate Arn"
   echo -e "--aws-cert-policy \t AWS SSL Certificate Policy"
   echo -e "--external-name \t External host name of ACS"
+  echo -e "--elb-tags \t Set of tags to add to the ELB"
 }
 
 if [ $# -lt 6 ]; then
@@ -55,6 +56,10 @@ else
               ;;
           --external-name)
               EXTERNAL_NAME="$2";
+              shift 2
+              ;;
+          --elb-tags)
+              ELB_TAGS="$2";
               shift 2
               ;;
           --)
@@ -100,6 +105,7 @@ controller:
       service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "https"
       external-dns.alpha.kubernetes.io/hostname: "$EXTERNAL_NAME"
       service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy: "$AWS_CERT_POLICY"
+      service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags: "$ELB_TAGS"
 EOF
 
   helm upgrade $INGRESS_RELEASE stable/nginx-ingress -f ingressvalues.yaml --install --version $INGRESS_VERSION --namespace $DESIREDNAMESPACE
