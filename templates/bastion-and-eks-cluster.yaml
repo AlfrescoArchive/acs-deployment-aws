@@ -945,11 +945,6 @@ Resources:
           buckets: !Ref TemplateBucketName
       AWS::CloudFormation::Init:
         config:
-          packages:
-            yum:
-              awslogs: []
-              amazon-ssm-agent: []
-              amazon-efs-utils: []
           files:
             '/etc/awslogs/awscli.conf':
               content: !Sub |
@@ -1094,6 +1089,9 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
             #!/bin/bash -xe
+            pip uninstall urllib3 -y
+            yum install -y awslogs
+            yum install -y amazon-ssm-agent
             yum install -y amazon-efs-utils
             /etc/eks/bootstrap.sh ${EKSClusterName}
             /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource NodeLaunchConfig --region ${AWS::Region}
