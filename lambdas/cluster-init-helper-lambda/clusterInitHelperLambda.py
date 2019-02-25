@@ -44,8 +44,9 @@ def handler(event, context):
                 # Execute scripts to setup helm deployment
                 helminit_doc = describe_document(event['ResourceProperties']['HelmInitRunScript'])
                 helmfluentd_doc = describe_document(event['ResourceProperties']['HelmInstallFluentdRunScript'])
+                helmautoscaler_doc = describe_document(event['ResourceProperties']['HelmInstallAutoscalerRunScript'])
 
-                if helminit_doc['Status'] == 'Active' and helmfluentd_doc['Status'] == 'Active':
+                if helminit_doc['Status'] == 'Active' and helmfluentd_doc['Status'] == 'Active' and helmautoscaler_doc['Status'] == 'Active':
 
                     # Deploy Tiller with Helm init
                     logger.info('Initialising helm...')
@@ -58,8 +59,18 @@ def handler(event, context):
                         helmdeployfluentd = ssm_sendcommand(ssm_instance, helmfluentd_doc['Name'], {})
                         if ssm_commandstatus(helmdeployfluentd['CommandId'], ssm_instance) is True:
                             logger.info('Fluentd installation completed successfully!')
-                            logger.info('Signalling success to CloudFormation...')
-                            cfnresponse.send(event, context, cfnresponse.SUCCESS, data, physicalResourceId)
+
+                            # Deploy Cluster Autoscaler helm chart
+                            logger.info('Installing cluster autoscaler...')
+                            helmdeployautoscaler = ssm_sendcommand(ssm_instance, helmautoscaler_doc['Name'], {})
+                            if ssm_commandstatus(helmdeployautoscaler['CommandId'], ssm_instance) is True:
+                                logger.info('Cluster Autoscaler completed successfully!')
+
+                                logger.info('Signalling success to CloudFormation...')
+                                cfnresponse.send(event, context, cfnresponse.SUCCESS, data, physicalResourceId)
+                            else:
+                                logger.error('Cluster Autoscaler installation was unsuccessful')
+                                cfnresponse.send(event, context, cfnresponse.FAILED, {})
                         else:
                             logger.error('Fluentd installation was unsuccessful')
                             cfnresponse.send(event, context, cfnresponse.FAILED, {})

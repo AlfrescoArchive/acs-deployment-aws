@@ -16,6 +16,7 @@ Metadata:
             - EksExternalUserArn
             - EKSClusterName
             - FluentdReleaseName
+            - AutoscalerReleaseName
             - TemplateBucketName
             - TemplateBucketKeyPrefix
         - Label:
@@ -97,6 +98,8 @@ Metadata:
           default: The EKS cluster name
         FluentdReleaseName:
           default: The helm chart release name of Fluentd
+        AutoscalerReleaseName:
+          default: The helm chart release name of Cluster Autoscaler
 
 Parameters:
     TemplateBucketName:
@@ -206,6 +209,12 @@ Parameters:
       Type: String
       Description: The helm chart release name of Fluentd
       Default: "alfresco-fluentd"
+    AutoscalerReleaseName:
+      AllowedPattern: ".+"
+      ConstraintDescription: The helm chart release name of Cluster Autoscaler can not be empty
+      Type: String
+      Description: The helm chart release name of Cluster Autoscaler
+      Default: "alfresco-cluster-autoscaler"
 
 Mappings:
   # see https://github.com/aws-quickstart/quickstart-linux-bastion/blob/master/templates/linux-bastion.template for latest AMI IDs
@@ -916,6 +925,9 @@ Resources:
       - Key: !Sub 'kubernetes.io/cluster/${EKSClusterName}'
         Value: 'owned'
         PropagateAtLaunch: true
+      - Key: k8s.io/cluster-autoscaler/enabled
+        Value: 'true'
+        PropagateAtLaunch: true
       - Key: KubernetesCluster
         Value: !Sub "${EKSClusterName}"
         PropagateAtLaunch: true
@@ -939,11 +951,6 @@ Resources:
           buckets: !Ref TemplateBucketName
       AWS::CloudFormation::Init:
         config:
-          packages:
-            yum:
-              awslogs: []
-              amazon-ssm-agent: []
-              amazon-efs-utils: []
           files:
             '/etc/awslogs/awscli.conf':
               content: !Sub |
@@ -1088,6 +1095,9 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
             #!/bin/bash -xe
+            pip uninstall urllib3 -y
+            yum install -y awslogs
+            yum install -y amazon-ssm-agent
             yum install -y amazon-efs-utils
             /etc/eks/bootstrap.sh ${EKSClusterName}
             /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource NodeLaunchConfig --region ${AWS::Region}
@@ -1218,6 +1228,27 @@ Resources:
               timeoutSeconds: 90
       DocumentType: Command
 
+  # Execute helm install cluster autoscaler
+  HelmInstallAutoscalerRunScript:
+    Type: "AWS::SSM::Document"
+    Properties:
+      Content:
+        schemaVersion: "2.2"
+        description: Install Cluster Autoscaler Helm chart
+        mainSteps:
+          - action: aws:runShellScript
+            name: helmInstallAutoscaler
+            inputs:
+              workingDirectory: "/root"
+              runCommand:
+                - "chmod u+x /tmp/helmAutoscaler.sh"
+                - !Sub "/tmp/helmAutoscaler.sh\
+                  \ --releasename ${AutoscalerReleaseName}\
+                  \ --region ${AWS::Region}\
+                  \ --clustername ${EKSClusterName}"
+              timeoutSeconds: 90
+      DocumentType: Command
+
   ClusterInitHelperLambdaRole:
     Type: AWS::IAM::Role
     Properties:
@@ -1281,7 +1312,7 @@ Resources:
       Handler: clusterInitHelperLambda.handler
       Role: !GetAtt ClusterInitHelperLambdaRole.Arn
       Runtime: python2.7
-      Timeout: 420
+      Timeout: 540
       Description: "A custom resource to initialise the EKS cluster"
 
   ClusterInitHelperLambdaCustomResource:
@@ -1296,6 +1327,7 @@ Resources:
       HelmDownloadScript: !Ref HelmDownloadScript
       HelmInitRunScript: !Ref HelmInitRunScript
       HelmInstallFluentdRunScript: !Ref HelmInstallFluentdRunScript
+      HelmInstallAutoscalerRunScript: !Ref HelmInstallAutoscalerRunScript
 
 Outputs:
   SubstackName:
