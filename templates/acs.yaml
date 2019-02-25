@@ -233,7 +233,7 @@ Resources:
                   \ --aws-cert-arn ${ElbCertArn}\
                   \ --aws-cert-policy ${ElbCertPolicy}\
                   \ --external-name ${AcsExternalName}\
-                  \ --elb-tags ${IngressELBTags}"
+                  \ --elb-tags '${IngressELBTags}'"
               timeoutSeconds: 60
       DocumentType: Command
 
