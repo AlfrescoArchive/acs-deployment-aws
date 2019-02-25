@@ -311,6 +311,13 @@ Resources:
               - 'kms:GenerateDataKey*'
               - 'kms:DescribeKey'
             Resource: '*'
+          -
+            Sid: 'Allow the key to be tagged'
+            Effect: 'Allow'
+            Principal: '*'
+            Action:
+              - 'kms:TagResource'
+            Resource: '*'
 
   ContentStoreKMSAlias:
     Type: AWS::KMS::Alias
