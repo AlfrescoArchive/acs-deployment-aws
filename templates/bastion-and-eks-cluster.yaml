@@ -242,7 +242,7 @@ Mappings:
     us-west-2:
       AmiId: ami-081099ec932b99961
     us-east-1:
-      AmiId: ami-0c5b63ec54dd3fc38
+      AmiId: ami-0eeeef929db40543c
     us-east-2:
       AmiId: ami-0b10ebfc82e446296
     eu-central-1:
