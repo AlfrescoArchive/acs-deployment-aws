@@ -37,7 +37,11 @@ Metadata:
             - MQUsername
             - MQPassword
             - RegistryCredentials
+            - RepoImage
+            - RepoTag
             - RepoPods
+            - ShareImage
+            - ShareTag
             - Route53DnsZone
 
       ParameterLabels:
@@ -87,8 +91,16 @@ Metadata:
           default: The helm chart release name of nginx-ingress
         AcsReleaseName:
           default: The helm chart release name of alfresco content services
+        RepoImage:
+          default: The Alfresco Repository docker image name
+        RepoTag:
+          default: The Alfresco Repository docker tag name
         RepoPods:
           default: The number of repository pods in the cluster
+        ShareImage:
+          default: The Alfresco Share docker image name
+        ShareTag:
+          default: The Alfresco Share docker tag name
         Route53DnsZone:
           default: The hosted zone to create Route53 Record for ACS (including the . (dot) at the end)
         IngressELBTags:
@@ -176,9 +188,21 @@ Parameters:
     AcsReleaseName:
       Type: String
       Description: The helm chart release name of alfresco content services
+    RepoImage:
+      Type: String
+      Description: The Alfresco Repository docker image name
+    RepoTag:
+      Type: String
+      Description: The Alfresco Repository docker tag name
     RepoPods:
       Type: String
       Description: The number of repository pods in the cluster
+    ShareImage:
+      Type: String
+      Description: The Alfresco Share docker image name
+    ShareTag:
+      Type: String
+      Description: The Alfresco Share docker tag name
     Route53DnsZone:
       Type: String
       Description: The hosted zone to create Route53 Record for ACS (including the . (dot) at the end)
@@ -191,6 +215,10 @@ Parameters:
 
 Conditions:
   PrivateRegistry: !Not [!Equals [!Ref RegistryCredentials, ""]]
+  NewRepoImage: !Not [!Equals [!Ref RepoImage, ""]]
+  NewRepoTag: !Not [!Equals [!Ref RepoTag, ""]]
+  NewShareImage: !Not [!Equals [!Ref ShareImage, ""]]
+  NewShareTag: !Not [!Equals [!Ref ShareTag, ""]]
 
 Resources:
 
@@ -264,6 +292,10 @@ Resources:
                     - !Sub "--mq-username ${MQUsername}"
                     - !Sub "--mq-password ${MQPassword}"
                     - !Sub "--external-name ${AcsExternalName}"
+                    - !If [NewRepoImage, !Join ["", [--repo-image, " ", !Ref RepoImage]], !Ref "AWS::NoValue"]
+                    - !If [NewRepoTag, !Join ["", [--repo-tag, " ", !Ref RepoTag]], !Ref "AWS::NoValue"]
+                    - !If [NewShareImage, !Join ["", [--share-image, " ", !Ref ShareImage]], !Ref "AWS::NoValue"]
+                    - !If [NewShareTag, !Join ["", [--share-tag, " ", !Ref ShareTag]], !Ref "AWS::NoValue"]
                     - !Sub "--repo-pods ${RepoPods}"
                     - !Sub "--s3bucket-name ${S3BucketName}"
                     - !Sub "--s3bucket-kms-alias ${S3BucketKMSAlias}"
@@ -300,6 +332,10 @@ Resources:
                     - !Sub "--mq-username ${MQUsername}"
                     - !Sub "--mq-password ${MQPassword}"
                     - !Sub "--external-name ${AcsExternalName}"
+                    - !If [NewRepoImage, !Join ["", [--repo-image, " ", !Ref RepoImage]], !Ref "AWS::NoValue"]
+                    - !If [NewRepoTag, !Join ["", [--repo-tag, " ", !Ref RepoTag]], !Ref "AWS::NoValue"]
+                    - !If [NewShareImage, !Join ["", [--share-image, " ", !Ref ShareImage]], !Ref "AWS::NoValue"]
+                    - !If [NewShareTag, !Join ["", [--share-tag, " ", !Ref ShareTag]], !Ref "AWS::NoValue"]
                     - !Sub "--repo-pods ${RepoPods}"
                     - !Sub "--s3bucket-name ${S3BucketName}"
                     - !Sub "--s3bucket-kms-alias ${S3BucketKMSAlias}"

@@ -74,7 +74,11 @@ Metadata:
             - AcsReleaseName
             - AlfrescoPassword
             - RegistryCredentials
+            - RepoImage
+            - RepoTag
             - RepoPods
+            - ShareImage
+            - ShareTag
             - Route53DnsZone
 
       ParameterLabels:
@@ -158,8 +162,16 @@ Metadata:
           default: The helm chart release name of alfresco content services
         FluentdReleaseName:
           default: The helm chart release name of Fluentd
+        RepoImage:
+          default: The Alfresco Repository docker image name
+        RepoTag:
+          default: The Alfresco Repository docker tag name
         RepoPods:
           default: The number of repository pods in the cluster
+        ShareImage:
+          default: The Alfresco Share docker image name
+        ShareTag:
+          default: The Alfresco Share docker tag name
         Route53DnsZone:
           default: The hosted zone to create Route53 Record for ACS (including the . (dot) at the end)
         UseCrossRegionReplication:
@@ -438,10 +450,26 @@ Parameters:
       Description: The private registry credentials in base64 format.
       NoEcho: True
       Default: ""
+    RepoImage:
+      Type: String
+      Description: The Alfresco Repository docker image name
+      Default: ""
+    RepoTag:
+      Type: String
+      Description: The Alfresco Repository docker tag name
+      Default: ""
     RepoPods:
       Type: String
       Description: The number of repository pods in the cluster
       Default: "2"
+    ShareImage:
+      Type: String
+      Description: The Alfresco Share docker image name
+      Default: ""
+    ShareTag:
+      Type: String
+      Description: The Alfresco Share docker tag name
+      Default: ""
     Route53DnsZone:
       AllowedPattern: ".+"
       ConstraintDescription: The hosted zone to create Route53 Record for ACS can not be empty
@@ -815,7 +843,11 @@ Resources:
           RegistryCredentials: !Ref RegistryCredentials
           IngressReleaseName: !Ref IngressReleaseName
           AcsReleaseName: !Ref AcsReleaseName
+          RepoImage: !Ref RepoImage
+          RepoTag: !Ref RepoTag
           RepoPods: !Ref RepoPods
+          ShareImage: !Ref ShareImage
+          ShareTag: !Ref ShareTag
           Route53DnsZone: !Ref Route53DnsZone
 
 Outputs:
