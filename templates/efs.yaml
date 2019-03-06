@@ -16,6 +16,7 @@ Metadata:
             - SecurityGroup
             - PrivateSubnet1ID
             - PrivateSubnet2ID
+            - PrivateSubnet3ID
 
       ParameterLabels:
         SecurityGroup:
@@ -24,6 +25,8 @@ Metadata:
           default: The ID of Private Subnet 1
         PrivateSubnet2ID:
           default: The ID of Private Subnet 2
+        PrivateSubnet3ID:
+          default: The ID of Private Subnet 3
 
 Parameters:
     SecurityGroup:
@@ -34,6 +37,9 @@ Parameters:
       Type: "AWS::EC2::Subnet::Id"   
     PrivateSubnet2ID:
       Description: "ID of Private Subnet 2"
+      Type: "AWS::EC2::Subnet::Id"
+    PrivateSubnet3ID:
+      Description: "ID of Private Subnet 3"
       Type: "AWS::EC2::Subnet::Id"
 
 Resources:
@@ -62,6 +68,14 @@ Resources:
         - !Ref SecurityGroup
       SubnetId: !Ref PrivateSubnet2ID
 
+  MountTarget3:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref Filesystem
+      SecurityGroups:
+        - !Ref SecurityGroup
+      SubnetId: !Ref PrivateSubnet3ID
+
   NFSIngressRule:
     Type: AWS::EC2::SecurityGroupIngress
     Properties: 
@@ -84,3 +98,4 @@ Outputs:
       - ","
       - - !Ref MountTarget1
         - !Ref MountTarget2
+        - !Ref MountTarget3
