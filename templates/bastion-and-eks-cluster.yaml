@@ -787,6 +787,16 @@ Resources:
       FromPort: 8080
       ToPort: 8080
 
+  NodeSecurityGroupIngressPostgreSQL:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow the PostgreSQL access across worker nodes
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 5432
+      ToPort: 5432
+
   NodeSecurityGroupIngressTransformers:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
