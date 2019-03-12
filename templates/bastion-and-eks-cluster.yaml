@@ -1275,7 +1275,7 @@ Resources:
                 - "chmod u+x /tmp/helmMonitoring.sh"
                 - !Sub "/tmp/helmMonitoring.sh\
                   \ --install"
-              timeoutSeconds: 90
+              timeoutSeconds: 420
       DocumentType: Command
 
   ClusterInitHelperLambdaRole:
