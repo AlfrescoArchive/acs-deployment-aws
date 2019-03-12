@@ -45,8 +45,9 @@ def handler(event, context):
                 helminit_doc = describe_document(event['ResourceProperties']['HelmInitRunScript'])
                 helmfluentd_doc = describe_document(event['ResourceProperties']['HelmInstallFluentdRunScript'])
                 helmautoscaler_doc = describe_document(event['ResourceProperties']['HelmInstallAutoscalerRunScript'])
+                helmmonitoring_doc = describe_document(event['ResourceProperties']['HelmInstallMonitoringRunScript'])
 
-                if helminit_doc['Status'] == 'Active' and helmfluentd_doc['Status'] == 'Active' and helmautoscaler_doc['Status'] == 'Active':
+                if helminit_doc['Status'] == 'Active' and helmfluentd_doc['Status'] == 'Active' and helmautoscaler_doc['Status'] == 'Active' and helmmonitoring_doc['Status'] == 'Active':
 
                     # Deploy Tiller with Helm init
                     logger.info('Initialising helm...')
@@ -66,8 +67,18 @@ def handler(event, context):
                             if ssm_commandstatus(helmdeployautoscaler['CommandId'], ssm_instance) is True:
                                 logger.info('Cluster Autoscaler completed successfully!')
 
-                                logger.info('Signalling success to CloudFormation...')
-                                cfnresponse.send(event, context, cfnresponse.SUCCESS, data, physicalResourceId)
+                                # Deploy Cluster Monitoring helm chart
+                                logger.info('Installing Monitoring...')
+                                helmdeploymonitoring = ssm_sendcommand(ssm_instance, helmmonitoring_doc['Name'], {})
+                                if ssm_commandstatus(helmdeploymonitoring['CommandId'], ssm_instance) is True:
+                                    logger.info('Monitoring completed successfully!')
+
+                                    logger.info('Signalling success to CloudFormation...')
+                                    cfnresponse.send(event, context, cfnresponse.SUCCESS, data, physicalResourceId)
+                                else:
+                                    logger.error('Monitoring installation was unsuccessful')
+                                    cfnresponse.send(event, context, cfnresponse.FAILED, {})
+
                             else:
                                 logger.error('Cluster Autoscaler installation was unsuccessful')
                                 cfnresponse.send(event, context, cfnresponse.FAILED, {})
