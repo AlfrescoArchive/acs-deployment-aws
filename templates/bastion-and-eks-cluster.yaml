@@ -1275,7 +1275,7 @@ Resources:
                 - "chmod u+x /tmp/helmMonitoring.sh"
                 - !Sub "/tmp/helmMonitoring.sh\
                   \ --install"
-              timeoutSeconds: 420
+              timeoutSeconds: 90
       DocumentType: Command
 
   ClusterInitHelperLambdaRole:
@@ -1341,7 +1341,7 @@ Resources:
       Handler: clusterInitHelperLambda.handler
       Role: !GetAtt ClusterInitHelperLambdaRole.Arn
       Runtime: python2.7
-      Timeout: 540
+      Timeout: 630
       Description: "A custom resource to initialise the EKS cluster"
 
   ClusterInitHelperLambdaCustomResource:
