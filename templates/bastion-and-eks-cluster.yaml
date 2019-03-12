@@ -1258,6 +1258,25 @@ Resources:
                   \ --clustername ${EKSClusterName}"
               timeoutSeconds: 90
       DocumentType: Command
+  
+  # Execute helm install monitoring tools
+  HelmInstallMonitoringRunScript:
+    Type: "AWS::SSM::Document"
+    Properties:
+      Content:
+        schemaVersion: "2.2"
+        description: Install Metrics Server and K8s Dashboard Helm charts
+        mainSteps:
+          - action: aws:runShellScript
+            name: helmInstallMonitoring
+            inputs:
+              workingDirectory: "/root"
+              runCommand:
+                - "chmod u+x /tmp/helmMonitoring.sh"
+                - !Sub "/tmp/helmMonitoring.sh\
+                  \ --install"
+              timeoutSeconds: 90
+      DocumentType: Command
 
   ClusterInitHelperLambdaRole:
     Type: AWS::IAM::Role
@@ -1338,6 +1357,8 @@ Resources:
       HelmInitRunScript: !Ref HelmInitRunScript
       HelmInstallFluentdRunScript: !Ref HelmInstallFluentdRunScript
       HelmInstallAutoscalerRunScript: !Ref HelmInstallAutoscalerRunScript
+      HelmInstallMonitoringRunScript: !Ref HelmInstallMonitoringRunScript
+
 
 Outputs:
   SubstackName:
@@ -1375,3 +1396,10 @@ Outputs:
     Value: !GetAtt EksHelperLambdaCustomResource.certificateAuthority
   EksServiceRoleArn:
     Value: !GetAtt EKSServiceRole.Arn
+  MonitoringToolsUsageMetricsServer:
+    Description: From bastion host run next command 
+    Value: \"kubectl top pods --all-namespaces\" or \"kubectl top pods\" 
+  MonitoringToolsUsageK8sDashboard:
+    Description: Run next commands from bastion host or your workstation as indicated
+    Value: from bastion run -> \"kubectl -n kube-system port-forward svc/kubernetes-dashboard 8443:443 &\" from bastion -> \"aws-iam-authenticator token --token-only -i $(tail -1 ~/.kube/config |tr -d '\ '|sed -e 's/^-//g')\" from your workstation -> \"ssh -f ec2-user@BASTION_PUBLIC_IP -L 8443:localhost:8443 -N\" from your workstation -> open https://localhost:8443 in your browser
+
