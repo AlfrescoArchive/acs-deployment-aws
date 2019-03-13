@@ -648,7 +648,7 @@ function harden_workernode_kubernetes() {
 EOF
   service auditd restart
 
-  DOCKERD_CIS_OPTIONS="--icc=false --log-level=info --iptables=true --live-restore --userland-proxy=false"
+  DOCKERD_CIS_OPTIONS="--icc=false --log-level=info --iptables=true --userland-proxy=false"
   sed -i s#ExecStart=/usr/bin/dockerd#ExecStart=/usr/bin/dockerd\ "$DOCKERD_CIS_OPTIONS"#g /usr/lib/systemd/system/docker.service
   systemctl daemon-reload
   systemctl restart docker.service

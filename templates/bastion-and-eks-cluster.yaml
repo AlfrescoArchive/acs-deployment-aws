@@ -218,8 +218,6 @@ Mappings:
       AmiId: ami-0cd3dfa4e37921605
     eu-central-1:
       AmiId: ami-0cfbf4f6db41068ac
-    eu-north-1:
-      AmiId: ami-86fe70f8
     eu-west-1:
       AmiId: ami-08935252a36e25f85
     ap-northeast-1:
