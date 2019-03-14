@@ -196,8 +196,8 @@ repository:
   livenessProbe:
     initialDelaySeconds: 420
   adminPassword: \"$ALFRESCO_PASSWORD\"
-  `if [ ! -z ${REPO_IMAGE} ] || [ ! -z ${REPO_TAG} ]; then echo image: ; fi`
-    `if [ ! -z ${REPO_IMAGE} ]; then echo repository: "$REPO_IMAGE"; fi`
+  image:
+    repository: "$REPO_IMAGE"
     `if [ ! -z ${REPO_TAG} ]; then echo tag: "$REPO_TAG"; fi`
   replicaCount: $REPO_PODS
   environment:
