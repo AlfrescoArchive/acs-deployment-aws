@@ -453,7 +453,7 @@ Parameters:
     RepoImage:
       Type: String
       Description: The Alfresco Repository docker image name
-      Default: ""
+      Default: "alfresco/alfresco-content-repository-aws"
     RepoTag:
       Type: String
       Description: The Alfresco Repository docker tag name
