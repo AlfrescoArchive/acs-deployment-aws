@@ -1398,8 +1398,7 @@ Outputs:
     Value: !GetAtt EKSServiceRole.Arn
   MonitoringToolsUsageMetricsServer:
     Description: From bastion host run next command 
-    Value: "kubectl top pods --all-namespaces" or "kubectl top pods" 
+    Value: \"kubectl top pods --all-namespaces\" or \"kubectl top pods\" 
   MonitoringToolsUsageK8sDashboard:
     Description: Run next commands from bastion host or your workstation as indicated
-    Value: from bastion run -> "kubectl -n kube-system port-forward svc/kubernetes-dashboard 8443:443 &" from bastion -> "aws-iam-authenticator token --token-only -i $(tail -1 ~/.kube/config |tr -d '\ '|sed -e 's/^-//g')" from your workstation -> "ssh -f ec2-user@BASTION_PUBLIC_IP -L 8443:localhost:8443 -N" from your workstation -> open https://localhost:8443 in your browser
-
+    Value: from bastion run -> \"kubectl -n kube-system port-forward svc/kubernetes-dashboard 8443:443 &\" from bastion -> \"aws-iam-authenticator token --token-only -i $(tail -1 ~/.kube/config |tr -d '\ '|sed -e 's/^-//g')\" from your workstation -> \"ssh -f ec2-user@BASTION_PUBLIC_IP -L 8443:localhost:8443 -N\" from your workstation -> open https://localhost:8443 in your browser
