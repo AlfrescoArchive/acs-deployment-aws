@@ -1,7 +1,7 @@
-# 3.0.0
+# 2.0.0
 
 ## Features
-* Using Alfresco's Helm Charts 3.0.0 https://github.com/Alfresco/acs-deployment
+* Using Alfresco's Helm Charts 2.0.0 https://github.com/Alfresco/acs-deployment
 * Parameterise Alfresco Repository & Share docker images for allowing customizations on those images
 
 ## Fixes
