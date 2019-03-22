@@ -500,7 +500,7 @@ Resources:
               owner: root
               group: root
             /tmp/hardening_bootstrap.sh:
-              source: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/scripts/hardening_bootstrap.sh"
+              source: !Sub "https://s3-${AWS::Region}.amazonaws.com/${TemplateBucketName}/${TemplateBucketKeyPrefix}/scripts/hardening_bootstrap.sh"
               mode: "000550"
               owner: root
               group: root
@@ -1044,7 +1044,7 @@ Resources:
               owner: root
               group: root
             '/tmp/hardening_bootstrap.sh':
-              source: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/scripts/hardening_bootstrap.sh"
+              source: !Sub "https://s3-${AWS::Region}.amazonaws.com/${TemplateBucketName}/${TemplateBucketKeyPrefix}/scripts/hardening_bootstrap.sh"
               mode: "000550"
               owner: root
               group: root
