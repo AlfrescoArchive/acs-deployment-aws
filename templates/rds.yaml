@@ -15,9 +15,7 @@ Metadata:
         Parameters:
           - VPCID
           - NodeSecurityGroup
-          - PrivateSubnet1
-          - PrivateSubnet2
-          - PrivateSubnet3
+          - PrivateSubnetIDs
       - Label:
           default: Alfresco Storage Configuration
         Parameters:
@@ -31,12 +29,8 @@ Metadata:
     ParameterLabels:
       NodeSecurityGroup:
         default: The Node Security Group ID to use for RDS
-      PrivateSubnet1:
-        default: The ID of Private Subnet 1
-      PrivateSubnet2:
-        default: The ID of Private Subnet 2
-      PrivateSubnet3:
-        default: The ID of Private Subnet 3
+      PrivateSubnetIDs:
+        default: Private subnet IDs
       RDSDBName:
         default: RDS DB Name
       RDSInstanceType:
@@ -56,16 +50,9 @@ Parameters:
   NodeSecurityGroup:
     Description: ID for the VPC, This will be used to get the node security group
     Type: AWS::EC2::SecurityGroup::Id
-  PrivateSubnet1:
-    Description: ID of Private Subnet 1
-    Type: AWS::EC2::Subnet::Id
-  PrivateSubnet2:
-    Description: ID of Private Subnet 2
-    Type: AWS::EC2::Subnet::Id
-  PrivateSubnet3:
-    Description: ID of Private Subnet 3
-    Type: AWS::EC2::Subnet::Id
-    Default: ""
+  PrivateSubnetIDs:
+    Description: List of private subnet IDs to use
+    Type: List<AWS::EC2::Subnet::Id>
   VPCID:
     Description: ID for the VPC
     Type: AWS::EC2::VPC::Id
@@ -115,20 +102,13 @@ Conditions:
   isAuroraAndCreateSnasphot: !And [Condition: isAmazonAuroraRegion, Condition: CreateSnapshot]
   isAuroraAndNotCreateSnasphot: !And [Condition: isAmazonAuroraRegion, !Not [Condition: CreateSnapshot]]
   CreateSnapshot: !Equals [!Ref RDSCreateSnapshotWhenDeleted, "true"]
-  UseThirdSubnet: !Equals [!Ref "PrivateSubnet3", ""]
 
 Resources:
   RDSDBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
       DBSubnetGroupDescription: Subnets available for the RDS DB Instance
-      SubnetIds:
-        - !Ref PrivateSubnet1
-        - !Ref PrivateSubnet2
-        - !If
-            - UseThirdSubnet
-            - !Ref PrivateSubnet3
-            - !Ref AWS::NoValue
+      SubnetIds: !Ref PrivateSubnetIDs
 
   RDSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
