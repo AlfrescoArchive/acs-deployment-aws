@@ -41,6 +41,10 @@ Parameters:
     PrivateSubnet3ID:
       Description: "ID of Private Subnet 3"
       Type: "AWS::EC2::Subnet::Id"
+      Default: ""
+
+Conditions:
+  UseThirdSubnet: !Equals [!Ref "PrivateSubnet3ID", ""]
 
 Resources:
   Filesystem:
@@ -69,6 +73,7 @@ Resources:
       SubnetId: !Ref PrivateSubnet2ID
 
   MountTarget3:
+    Condition: UseThirdSubnet
     Type: AWS::EFS::MountTarget
     Properties:
       FileSystemId: !Ref Filesystem
@@ -98,4 +103,7 @@ Outputs:
       - ","
       - - !Ref MountTarget1
         - !Ref MountTarget2
-        - !Ref MountTarget3
+        - !If
+            - UseThirdSubnet
+            - !Ref MountTarget3
+            - !Ref AWS::NoValue

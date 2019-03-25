@@ -65,6 +65,7 @@ Parameters:
   PrivateSubnet3:
     Description: ID of Private Subnet 3
     Type: AWS::EC2::Subnet::Id
+    Default: ""
   VPCID:
     Description: ID for the VPC
     Type: AWS::EC2::VPC::Id
@@ -114,6 +115,7 @@ Conditions:
   isAuroraAndCreateSnasphot: !And [Condition: isAmazonAuroraRegion, Condition: CreateSnapshot]
   isAuroraAndNotCreateSnasphot: !And [Condition: isAmazonAuroraRegion, !Not [Condition: CreateSnapshot]]
   CreateSnapshot: !Equals [!Ref RDSCreateSnapshotWhenDeleted, "true"]
+  UseThirdSubnet: !Equals [!Ref "PrivateSubnet3", ""]
 
 Resources:
   RDSDBSubnetGroup:
@@ -123,7 +125,10 @@ Resources:
       SubnetIds:
         - !Ref PrivateSubnet1
         - !Ref PrivateSubnet2
-        - !Ref PrivateSubnet3
+        - !If
+            - UseThirdSubnet
+            - !Ref PrivateSubnet3
+            - !Ref AWS::NoValue
 
   RDSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
