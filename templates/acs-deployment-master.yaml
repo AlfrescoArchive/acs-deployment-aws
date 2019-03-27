@@ -453,7 +453,7 @@ Parameters:
     RepoImage:
       Type: String
       Description: The Alfresco Repository docker image name
-      Default: ""
+      Default: "alfresco/alfresco-content-repository-aws"
     RepoTag:
       Type: String
       Description: The Alfresco Repository docker tag name
@@ -624,8 +624,10 @@ Resources:
             Value: !Sub "${AWS::StackName}-eks"
         TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/templates/efs.yaml"
         Parameters:
-          PrivateSubnet1ID: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
-          PrivateSubnet2ID: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
+          PrivateSubnetIDs: !Join
+            - ","
+            - - !GetAtt VPCStack.Outputs.PrivateSubnet1AID
+              - !GetAtt VPCStack.Outputs.PrivateSubnet2AID
           SecurityGroup: !Ref NodeSecurityGroup
 
     MQStack:
@@ -776,10 +778,12 @@ Resources:
             Value: !Sub "${AWS::StackName}-eks"
         TemplateURL: !Sub "https://${TemplateBucketName}.s3.amazonaws.com/${TemplateBucketKeyPrefix}/templates/rds.yaml"
         Parameters:
-          PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
-          PrivateSubnet2: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
-          NodeSecurityGroup: !Ref NodeSecurityGroup
           VPCID: !GetAtt VPCStack.Outputs.VPCID
+          NodeSecurityGroup: !Ref NodeSecurityGroup
+          PrivateSubnetIDs: !Join
+            - ","
+            - - !GetAtt VPCStack.Outputs.PrivateSubnet1AID
+              - !GetAtt VPCStack.Outputs.PrivateSubnet2AID
           RDSInstanceType: !Ref RDSInstanceType
           RDSAllocatedStorage: !Ref RDSAllocatedStorage
           RDSDBName: !Ref RDSDBName

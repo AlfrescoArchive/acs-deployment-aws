@@ -1405,4 +1405,3 @@ Outputs:
   MonitoringToolsUsageWeaveScope:
     Description: Run next commands from bastion host or your workstation as indicated 
     Value: from bastion run -> \"kubectl -n kube-system port-forward svc/weave-scope-weave-scope 8444:80 &\" from your workstation -> \"ssh -f ec2-user@BASTION_PUBLIC_IP -L 8444:localhost:8444 -N\" from your workstation -> open http://localhost:8444 in your browser
-

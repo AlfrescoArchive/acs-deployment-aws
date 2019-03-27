@@ -15,8 +15,7 @@ Metadata:
         Parameters:
           - VPCID
           - NodeSecurityGroup
-          - PrivateSubnet1
-          - PrivateSubnet2
+          - PrivateSubnetIDs
       - Label:
           default: Alfresco Storage Configuration
         Parameters:
@@ -30,10 +29,8 @@ Metadata:
     ParameterLabels:
       NodeSecurityGroup:
         default: The Node Security Group ID to use for RDS
-      PrivateSubnet1:
-        default: The ID of Private Subnet 1
-      PrivateSubnet2:
-        default: The ID of Private Subnet 2
+      PrivateSubnetIDs:
+        default: Private subnet IDs
       RDSDBName:
         default: RDS DB Name
       RDSInstanceType:
@@ -53,12 +50,9 @@ Parameters:
   NodeSecurityGroup:
     Description: ID for the VPC, This will be used to get the node security group
     Type: AWS::EC2::SecurityGroup::Id
-  PrivateSubnet1:
-    Description: ID of Private Subnet 1
-    Type: AWS::EC2::Subnet::Id
-  PrivateSubnet2:
-    Description: ID of Private Subnet 2
-    Type: AWS::EC2::Subnet::Id
+  PrivateSubnetIDs:
+    Description: List of private subnet IDs to use
+    Type: List<AWS::EC2::Subnet::Id>
   VPCID:
     Description: ID for the VPC
     Type: AWS::EC2::VPC::Id
@@ -114,9 +108,7 @@ Resources:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
       DBSubnetGroupDescription: Subnets available for the RDS DB Instance
-      SubnetIds:
-        - !Ref PrivateSubnet1
-        - !Ref PrivateSubnet2
+      SubnetIds: !Ref PrivateSubnetIDs
 
   RDSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
