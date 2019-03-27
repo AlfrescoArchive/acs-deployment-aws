@@ -67,6 +67,14 @@ else
     # from bastion: aws-iam-authenticator token --token-only -i $(tail -1 ~/.kube/config |tr -d '\ '|sed -e 's/^-//g')
     # from your workstation: ssh -f ec2-user@3.93.233.228 -L 8443:localhost:8443 -N
     # from your workstation: open https://localhost:8443 in your browser
+
+    # WeaveScope installation
+    helm install stable/weave-scope \
+    --name weave-scope \
+    --namespace kube-system
+    if [[ $? -ne 0 ]] ; then
+    exit 1
+    fi
   fi
 
   STATUS_MS=$(helm ls metrics-server | grep metrics-server | awk '{print $8}')
@@ -75,7 +83,7 @@ else
     sleep 1
     STATUS_MS=$(helm ls metrics-server | grep metrics-server | awk '{print $8}')
   done
-  echo "Metrics Server cloudwatch deployed successfully"
+  echo "Metrics Server deployed successfully"
 
   STATUS_K8S_DASHBOARD=$(helm ls kubernetes-dashboard | grep kubernetes-dashboard | awk '{print $8}')
   while [ "$STATUS_K8S_DASHBOARD" != "DEPLOYED" ]; do
@@ -83,12 +91,20 @@ else
     sleep 1
     STATUS_K8S_DASHBOARD=$(helm ls kubernetes-dashboard | grep kubernetes-dashboard | awk '{print $8}')
   done
-  echo "Kubernets Dashboard cloudwatch deployed successfully"
+  echo "Kubernets Dashboard deployed successfully"
+
+  STATUS_WEAVESCOPE=$(helm ls weave-scope | grep weave-scope | awk '{print $8}')
+  while [ "$STATUS_WEAVESCOPE" != "DEPLOYED" ]; do
+    echo "WeaveScope is still deploying, sleeping for a second..."
+    sleep 1
+    STATUS_K8S_DASHBOARD=$(helm ls weave-scope | grep weave-scope | awk '{print $8}')
+  done
+  echo "WeaveScope deployed successfully"
 
 
   # Below logic is for AWS Systems Manager return code for the script
-  STATUS_K8S_DASHBOARD=$(helm ls kubernetes-dashboard | grep kubernetes-dashboard | awk '{print $8}')
-  if [ "$STATUS_K8S_DASHBOARD" = "DEPLOYED" ]; then
+  STATUS_WEAVESCOPE=$(helm ls weave-scope | grep weave-scope | awk '{print $8}')
+  if [ "$STATUS_WEAVESCOPE" = "DEPLOYED" ]; then
     exit 0
   else
     exit 1
