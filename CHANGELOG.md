@@ -2,7 +2,7 @@
 
 ## Features
 * Using Alfresco's Helm Charts 2.0.0 https://github.com/Alfresco/acs-deployment
-* Parameterise Alfresco Repository & Share docker images for allowing customizations on those images
+* Added optional CFN parameter (RepoImage, RepoTag, ShareImage, ShareTag) for customized Alfresco Repository & Share docker images for allowing customizations on those images. If not specified the Helm Chart values are taken.
 
 ## Fixes
 * Allow communication across worker nodes

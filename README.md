@@ -191,6 +191,10 @@ See the AWS documentation on [Amazon EC2 Key Pairs](https://docs.aws.amazon.com/
 | The helm chart release name of nginx-ingress (IngressReleaseName)| ingress | The helm chart release name of nginx-ingress |
 | The helm chart release name of alfresco content services (AcsReleaseName)| acs | The helm chart release name of alfresco content services |
 | The Admin password for Alfresco (AlfrescoPassword)| <span style="color:red">Requires input</span> | The Admin password for Alfresco |
+| The Alfresco Repository docker image name (RepoImage) | "" | The Alfresco Repository docker image name |
+| The Alfresco Repository docker tag name (RepoTag) | "" | The Alfresco Repository docker tag name |
+| The Alfresco Share docker image name (ShareImage) | "" | The Alfresco Share docker image name |
+| The Alfresco Share docker tag name (ShareTag) | "" | The Alfresco Share docker tag name |
 | Private Registry Credentials. Base64 encryption of dockerconfig json (RegistryCredentials)| <span style="color:red">Requires input</span> | Make sure you have your Quay.io credentials as described in the [Prerequisites](#prerequisites). Also, if you're using Docker for Mac, go to **Preferences...** > **General** to ensure your "Securely store docker logins in macOS keychain" preference is OFF before running the next step.<ol><li> Login to quay.io: <br>```docker login quay.io```</li> <li> Validate that you can see the credentials for Quay.io: <br>```cat ~/.docker/config.json```</li><li> Get the encoded credentials: <br>```cat ~/.docker/config.json \| base64```</li><li> Copy the credentials into the textbox.</li></ol> |
 | The number of repository pods in the cluster (RepoPods)| 2 | The number of repository pods in the cluster |
 | The hosted zone to create Route53 Record for ACS (Route53DnsZone)| <span style="color:red">Requires input</span> | Enter your hosted zone e.g. **example.com.**. For more information about how to create a hosted zone, see the AWS documentation on [Creating a Public Hosted Zone](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html). |
