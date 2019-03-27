@@ -69,7 +69,7 @@ else
     # from your workstation: open https://localhost:8443 in your browser
 
     # WeaveScope installation
-    helm install stable/weave-scope 
+    helm install stable/weave-scope \
     --name weave-scope \
     --namespace kube-system
     if [[ $? -ne 0 ]] ; then
