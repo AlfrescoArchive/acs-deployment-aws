@@ -240,23 +240,23 @@ Mappings:
   # see https://docs.aws.amazon.com/eks/latest/userguide/eks-optimized-ami.html for latest worker node AMI IDs
   NodeAmiRegionMap:
     us-west-2:
-      AmiId: ami-0c28139856aaf9c3b
+      AmiId: ami-0923e4b35a30a5f53
     us-east-1:
-      AmiId: ami-0eeeef929db40543c
+      AmiId: ami-0abcb9f9190e867ab
     us-east-2:
-      AmiId: ami-0484545fe7d3da96f
+      AmiId: ami-04ea7cb66af82ae4a
     eu-central-1:
-      AmiId: ami-032ed5525d4df2de3
+      AmiId: ami-0d741ed58ca5b342e
     eu-west-1:
-      AmiId: ami-098fb7e9b507904e7
+      AmiId: ami-08716b70cac884aaa
     ap-northeast-1:
-      AmiId: ami-07fdc9272ce5b0ce5
+      AmiId: ami-0bfedee6a7845c26d
     ap-northeast-2:
-      AmiId: ami-091e0e1906e653417
+      AmiId: ami-0a904348b703e620c
     ap-southeast-1:
-      AmiId: ami-038d55c26bf01998f
+      AmiId: ami-07b922b9b94d9a6d2
     ap-southeast-2:
-      AmiId: ami-0e07b5081bb77d540
+      AmiId: ami-0f0121e9e64ebd3dc
 
 Conditions:
   isNodesMetricsEnabled: !Equals [!Ref NodesMetricsEnabled, "true"]
