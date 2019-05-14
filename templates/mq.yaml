@@ -17,8 +17,8 @@ Metadata:
             - MQInstanceType
             - MQDeploymentMode
             - SecurityGroup
-            - PrivateSubnet1ID
-            - PrivateSubnet2ID
+            - NumberOfPrivateSubnets
+            - PrivateSubnetIDs
             - MQUsername
             - MQPassword
 
@@ -31,10 +31,10 @@ Metadata:
           default: AmazonMQ Deployment mode
         SecurityGroup:
           default: The Security Group ID to use for AmazonMQ
-        PrivateSubnet1ID:
-          default: The ID of Private Subnet 1
-        PrivateSubnet2ID:
-          default: The ID of Private Subnet 2
+        NumberOfPrivateSubnets:
+          default: Number of private subnets
+        PrivateSubnetIDs:
+          default: Private subnet IDs
         MQUsername:
           default: AmazonMQ User Name
         MQPassword:
@@ -67,12 +67,16 @@ Parameters:
     SecurityGroup:
       Description: "ID for the VPC, This will be used to get the default security group"
       Type: "AWS::EC2::SecurityGroup::Id"
-    PrivateSubnet1ID:
-      Description: "ID of Private Subnet 1"
-      Type: "AWS::EC2::Subnet::Id"
-    PrivateSubnet2ID:
-      Description: "ID of Private Subnet 2"
-      Type: "AWS::EC2::Subnet::Id"
+    NumberOfPrivateSubnets:
+      Description: The number of private subnets, this must match the number of subnets selected in SubnetIDs parameter.
+      Type: String
+      Default: "2"
+      AllowedValues:
+        - "2"
+        - "3"
+    PrivateSubnetIDs:
+      Description: List of private subnet IDs to use
+      Type: List<AWS::EC2::Subnet::Id>
     MQUsername:
       AllowedPattern: ".+"
       Default: admin
@@ -101,9 +105,7 @@ Resources:
       PubliclyAccessible: "true"
       SecurityGroups:
         - !Ref SecurityGroup
-      SubnetIds:
-        - !Ref PrivateSubnet1ID
-        - !Ref PrivateSubnet2ID
+      SubnetIds: !Ref PrivateSubnetIDs
       Users:
         - Groups:
             - "admin"
