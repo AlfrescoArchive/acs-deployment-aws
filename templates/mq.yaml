@@ -17,7 +17,6 @@ Metadata:
             - MQInstanceType
             - MQDeploymentMode
             - SecurityGroup
-            - NumberOfPrivateSubnets
             - PrivateSubnetIDs
             - MQUsername
             - MQPassword
@@ -31,8 +30,6 @@ Metadata:
           default: AmazonMQ Deployment mode
         SecurityGroup:
           default: The Security Group ID to use for AmazonMQ
-        NumberOfPrivateSubnets:
-          default: Number of private subnets
         PrivateSubnetIDs:
           default: Private subnet IDs
         MQUsername:
@@ -67,13 +64,6 @@ Parameters:
     SecurityGroup:
       Description: "ID for the VPC, This will be used to get the default security group"
       Type: "AWS::EC2::SecurityGroup::Id"
-    NumberOfPrivateSubnets:
-      Description: The number of private subnets, this must match the number of subnets selected in SubnetIDs parameter.
-      Type: String
-      Default: "2"
-      AllowedValues:
-        - "2"
-        - "3"
     PrivateSubnetIDs:
       Description: List of private subnet IDs to use
       Type: List<AWS::EC2::Subnet::Id>
