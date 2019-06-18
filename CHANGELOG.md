@@ -1,3 +1,8 @@
+# 2.0.0.1
+
+## Fixes
+* S3 VPC template path fix
+
 # 2.0.0
 
 ## Features
