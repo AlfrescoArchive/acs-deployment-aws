@@ -192,16 +192,18 @@ alfresco-infrastructure:
     efs:
       enabled: true
       dns: \"$EFS_NAME\"
+  nginx-ingress:
+    enabled: false
 repository:
   livenessProbe:
     initialDelaySeconds: 420
   adminPassword: \"$ALFRESCO_PASSWORD\"
   image:
-    repository: "$REPO_IMAGE"
-    `if [ ! -z ${REPO_TAG} ]; then echo tag: "$REPO_TAG"; fi`
+    repository: quay.io/alfresco/alfresco-content-repository-aws
+    tag: \"6.1.1-RC1\"
   replicaCount: $REPO_PODS
   environment:
-    JAVA_OPTS: \" -Dopencmis.server.override=true -Dopencmis.server.value=https://$EXTERNAL_NAME -Dalfresco.restApi.basicAuthScheme=true -Dsolr.base.url=/solr -Dsolr.secureComms=none -Dindex.subsystem.name=solr6 -Dalfresco.cluster.enabled=true -Ddeployment.method=HELM_CHART -Dlocal.transform.service.enabled=true -Dtransform.service.enabled=true -Dmessaging.broker.url='failover:($MQ_ENDPOINT)?timeout=3000&jms.useCompression=true' -Dmessaging.broker.user=$MQ_USERNAME -Dmessaging.broker.password=$MQ_PASSWORD -Xms2000M -Xmx2000M\"
+    JAVA_OPTS: \" -Dopencmis.server.override=true -Dopencmis.server.value=https://$EXTERNAL_NAME -Dalfresco.restApi.basicAuthScheme=true -Dsolr.base.url=/solr -Dsolr.secureComms=none -Dindex.subsystem.name=solr6 -Dalfresco.cluster.enabled=true -Ddeployment.method=HELM_CHART -Dlocal.transform.service.enabled=false -Dtransform.service.enabled=true -Dmessaging.broker.url='failover:($MQ_ENDPOINT)?timeout=3000&jms.useCompression=true' -Dmessaging.broker.user=$MQ_USERNAME -Dmessaging.broker.password=$MQ_PASSWORD -Xms2000M -Xmx2000M\"    
 alfresco-search:
   resources:
     requests:
@@ -278,18 +280,38 @@ share:
   `if [ ! -z ${SHARE_IMAGE} ] || [ ! -z ${SHARE_TAG} ]; then echo image: ; fi`
     `if [ ! -z ${SHARE_IMAGE} ]; then echo repository: "$SHARE_IMAGE"; fi`
     `if [ ! -z ${SHARE_TAG} ]; then echo tag: "$SHARE_TAG"; fi`
-registryPullSecrets: quay-registry-secret" > $VALUES_FILE
+registryPullSecrets: quay-registry-secret
+alfresco-sync-service:
+  syncservice:
+    image:
+      tag: latest
+    environment:
+      EXTRA_JAVA_OPTS: >-       
+         -Dmessaging.broker.endpoint=$MQ_ENDPOINT
+  activemq:
+    external: true
+    broker:     
+      username: $MQ_USERNAME
+      password: $MQ_PASSWORD
+  database:
+    external: true
+    driver: \"org.mariadb.jdbc.Driver\"
+    user: \"alfresco\"
+    password: \"$DATABASE_PASSWORD\"
+    url: \"'jdbc:mariadb:aurora//$RDS_ENDPOINT:3306/alfresco?useUnicode=yes&characterEncoding=UTF-8'\"
+  postgresql:
+    enabled: false" > $VALUES_FILE
 
-  CHART_VERSION=2.0.0
+  CHART_VERSION=2.1.0
 
   if [ "$INSTALL" = "true" ]; then
-    echo Installing Alfresco Content Services helm chart...
-    helm install alfresco-stable/alfresco-content-services --version $CHART_VERSION -f $VALUES_FILE --name $ACS_RELEASE --namespace=$DESIREDNAMESPACE
+    echo Installing Alfresco Content Services helm chart version $CHART_VERSION ...
+    helm install alfresco-incubator/alfresco-content-services --version $CHART_VERSION -f $VALUES_FILE --name $ACS_RELEASE --namespace=$DESIREDNAMESPACE
   fi
 
   if [ "$UPGRADE" = "true" ]; then
     echo Upgrading Alfresco Content Services helm chart...
-    helm upgrade $ACS_RELEASE alfresco-stable/alfresco-content-services --version $CHART_VERSION -f $VALUES_FILE \
+    helm upgrade $ACS_RELEASE alfresco-incubator/alfresco-content-services --version $CHART_VERSION -f $VALUES_FILE \
      --install --namespace=$DESIREDNAMESPACE
   fi
 
