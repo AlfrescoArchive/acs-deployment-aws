@@ -200,7 +200,7 @@ repository:
   adminPassword: \"$ALFRESCO_PASSWORD\"
   image:
     repository: quay.io/alfresco/alfresco-content-repository-aws
-    tag: \"6.1.1-RC1\"
+    tag: \"feature-6.1.N-APPSREPO-673_include_sync_aws-6.1.1-SNAPSHOT\"
   replicaCount: $REPO_PODS
   environment:
     JAVA_OPTS: \" -Dopencmis.server.override=true -Dopencmis.server.value=https://$EXTERNAL_NAME -Dalfresco.restApi.basicAuthScheme=true -Dsolr.base.url=/solr -Dsolr.secureComms=none -Dindex.subsystem.name=solr6 -Dalfresco.cluster.enabled=true -Ddeployment.method=HELM_CHART -Dlocal.transform.service.enabled=false -Dtransform.service.enabled=true -Dmessaging.broker.url='failover:($MQ_ENDPOINT)?timeout=3000&jms.useCompression=true' -Dmessaging.broker.user=$MQ_USERNAME -Dmessaging.broker.password=$MQ_PASSWORD -Xms2000M -Xmx2000M\"    
