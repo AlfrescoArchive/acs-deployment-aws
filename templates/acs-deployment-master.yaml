@@ -420,7 +420,7 @@ Parameters:
       ConstraintDescription: The NGINX Ingress version can not be empty
       Type: String
       Description: The nginx-ingress chart version
-      Default: "0.14.0"
+      Default: "0.21.0"
     IngressReleaseName:
       AllowedPattern: ".+"
       ConstraintDescription: The helm chart release name of nginx-ingress can not be empty
