@@ -280,7 +280,7 @@ share:
     `if [ ! -z ${SHARE_TAG} ]; then echo tag: "$SHARE_TAG"; fi`
 registryPullSecrets: quay-registry-secret" > $VALUES_FILE
 
-  CHART_VERSION=2.0.2
+  CHART_VERSION=2.1.0
 
   if [ "$INSTALL" = "true" ]; then
     echo Installing Alfresco Content Services helm chart...
