@@ -280,11 +280,11 @@ share:
     `if [ ! -z ${SHARE_TAG} ]; then echo tag: "$SHARE_TAG"; fi`
 registryPullSecrets: quay-registry-secret" > $VALUES_FILE
 
-  CHART_VERSION=2.1.2
+  CHART_VERSION=2.0.2
 
   if [ "$INSTALL" = "true" ]; then
     echo Installing Alfresco Content Services helm chart...
-    helm install alfresco-stable/alfresco-content-services --version $CHART_VERSION -f $VALUES_FILE --name $ACS_RELEASE --namespace=$DESIREDNAMESPACE --set global.alfrescoRegistryPullSecrets="quay-registry-secret" --set alfresco-search.type=insight-engine --set alfresco-search.ingress.enabled=true --set alfresco-insight-zeppelin.enabled="true" --set alfresco-search.alfresco-insight-zeppelin.registryPullSecrets="quay-registry-secret" --set alfresco-search.ingress.basicAuth="YWRtaW46JGFwcjEkVVJqb29uS00kSEMuS1EwVkRScFpwSHB2a3JwTDd1Lg=="  --set repository.replicaCount=1 --set transformrouter.replicaCount=1 --set pdfrenderer.replicaCount=1 --set imagemagick.replicaCount=1 --set libreoffice.replicaCount=1 --set tika.replicaCount=1 --set alfresco-sync-service.enabled=false
+    helm install alfresco-stable/alfresco-content-services --version $CHART_VERSION -f $VALUES_FILE --name $ACS_RELEASE --namespace=$DESIREDNAMESPACE --set registryPullSecrets="quay-registry-secret" --set alfresco-search.type=insight-engine --set alfresco-search.ingress.enabled=true --set alfresco-insight-zeppelin.enabled="true" --set alfresco-search.alfresco-insight-zeppelin.registryPullSecrets="quay-registry-secret" --set alfresco-search.ingress.basicAuth="YWRtaW46JGFwcjEkVVJqb29uS00kSEMuS1EwVkRScFpwSHB2a3JwTDd1Lg=="  --set repository.replicaCount=1 --set transformrouter.replicaCount=1 --set pdfrenderer.replicaCount=1 --set imagemagick.replicaCount=1 --set libreoffice.replicaCount=1 --set tika.replicaCount=1 --set alfresco-sync-service.enabled=false
   fi
 
   if [ "$UPGRADE" = "true" ]; then
