@@ -522,8 +522,8 @@ Resources:
                   sleep 5
                   STATUS=$(aws eks describe-cluster --region ${AWS::Region} --name ${EKSClusterName} --query cluster.status --output text)
                   while [ \"$STATUS\" = \"CREATING\" ]; do
-                    echo Cluster is still creating, sleeping for 60 seconds...
-                    sleep 60
+                    echo Cluster is still creating, sleeping for 30 seconds...
+                    sleep 30
                     STATUS=$(aws eks describe-cluster --region ${AWS::Region} --name ${EKSClusterName} --query cluster.status --output text)
                   done
                 fi
