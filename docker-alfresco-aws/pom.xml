@@ -1,0 +1,279 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>content-services-docker-aws</artifactId>
+    <name>Alfresco Content Services Docker Image Builder for AWS</name>
+    <packaging>pom</packaging>
+    <groupId>org.alfresco</groupId>
+    <version>6.3.0-SNAPSHOT</version>
+
+    <properties>
+        <image.tag>latest</image.tag>
+        <!-- Private docker registry -->
+        <image.registry>quay.io</image.registry>
+        <image.name>alfresco/alfresco-content-repository-aws</image.name>
+        <resource_path>aws/target</resource_path>
+
+        <!-- Alfresco Alfresco Intelligence Services (AIS) -->
+        <alfresco.ais.version>1.1.1.1</alfresco.ais.version>
+        <!-- Alfresco S3 Connector integration version -->
+        <alfresco.s3connector.version>3.0.0</alfresco.s3connector.version>
+
+        <dependency.fabric8.version>4.3.1</dependency.fabric8.version>
+        <dependency.mariadb.version>2.5.2</dependency.mariadb.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.alfresco</groupId>
+            <artifactId>alfresco-ai-repo</artifactId>
+            <version>${alfresco.ais.version}</version>
+            <type>amp</type>
+        </dependency>
+        <dependency>
+            <groupId>org.alfresco.integrations</groupId>
+            <artifactId>alfresco-s3-connector</artifactId>
+            <version>${alfresco.s3connector.version}</version>
+            <type>amp</type>
+        </dependency>
+        <dependency>
+            <groupId>org.mariadb.jdbc</groupId>
+            <artifactId>mariadb-java-client</artifactId>
+            <version>${dependency.mariadb.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!--
+            copy-licenses phase is not required as the license is already part of alfresco-content-repository
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.1.1</version>
+                <executions>
+                    <!--
+                    unpack-resources phase is not required as the following WARs are part of alfresco-content-repository
+                    docker image:
+                    - content-services
+                    - api-explorer
+                    -->
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <!--
+                                Following WARs/Jars are already part of alfresco-content-repository docker image:
+                                - postgresql
+                                - alfresco-mmt
+                                - alfresco-server-root
+                                - alfresco-vti-bin
+                                -->
+                                <artifactItem>
+                                    <groupId>org.mariadb.jdbc</groupId>
+                                    <artifactId>mariadb-java-client</artifactId>
+                                    <version>${dependency.mariadb.version}</version>
+                                    <type>jar</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${project.build.directory}/connector</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-resources-amps</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <!--
+                                Following AMPs are already part of alfresco-content-repository docker image:
+                                - alfresco-share-services
+                                - alfresco-aos-module
+                                - alfresco-googledocs-repo
+                                - alfresco-device-sync-repo
+                                -->
+                                <artifactItem>
+                                    <groupId>org.alfresco.integrations</groupId>
+                                    <artifactId>alfresco-s3-connector</artifactId>
+                                    <version>${alfresco.s3connector.version}</version>
+                                    <type>amp</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${project.build.directory}/amps</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.alfresco</groupId>
+                                    <artifactId>alfresco-ai-repo</artifactId>
+                                    <version>${alfresco.ais.version}</version>
+                                    <type>amp</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${project.build.directory}/amps</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>fabric8-maven-plugin</artifactId>
+                <version>${dependency.fabric8.version}</version>
+                <configuration>
+                    <images>
+                        <image>
+                            <name>${image.name}</name>
+                            <build>
+                                <dockerFileDir>${project.basedir}/</dockerFileDir>
+                            </build>
+                        </image>
+                    </images>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>enterpriseDocker</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>fabric8-maven-plugin</artifactId>
+                        <version>${dependency.fabric8.version}</version>
+                        <executions>
+                            <execution>
+                                <id>build-image</id>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>build</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>internal</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>fabric8-maven-plugin</artifactId>
+                        <version>${dependency.fabric8.version}</version>
+                        <configuration>
+                            <images>
+                                <image>
+                                    <name>${image.name}:${image.tag}</name>
+                                    <registry>${image.registry}</registry>
+                                    <build>
+                                        <dockerFileDir>${project.basedir}/</dockerFileDir>
+                                    </build>
+                                </image>
+                            </images>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>build-push-image</id>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>build</goal>
+                                    <goal>push</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>master</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>fabric8-maven-plugin</artifactId>
+                        <version>${dependency.fabric8.version}</version>
+                        <configuration>
+                            <images>
+                                <image>
+                                    <name>${image.name}</name>
+                                    <registry>${image.registry}</registry>
+                                    <build>
+                                        <dockerFileDir>${project.basedir}/</dockerFileDir>
+                                    </build>
+                                </image>
+                                <image>
+                                    <name>${image.name}</name>
+                                    <build>
+                                        <dockerFileDir>${project.basedir}/</dockerFileDir>
+                                    </build>
+                                </image>
+                            </images>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>build-push-image</id>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>build</goal>
+                                    <goal>push</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>fabric8-maven-plugin</artifactId>
+                        <version>${dependency.fabric8.version}</version>
+                        <configuration>
+                            <images>
+                                <image>
+                                    <name>${image.name}:${project.version}</name>
+                                    <registry>${image.registry}</registry>
+                                    <build>
+                                        <dockerFileDir>${project.basedir}/</dockerFileDir>
+                                    </build>
+                                </image>
+                                <image>
+                                    <name>${image.name}:${project.version}</name>
+                                    <build>
+                                        <dockerFileDir>${project.basedir}/</dockerFileDir>
+                                    </build>
+                                </image>
+                            </images>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>build-push-image</id>
+                                <phase>deploy</phase>
+                                <goals>
+                                    <goal>build</goal>
+                                    <goal>push</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>
