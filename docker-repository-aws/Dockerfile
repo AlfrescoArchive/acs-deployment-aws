@@ -4,9 +4,6 @@ FROM alfresco/alfresco-content-repository:6.2.0
 
 USER root
 
-# Set default docker_context. Will / Can be overriden with maven.
-ARG resource_path=target
-
 # Set default user information
 ARG GROUPNAME=Alfresco
 ARG USERNAME=alfresco
